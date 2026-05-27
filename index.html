@@ -158,9 +158,7 @@ code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font
   <button class="setup-btn" onclick="startApp()">
     <i class="ti ti-rocket" style="font-size:13px;vertical-align:-1px;margin-right:5px"></i>Bắt đầu sử dụng
   </button>
-  <button onclick="testAPI()" style="width:100%;padding:8px;font-size:12px;cursor:pointer;margin-bottom:10px;border-radius:8px;border:0.5px solid #ccc;background:transparent;color:#555">🔍 Kiểm tra API key</button>
-<div id="test-result" style="font-size:12px;padding:8px;border-radius:6px;display:none;margin-bottom:10px"></div>
-<p class="setup-note">
+  <p class="setup-note">
     <i class="ti ti-shield-check" style="font-size:11px;vertical-align:-1px;margin-right:3px"></i>
     Key lưu trong trình duyệt, không gửi đến đâu ngoài Google. Hoàn toàn miễn phí cho dùng cá nhân.
   </p>
@@ -395,24 +393,34 @@ class GeminiDataService {
     const models = G.activeGeminiModel
       ? [G.activeGeminiModel, ...CFG.geminiModels.filter(m=>m!==G.activeGeminiModel)]
       : CFG.geminiModels
+
+    // Thử theo thứ tự: v1beta+search → v1beta (không search) → v1 (ổn định nhất)
+    const buildAttempts = (withSearch) => [
+      ...(withSearch ? [{ver:'v1beta',tools:[{google_search_retrieval:{}}]}] : []),
+      {ver:'v1beta', tools:[]},
+      {ver:'v1',     tools:[]},
+    ]
+
     const errors=[]
     for(const model of models){
-      try{
-        const body={
-          systemInstruction:{parts:[{text:sys}]},
-          contents:[{role:'user',parts:[{text:prompt}]}],
-          generationConfig:{maxOutputTokens:2000,temperature:0.15}
-        }
-        if(search) body.tools=[{google_search_retrieval:{}}]
-        const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.key}`,
-          {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-        const d=await r.json()
-        if(!r.ok){errors.push(`[${model}] ${d.error?.message||r.status}`);continue}
-        G.activeGeminiModel=model
-        return d.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||''
-      }catch(e){errors.push(`[${model}] ${e.message}`)}
+      for(const ep of buildAttempts(search)){
+        try{
+          const body={
+            systemInstruction:{parts:[{text:sys}]},
+            contents:[{role:'user',parts:[{text:prompt}]}],
+            generationConfig:{maxOutputTokens:2000,temperature:0.15}
+          }
+          if(ep.tools.length) body.tools=ep.tools
+          const url=`https://generativelanguage.googleapis.com/${ep.ver}/models/${model}:generateContent?key=${this.key}`
+          const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+          const d=await r.json()
+          if(!r.ok){errors.push(`[${model}/${ep.ver}] ${d.error?.message||r.status}`);continue}
+          G.activeGeminiModel=model
+          return d.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||''
+        }catch(e){errors.push(`[${model}] ${e.message}`)}
+      }
     }
-    throw new Error(errors[0]||'Không kết nối Gemini')
+    throw new Error(errors.slice(0,2).join(' | ')||'Không kết nối Gemini API')
   }
 
   json(txt){ return JSON.parse(txt.replace(/```json|```/g,'').trim()) }
@@ -528,32 +536,6 @@ function initApp(){
   showScreen('s-app')
   renderWatchlist()
   loadWlData()
-}
-async function testAPI(){
-  const key = document.getElementById('key-inp').value.trim() || G.apiKey
-  if(!key){alert('Nhập API key trước');return}
-  const r = document.getElementById('test-result')
-  r.style.display='block'
-  r.style.background='#fff3cd'
-  r.textContent='Đang kiểm tra...'
-  const models=['gemini-1.5-flash','gemini-1.5-flash-8b','gemini-1.5-pro','gemini-pro']
-  let found=null
-  for(const m of models){
-    try{
-      const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`,
-        {method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{role:'user',parts:[{text:'hi'}]}],generationConfig:{maxOutputTokens:10}})})
-      const d=await res.json()
-      if(res.ok){found=m;break}
-    }catch{}
-  }
-  if(found){
-    r.style.background='#d4edda'
-    r.textContent='✅ API key hoạt động! Model: '+found
-  } else {
-    r.style.background='#f8d7da'
-    r.innerHTML='❌ API key không hoạt động với các model hiện có. <br>Thử: <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank" style="color:#721c24">Bật Generative Language API</a>'
-  }
 }
 if(G.apiKey) initApp()
 
