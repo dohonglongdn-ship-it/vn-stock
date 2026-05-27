@@ -298,9 +298,7 @@ const CFG = {
   geminiModels: [
     'gemini-2.0-flash',
     'gemini-2.0-flash-lite',
-    'gemini-1.5-flash',
-    'gemini-1.5-flash-8b',
-    'gemini-pro',
+    'gemini-2.0-flash-exp',
   ],
 
   // Backend API endpoints (khi dùng chế độ backend)
@@ -395,36 +393,46 @@ class GeminiDataService {
       ? [G.activeGeminiModel, ...CFG.geminiModels.filter(m=>m!==G.activeGeminiModel)]
       : CFG.geminiModels
 
-    const getAttempts = (m, withSearch) => {
-      const searchTool = m.startsWith('gemini-2') ? {google_search:{}} : {google_search_retrieval:{}}
-      return [
-        ...(withSearch ? [{ver:'v1beta', tools:[searchTool]}] : []),
-        {ver:'v1beta', tools:[]},
-        {ver:'v1',     tools:[]},
-      ]
-    }
-
     const errors=[]
     for(const model of models){
-      for(const ep of getAttempts(model, search)){
+      // Thử có search trước, nếu không được thì thử không search
+      const attempts = search
+        ? [{tools:[{google_search:{}}]}, {tools:[]}]
+        : [{tools:[]}]
+
+      for(const attempt of attempts){
         try{
           const body={
             systemInstruction:{parts:[{text:sys}]},
             contents:[{role:'user',parts:[{text:prompt}]}],
             generationConfig:{maxOutputTokens:2000,temperature:0.15}
           }
-          if(ep.tools.length) body.tools=ep.tools
-          const url=`https://generativelanguage.googleapis.com/${ep.ver}/models/${model}:generateContent?key=${this.key}`
+          if(attempt.tools.length) body.tools=attempt.tools
+          const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.key}`
           const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
           const d=await r.json()
-          if(r.status===404){errors.push(`[${model}] không tìm thấy`);break} // bỏ qua model này
-          if(!r.ok){errors.push(`[${model}/${ep.ver}] ${d.error?.message||r.status}`);continue}
+
+          // Hết quota → thông báo rõ ràng
+          if(r.status===429){
+            throw new Error('Hết quota hôm nay. Vui lòng dùng API key mới hoặc thử lại sau 24h.')
+          }
+          // Model không tồn tại → thử model khác
+          if(r.status===404){errors.push(`${model}: không hỗ trợ`);break}
+          // Lỗi khác
+          if(!r.ok){errors.push(`${model}: ${d.error?.message||r.status}`);continue}
+
           G.activeGeminiModel=model
           return d.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||''
-        }catch(e){errors.push(`[${model}] ${e.message}`)}
+        }catch(e){
+          if(e.message.includes('Hết quota')) throw e
+          errors.push(`${model}: ${e.message}`)
+        }
       }
     }
-    throw new Error(errors.slice(0,3).join(' | ')||'Không kết nối Gemini. Kiểm tra API key.')
+    const msg = errors.some(e=>e.includes('không hỗ trợ'))
+      ? 'API key chưa kích hoạt hoặc không hỗ trợ model. Đợi 5-10 phút rồi thử lại.'
+      : errors[0]||'Không kết nối được Gemini API.'
+    throw new Error(msg)
   }
 
   json(txt){ return JSON.parse(txt.replace(/```json|```/g,'').trim()) }
