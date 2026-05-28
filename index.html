@@ -146,6 +146,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .disclaimer{font-size:10px;color:var(--t3);line-height:1.5;margin-top:10px;padding-top:8px;border-top:0.5px solid var(--bd)}
 code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font-family:monospace}
 a{color:var(--blue)}
+/* Time range */
+.trange{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+.tr-btn{font-size:10px;padding:3px 10px;border-radius:99px;border:0.5px solid var(--bd2);color:var(--t2);background:transparent;cursor:pointer;font-weight:600;transition:all .12s}
+.tr-btn:hover{color:var(--blue);border-color:var(--blue)}
+.tr-btn.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+/* Performance table */
+.perf-table{width:100%;border-collapse:collapse;font-size:11px}
+.perf-table th{font-size:9px;font-weight:600;color:var(--t3);text-align:right;padding:4px 6px;text-transform:uppercase;letter-spacing:.05em}
+.perf-table th:first-child{text-align:left}
+.perf-table td{padding:5px 6px;text-align:right;border-top:0.5px solid var(--bd)}
+.perf-table td:first-child{text-align:left;font-weight:500;color:var(--t2)}
+.perf-up{color:var(--up);font-weight:600}
+.perf-dn{color:var(--dn);font-weight:600}
+/* Candlestick */
+.chart-type-row{display:flex;gap:4px;margin-bottom:6px;align-items:center}
+.ct-btn{font-size:10px;padding:2px 9px;border-radius:5px;border:0.5px solid var(--bd2);color:var(--t2);background:transparent;cursor:pointer}
+.ct-btn.on{background:var(--bg3);color:var(--t);border-color:var(--bd2);font-weight:600}
+.candle-wrap{position:relative;height:230px;overflow:hidden}
+.candle-up{fill:#0e9f6e;stroke:#0e9f6e}
+.candle-dn{fill:#d84040;stroke:#d84040}
 </style>
 </head>
 <body>
@@ -271,9 +291,32 @@ a{color:var(--blue)}
       <div id="stock-content" style="display:none">
         <!-- Chart -->
         <div class="card">
-          <div class="chart-tabs" id="chart-tabs"></div>
-          <div class="chart-box"><canvas id="price-chart" role="img"></canvas></div>
-          <div id="data-source-label"></div>
+          <!-- Row 1: Chart type (Line / Nến) -->
+          <div class="chart-type-row">
+            <span style="font-size:10px;color:var(--t3);font-weight:600;margin-right:4px">Loại:</span>
+            <button class="ct-btn on" id="ct-line" onclick="setChartType('line')">Đường</button>
+            <button class="ct-btn" id="ct-candle" onclick="setChartType('candle')">Nến</button>
+            <div style="margin-left:auto" id="data-source-label"></div>
+          </div>
+          <!-- Row 2: Time range -->
+          <div class="trange" id="time-range-row"></div>
+          <!-- Row 3: Indicator tabs (chỉ khi là line chart) -->
+          <div id="indicator-tabs-row">
+            <div class="chart-tabs" id="chart-tabs"></div>
+          </div>
+          <!-- Chart canvas (line) -->
+          <div class="chart-box" id="chart-line-box">
+            <canvas id="price-chart" role="img"></canvas>
+          </div>
+          <!-- Candlestick canvas -->
+          <div class="candle-wrap" id="chart-candle-box" style="display:none">
+            <canvas id="candle-chart"></canvas>
+          </div>
+        </div>
+        <!-- Performance table -->
+        <div class="card" id="perf-card" style="display:none">
+          <div class="card-title"><i class="ti ti-chart-line" style="font-size:13px"></i>Hiệu suất theo kỳ</div>
+          <div id="perf-body"></div>
         </div>
         <!-- Metrics -->
         <div class="met-grid" id="stock-mets"></div>
@@ -406,6 +449,8 @@ const G = {
   wlCache: {},      // { ticker: {price, chg, spark, name, sector} }
   chart: null,
   chartMode: 'price',
+  chartType: 'line',   // 'line' | 'candle'
+  timeRange: '3M',     // '3M' | '6M' | '1Y' | '3Y' | 'Max'
   groqModel: null,
   lastGroqCall: 0,
 }
@@ -712,6 +757,11 @@ Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
     renderChart('price')
     renderMets()
     renderTA()
+    renderPerfTable()
+    // Reset chart type về line khi load mã mới
+    G.chartType = 'line'
+    G.timeRange = '3M'
+    setChartType('line')
     el('stock-content').style.display = 'block'
 
   } catch(e) {
@@ -723,6 +773,13 @@ Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
 
 // ── Chart ────────────────────────────────────────────────────────────
 function renderChartTabs() {
+  // Time range buttons
+  const ranges = [{k:'3M',l:'3T'},{k:'6M',l:'6T'},{k:'1Y',l:'1N'},{k:'3Y',l:'3N'},{k:'Max',l:'Max'}]
+  el('time-range-row').innerHTML = ranges.map(r=>
+    `<button class="tr-btn${G.timeRange===r.k?' on':''}" onclick="setTimeRange('${r.k}')">${r.l}</button>`
+  ).join('')
+
+  // Indicator tabs (only for line chart)
   const tabs = [
     {k:'price', l:'Giá + MA'},
     {k:'bb',    l:'Bollinger'},
@@ -735,6 +792,38 @@ function renderChartTabs() {
   ).join('')
 }
 
+function setChartType(type) {
+  G.chartType = type
+  el('ct-line').classList.toggle('on', type==='line')
+  el('ct-candle').classList.toggle('on', type==='candle')
+  el('chart-line-box').style.display = type==='line' ? 'block' : 'none'
+  el('chart-candle-box').style.display = type==='candle' ? 'block' : 'none'
+  el('indicator-tabs-row').style.display = type==='line' ? 'block' : 'none'
+  if (type==='candle') renderCandlestick()
+  else renderChart(G.chartMode)
+}
+
+function setTimeRange(range) {
+  G.timeRange = range
+  // Update buttons
+  document.querySelectorAll('.tr-btn').forEach(b=>{
+    b.classList.toggle('on', b.textContent===({
+      '3M':'3T','6M':'6T','1Y':'1N','3Y':'3N','Max':'Max'
+    }[range]))
+  })
+  if (G.chartType==='candle') renderCandlestick()
+  else renderChart(G.chartMode)
+}
+
+function getBarsForRange() {
+  const bars = G.stockData?.bars || []
+  if (!bars.length) return bars
+  const n = {
+    '3M': 65, '6M': 130, '1Y': 252, '3Y': 756, 'Max': bars.length
+  }[G.timeRange] || 65
+  return bars.slice(-Math.min(n, bars.length))
+}
+
 function renderChart(mode) {
   G.chartMode = mode
   // Update tab highlight
@@ -745,7 +834,7 @@ function renderChart(mode) {
   if (G.chart) { G.chart.destroy(); G.chart = null }
   const d = G.stockData; if (!d?.bars?.length) return
 
-  const bars = d.bars.slice(-120) // show last 120 bars
+  const bars = getBarsForRange()
   const labels = bars.map(b=>b.date.slice(5)) // MM-DD
   const closes = bars.map(b=>b.close)
   const ta = d.ta
@@ -810,6 +899,194 @@ function renderChart(mode) {
       }
     }
   })
+}
+
+// ── Candlestick Chart (Canvas 2D custom renderer) ────────────────────
+function renderCandlestick() {
+  const d = G.stockData; if (!d?.bars?.length) return
+  const bars = getBarsForRange()
+  if (!bars.length) return
+
+  const canvas = el('candle-chart')
+  const wrap = el('chart-candle-box')
+  canvas.width  = wrap.clientWidth  || 640
+  canvas.height = wrap.clientHeight || 230
+  const ctx = canvas.getContext('2d')
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+  const W = canvas.width, H = canvas.height
+  const PAD = {top:12, right:56, bottom:28, left:8}
+  const chartW = W - PAD.left - PAD.right
+  const chartH = H - PAD.top  - PAD.bottom
+
+  // Price range
+  const highs  = bars.map(b=>b.high||b.close)
+  const lows   = bars.map(b=>b.low||b.close)
+  const priceMin = Math.min(...lows)  * 0.998
+  const priceMax = Math.max(...highs) * 1.002
+  const priceRng = priceMax - priceMin
+
+  const toY = p => PAD.top + chartH - (p - priceMin) / priceRng * chartH
+  const toX = i => PAD.left + (i + 0.5) / bars.length * chartW
+
+  const candleW = Math.max(1, Math.min(12, chartW / bars.length * 0.7))
+
+  // Dark mode
+  const isDark = window.matchMedia('(prefers-color-scheme:dark)').matches
+  const textColor = isDark ? '#aaa' : '#888'
+  const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+
+  // Grid lines (5 price levels)
+  ctx.strokeStyle = gridColor
+  ctx.lineWidth = 0.5
+  ctx.fillStyle = textColor
+  ctx.font = '9px -apple-system,sans-serif'
+  ctx.textAlign = 'right'
+  for (let i=0; i<=4; i++) {
+    const p = priceMin + (priceRng * i / 4)
+    const y = toY(p)
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W-PAD.right, y); ctx.stroke()
+    ctx.fillText(p>=1000?Math.round(p).toLocaleString('vi-VN'):p.toFixed(1), W-4, y+3)
+  }
+
+  // MA lines
+  const ta = d.ta
+  const drawMA = (arr, color) => {
+    if (!arr) return
+    const sliced = arr.slice(-bars.length)
+    ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.setLineDash([4,2])
+    ctx.beginPath()
+    let started = false
+    sliced.forEach((v,i) => {
+      if (v==null) return
+      const x=toX(i), y=toY(v)
+      if (!started) {ctx.moveTo(x,y);started=true} else ctx.lineTo(x,y)
+    })
+    ctx.stroke(); ctx.setLineDash([])
+  }
+  if (ta) {
+    drawMA(ta.ma20Arr?.slice(-bars.length), 'rgba(245,158,11,0.7)')
+    drawMA(ta.ma50Arr?.slice(-bars.length), 'rgba(139,92,246,0.7)')
+  }
+
+  // Candles
+  bars.forEach((b, i) => {
+    const isUp = b.close >= b.open
+    const color = isUp ? '#0e9f6e' : '#d84040'
+    const x = toX(i)
+    const openY  = toY(b.open)
+    const closeY = toY(b.close)
+    const highY  = toY(b.high||b.close)
+    const lowY   = toY(b.low||b.close)
+    const bodyTop = Math.min(openY, closeY)
+    const bodyH   = Math.max(1, Math.abs(openY - closeY))
+
+    ctx.strokeStyle = color
+    ctx.fillStyle   = color
+
+    // Wick
+    ctx.lineWidth = 1
+    ctx.beginPath(); ctx.moveTo(x, highY); ctx.lineTo(x, lowY); ctx.stroke()
+    // Body
+    if (candleW > 1) {
+      ctx.fillRect(x - candleW/2, bodyTop, candleW, bodyH)
+    } else {
+      ctx.beginPath(); ctx.moveTo(x, openY); ctx.lineTo(x, closeY); ctx.stroke()
+    }
+  })
+
+  // X-axis labels (10 evenly spaced)
+  ctx.fillStyle = textColor
+  ctx.textAlign = 'center'
+  const step = Math.max(1, Math.floor(bars.length / 10))
+  for (let i=0; i<bars.length; i+=step) {
+    const b = bars[i]
+    const x = toX(i)
+    ctx.fillText(b.date.slice(5), x, H - 6)
+  }
+
+  // Current price line
+  if (d.price) {
+    const y = toY(d.price)
+    if (y >= PAD.top && y <= H-PAD.bottom) {
+      ctx.strokeStyle = d.chgPct>=0 ? '#0e9f6e' : '#d84040'
+      ctx.lineWidth = 0.8; ctx.setLineDash([3,3])
+      ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W-PAD.right, y); ctx.stroke()
+      ctx.setLineDash([])
+      ctx.fillStyle = d.chgPct>=0 ? '#0e9f6e' : '#d84040'
+      ctx.textAlign = 'right'
+      ctx.font = '9px -apple-system,sans-serif'
+      ctx.fillText(fP(d.price), W-4, y-2)
+    }
+  }
+}
+
+// ── Performance Table ─────────────────────────────────────────────────
+function renderPerfTable() {
+  const d = G.stockData; if (!d?.bars?.length) return
+  const bars = d.bars
+  const last = d.price || bars[bars.length-1].close
+
+  function getPeriodReturn(daysBack, label) {
+    const targetIdx = bars.length - 1 - daysBack
+    if (targetIdx < 0) return null
+    const base = bars[Math.max(0, targetIdx)]?.close
+    if (!base) return null
+    const ret = (last - base) / base * 100
+    return {label, ret, base, days: daysBack}
+  }
+
+  // YTD: từ đầu năm
+  const now = new Date()
+  const ytdStart = `${now.getFullYear()}-01-01`
+  const ytdBar = bars.find(b => b.date >= ytdStart) || bars[0]
+  const ytdRet = ytdBar ? (last - ytdBar.close) / ytdBar.close * 100 : null
+
+  const periods = [
+    {label:'1 Tháng',  ret: getPeriodReturn(21, '1T')?.ret},
+    {label:'3 Tháng',  ret: getPeriodReturn(63, '3T')?.ret},
+    {label:'6 Tháng',  ret: getPeriodReturn(126, '6T')?.ret},
+    {label:'Từ đầu năm', ret: ytdRet},
+    {label:'1 Năm',    ret: getPeriodReturn(252, '1N')?.ret},
+    {label:'3 Năm',    ret: getPeriodReturn(756, '3N')?.ret},
+    {label:'5 Năm',    ret: getPeriodReturn(1260, '5N')?.ret},
+    {label:'Từ đầu',   ret: bars.length>1 ? (last - bars[0].close) / bars[0].close * 100 : null},
+  ].filter(p => p.ret !== null && p.ret !== undefined)
+
+  // Investment simulation: 100 triệu
+  const invest = 100e6
+  const pc = el('perf-card')
+  if (periods.length === 0) { pc.style.display='none'; return }
+  pc.style.display = 'block'
+
+  el('perf-body').innerHTML = `
+    <div style="overflow-x:auto">
+    <table class="perf-table">
+      <thead>
+        <tr>
+          <th>Kỳ</th>
+          <th>% Thay đổi</th>
+          <th>100 triệu → ?</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${periods.map(p => {
+          const cls = p.ret >= 0 ? 'perf-up' : 'perf-dn'
+          const icon = p.ret >= 0 ? '▲' : '▼'
+          const sim = invest * (1 + p.ret/100)
+          const simFmt = sim >= 1e9 ? (sim/1e9).toFixed(2)+'&nbsp;tỷ' : (sim/1e6).toFixed(1)+'&nbsp;triệu'
+          return `<tr>
+            <td>${p.label}</td>
+            <td class="${cls}">${icon} ${Math.abs(p.ret).toFixed(2)}%</td>
+            <td class="${cls}" style="font-weight:500">${simFmt}</td>
+          </tr>`
+        }).join('')}
+      </tbody>
+    </table>
+    </div>
+    <div style="font-size:10px;color:var(--t3);margin-top:6px">
+      * Dựa trên dữ liệu vnstock CSV. Không tính cổ tức.
+    </div>`
 }
 
 // ── Metrics ──────────────────────────────────────────────────────────
@@ -1123,6 +1400,11 @@ function renderAnalysis() {
       Dữ liệu: ${d?.dataSource||'N/A'}. Phân tích: Groq AI. Chỉ mang tính tham khảo — không phải tư vấn tài chính.
     </p>`
 }
+
+// ── Resize handler for candlestick ───────────────────────────────────
+window.addEventListener('resize', () => {
+  if (G.chartType === 'candle' && G.stockData) renderCandlestick()
+})
 
 // ── Brief ─────────────────────────────────────────────────────────────
 async function loadBrief() {
