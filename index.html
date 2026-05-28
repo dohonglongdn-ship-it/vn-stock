@@ -10,896 +10,872 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#fff;--bg2:#f7f7f6;--bg3:#efefed;
-  --bd:rgba(0,0,0,0.08);--bd2:rgba(0,0,0,0.15);
+  --bd:rgba(0,0,0,0.08);--bd2:rgba(0,0,0,0.14);
   --t:#111;--t2:#555;--t3:#999;
   --up:#1D9E75;--dn:#D85A30;--neu:#888;
-  --blue:#1a73e8;--blue2:#1557b0;
-  --r:8px;--rl:12px;--rxl:16px;
-  --shadow:0 1px 3px rgba(0,0,0,0.08);
+  --blue:#1a73e8;--r:8px;--rl:12px;
 }
 @media(prefers-color-scheme:dark){:root{
   --bg:#1e1e1c;--bg2:#262624;--bg3:#303030;
-  --bd:rgba(255,255,255,0.08);--bd2:rgba(255,255,255,0.15);
+  --bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.13);
   --t:#f0efe8;--t2:#aaa;--t3:#666;
 }}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg2);color:var(--t);min-height:100dvh;-webkit-font-smoothing:antialiased}
-/* Screens */
 .screen{display:none}.screen.active{display:block}
-/* Setup */
-.setup-wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg2)}
-.setup-card{background:var(--bg);border:0.5px solid var(--bd);border-radius:var(--rxl);padding:32px 28px;max-width:440px;width:100%;box-shadow:var(--shadow)}
-.setup-logo{display:flex;align-items:center;gap:9px;font-size:19px;font-weight:700;margin-bottom:5px;color:var(--t)}
-.setup-tagline{font-size:12px;color:var(--t3);margin-bottom:20px}
-.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;border-radius:99px;font-weight:500}
-.badge-green{background:#e8f5e9;color:#2e7d32}
-.badge-blue{background:#e8f0fe;color:#1a73e8}
-.setup-section{margin-bottom:18px}
-.setup-section-title{font-size:12px;font-weight:600;color:var(--t2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.step-list{background:var(--bg2);border-radius:var(--r);padding:12px 14px}
-.step{display:flex;gap:10px;margin-bottom:8px;font-size:12px;color:var(--t2);line-height:1.5;align-items:flex-start}
+
+/* ── Setup ── */
+.setup-wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px}
+.setup-card{background:var(--bg);border:0.5px solid var(--bd2);border-radius:16px;padding:32px 26px;max-width:420px;width:100%}
+.setup-logo{font-size:19px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.setup-sub{font-size:12px;color:var(--t3);margin-bottom:18px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:99px;font-weight:600;margin-right:4px;margin-bottom:14px}
+.badge-g{background:#e8f5e9;color:#2e7d32}
+.badge-b{background:#e8f0fe;color:#1a73e8}
+.badge-gray{background:var(--bg2);color:var(--t2);border:0.5px solid var(--bd)}
+.steps{background:var(--bg2);border-radius:var(--r);padding:12px 14px;margin-bottom:16px}
+.step{display:flex;gap:9px;margin-bottom:7px;font-size:12px;color:var(--t2);line-height:1.5;align-items:flex-start}
 .step:last-child{margin-bottom:0}
-.step-n{min-width:18px;height:18px;border-radius:50%;background:var(--blue);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
-.setup-label{font-size:12px;font-weight:500;color:var(--t2);margin-bottom:6px;display:block}
-.setup-input{width:100%;font-size:13px;padding:9px 12px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);margin-bottom:10px;font-family:monospace;letter-spacing:.5px}
-.setup-input:focus{outline:none;border-color:var(--blue)}
-.setup-btn{width:100%;padding:11px;font-size:14px;font-weight:600;background:var(--blue);color:#fff;border:none;border-radius:var(--r);cursor:pointer;transition:background .15s}
-.setup-btn:hover{background:var(--blue2)}
-.setup-note{font-size:11px;color:var(--t3);margin-top:12px;line-height:1.5;text-align:center}
-/* App */
-.app{padding-bottom:64px;max-width:700px;margin:0 auto}
-.nav{background:var(--bg);border-bottom:0.5px solid var(--bd);padding:10px 16px;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:10}
-.nav-logo{font-size:15px;font-weight:700;display:flex;align-items:center;gap:5px;color:var(--t);white-space:nowrap}
+.sn{min-width:18px;height:18px;border-radius:50%;background:var(--blue);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.inp{width:100%;font-size:13px;padding:9px 12px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);margin-bottom:10px;font-family:monospace}
+.inp:focus{outline:none;border-color:var(--blue)}
+.btn-primary{width:100%;padding:11px;font-size:14px;font-weight:600;background:var(--blue);color:#fff;border:none;border-radius:var(--r);cursor:pointer}
+.setup-note{font-size:11px;color:var(--t3);margin-top:10px;line-height:1.5;text-align:center}
+
+/* ── App layout ── */
+.app{padding-bottom:66px;max-width:680px;margin:0 auto}
+.nav{background:var(--bg);border-bottom:0.5px solid var(--bd);padding:9px 15px;display:flex;align-items:center;gap:7px;position:sticky;top:0;z-index:10}
+.nav-logo{font-size:15px;font-weight:700;display:flex;align-items:center;gap:5px;white-space:nowrap}
 .search-form{display:flex;gap:5px;flex:1;max-width:220px;margin-left:4px}
-.search-form input{flex:1;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--t);text-transform:uppercase;font-weight:500;letter-spacing:.3px}
+.search-form input{flex:1;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--t);text-transform:uppercase;font-weight:500}
 .search-form input:focus{outline:none;border-color:var(--blue)}
 .search-form button{padding:0 10px;border:0.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--t2);cursor:pointer}
-.nav-end{margin-left:auto;display:flex;align-items:center;gap:6px}
-.nav-mode{font-size:9px;padding:2px 7px;border-radius:99px;font-weight:600}
-.icon-btn{background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;padding:2px 4px}
-/* Body */
-.body{padding:12px 16px}
-.sec-label{font-size:10px;color:var(--t3);margin:0 0 7px;letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.nav-end{margin-left:auto;display:flex;align-items:center;gap:5px}
+.icon-btn{background:none;border:none;cursor:pointer;font-size:18px;color:var(--t3);padding:2px 4px}
+.body{padding:12px 15px}
+
+/* ── Cards ── */
 .card{background:var(--bg);border:0.5px solid var(--bd);border-radius:var(--rl);padding:12px 14px;margin-bottom:10px}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .card-title{font-size:12px;font-weight:600;color:var(--t);display:flex;align-items:center;gap:5px}
-.met-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px;margin-bottom:10px}
+.sec-label{font-size:10px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin-bottom:6px}
+.met-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:7px;margin-bottom:10px}
 .met{background:var(--bg2);border-radius:var(--r);padding:9px 11px}
 .met-l{font-size:10px;color:var(--t2);margin-bottom:3px;font-weight:500}
 .met-v{font-size:14px;font-weight:600;color:var(--t)}
 .met-sub{font-size:10px;color:var(--t3);margin-top:1px}
+
+/* ── Pills / Tabs ── */
 .tab-row{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
-.pill{font-size:11px;padding:4px 12px;border-radius:99px;border:0.5px solid var(--bd2);color:var(--t2);background:transparent;cursor:pointer;font-weight:500;transition:all .15s}
-.pill:hover{border-color:var(--blue);color:var(--blue)}
+.pill{font-size:11px;padding:4px 11px;border-radius:99px;border:0.5px solid var(--bd2);color:var(--t2);background:transparent;cursor:pointer;font-weight:500;transition:all .12s}
+.pill:hover{color:var(--blue);border-color:var(--blue)}
 .pill.on{background:#1a1a3e;color:#93c5fd;border:none}
 .big-btn{width:100%;padding:11px;font-size:13px;cursor:pointer;font-weight:600;margin-top:6px;border-radius:var(--r);background:transparent;border:0.5px solid var(--bd2);color:var(--t);transition:all .15s}
 .big-btn:hover{background:var(--blue);color:#fff;border-color:transparent}
-/* Nav bottom */
+.big-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── Bottom nav ── */
 .bnav{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:0.5px solid var(--bd);display:flex;justify-content:space-around;padding:6px 0 8px;z-index:20}
-.bni{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:600;color:var(--t3);cursor:pointer;padding:4px 14px;background:none;border:none;letter-spacing:.02em}
+.bni{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;font-weight:600;color:var(--t3);cursor:pointer;padding:4px 12px;background:none;border:none;letter-spacing:.02em}
 .bni.on{color:var(--blue)}
-/* Colors */
+
+/* ── Colors ── */
 .up{color:var(--up)}.dn{color:var(--dn)}.neu{color:var(--neu)}
-/* Watchlist */
+
+/* ── Watchlist ── */
 .wl-row{display:flex;align-items:center;padding:8px 0;border-top:0.5px solid var(--bd);gap:8px}
 .wl-row:first-child{border-top:none}
-.wl-code{font-size:13px;font-weight:700;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;width:46px;text-align:left;letter-spacing:.3px}
+.wl-code{font-size:13px;font-weight:700;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;width:46px;text-align:left}
 .wl-info{flex:1;min-width:0}
 .wl-name{font-size:10px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wl-sector{font-size:9px;color:var(--t3);margin-top:1px}
+.wl-sector{font-size:9px;color:var(--t3)}
 .wl-spark{width:52px;flex-shrink:0}
-.wl-price{font-size:12px;font-weight:600;width:76px;text-align:right;color:var(--t)}
-.wl-chg{font-size:11px;font-weight:600;width:58px;text-align:right}
-.wl-del{background:none;border:none;color:var(--t3);cursor:pointer;padding:0 2px;opacity:.5}
+.wl-price{font-size:12px;font-weight:600;width:72px;text-align:right;color:var(--t)}
+.wl-chg{font-size:11px;font-weight:600;width:56px;text-align:right}
+.wl-del{background:none;border:none;color:var(--t3);cursor:pointer;padding:0 2px;opacity:.4}
 .wl-del:hover{opacity:1;color:var(--dn)}
-/* Chart */
+
+/* ── Chart ── */
 .chart-wrap{position:relative;height:220px}
-/* Analysis */
+
+/* ── Signal bars ── */
+.sig-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.sig-lbl{font-size:11px;color:var(--t2);width:110px;flex-shrink:0}
+.sig-track{flex:1;height:4px;background:var(--bg2);border-radius:99px;overflow:hidden}
+.sig-fill{height:4px;border-radius:99px}
+.sig-val{font-size:11px;font-weight:600;width:80px;text-align:right}
+
+/* ── Analysis ── */
+.verdict-wrap{display:flex;align-items:center;gap:12px}
 .verdict-ring{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
 .conf-track{height:5px;background:var(--bg2);border-radius:99px;overflow:hidden;margin-top:5px}
-.conf-fill{height:5px;border-radius:99px;transition:width .5s ease}
-.target-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
-.risk-item{display:flex;gap:8px;margin-bottom:5px;align-items:flex-start}
+.conf-fill{height:5px;border-radius:99px}
+.tgt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.risk-row{display:flex;gap:8px;margin-bottom:5px;align-items:flex-start}
 .risk-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px}
-.src-item{display:flex;gap:8px;padding:6px 0;border-top:0.5px solid var(--bd)}
-.src-item:first-child{border-top:none}
-.src-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
-.signal-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
-.signal-label{font-size:11px;color:var(--t2);width:110px;flex-shrink:0}
-.signal-bar{flex:1;height:4px;background:var(--bg2);border-radius:99px;overflow:hidden}
-.signal-fill{height:4px;border-radius:99px}
-.signal-val{font-size:11px;font-weight:600;width:70px;text-align:right}
-/* Brief */
+.news-row{display:flex;gap:8px;padding:6px 0;border-top:0.5px solid var(--bd)}
+.news-row:first-child{border-top:none}
+.news-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+
+/* ── Brief ── */
 .brief-g2{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px}
 .brief-g3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
-.brief-item{background:var(--bg2);border-radius:6px;padding:6px 9px}
-.brief-item-c{background:var(--bg2);border-radius:6px;padding:5px 8px;text-align:center}
-.sector-tag{font-size:10px;padding:2px 8px;border-radius:99px;background:#e8f5e9;color:#2e7d32;font-weight:500}
-@media(prefers-color-scheme:dark){.sector-tag{background:#1b3a21;color:#4caf50}}
-/* Misc */
-.loading-wrap{text-align:center;padding:36px 20px;color:var(--t2)}
-.loading-wrap .spin{display:inline-block;font-size:24px;animation:spin 1s linear infinite;margin-bottom:10px}
+.bi{background:var(--bg2);border-radius:6px;padding:6px 9px}
+.bi-c{background:var(--bg2);border-radius:6px;padding:5px 8px;text-align:center}
+.stag{font-size:10px;padding:2px 8px;border-radius:99px;background:#e8f5e9;color:#2e7d32;font-weight:500}
+
+/* ── States ── */
+.loading-wrap{text-align:center;padding:36px 20px;color:var(--t2);font-size:13px}
+.spin{display:inline-block;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.error-box{padding:12px 14px;font-size:12px;color:var(--dn);background:var(--bg);border:0.5px solid rgba(216,90,48,.3);border-radius:var(--rl);margin-bottom:10px;line-height:1.5}
+.err-box{padding:11px 13px;font-size:12px;color:var(--dn);background:var(--bg);border:0.5px solid rgba(216,90,48,.25);border-radius:var(--rl);margin-bottom:10px;line-height:1.5}
 .disclaimer{font-size:10px;color:var(--t3);line-height:1.5;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--bd)}
+.data-tag{font-size:10px;color:var(--t3);margin-top:5px;font-style:italic}
 code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font-family:monospace}
-.data-source{font-size:10px;color:var(--t3);margin-top:6px;font-style:italic}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════
-     SETUP SCREEN
-═══════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════
+     SETUP
+════════════════════════════════════ -->
 <div class="screen active" id="s-setup">
-<div class="setup-wrap">
-<div class="setup-card">
-  <div class="setup-logo">
-    <i class="ti ti-chart-candle" style="font-size:22px;color:var(--blue)"></i>
-    VN Stock Intelligence
+<div class="setup-wrap"><div class="setup-card">
+  <div class="setup-logo"><i class="ti ti-chart-candle" style="font-size:22px;color:var(--blue)"></i>VN Stock Intelligence</div>
+  <div class="setup-sub">Phân tích chứng khoán Việt Nam bằng AI</div>
+  <div>
+    <span class="badge badge-g"><i class="ti ti-database" style="font-size:10px"></i>TCBS API — Dữ liệu thực</span>
+    <span class="badge badge-b"><i class="ti ti-brain" style="font-size:10px"></i>Gemini AI — Phân tích</span>
+    <span class="badge badge-gray">HOSE · HNX · UPCOM</span>
   </div>
-  <div class="setup-tagline">Phân tích chứng khoán Việt Nam bằng AI — miễn phí</div>
-  <div style="display:flex;gap:6px;margin-bottom:20px">
-    <span class="badge badge-green"><i class="ti ti-currency-dollar" style="font-size:11px"></i>Miễn phí</span>
-    <span class="badge badge-blue"><i class="ti ti-brain" style="font-size:11px"></i>Gemini AI</span>
-    <span class="badge" style="background:var(--bg2);color:var(--t2)"><i class="ti ti-chart-bar" style="font-size:11px"></i>HOSE · HNX · UPCOM</span>
+  <div class="steps">
+    <div class="step"><span class="sn">1</span><span>Vào <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--blue);font-weight:500">aistudio.google.com/apikey</a> (đăng nhập Gmail)</span></div>
+    <div class="step"><span class="sn">2</span><span>Nhấn <strong>"Create API key"</strong> → <strong>"Create API key in new project"</strong></span></div>
+    <div class="step"><span class="sn">3</span><span>Copy key dạng <code>AIzaSy...</code> dán vào ô bên dưới</span></div>
   </div>
-
-  <div class="setup-section">
-    <div class="setup-section-title"><i class="ti ti-key" style="font-size:13px"></i>Lấy API key miễn phí</div>
-    <div class="step-list">
-      <div class="step"><span class="step-n">1</span><span>Vào <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--blue);font-weight:500">aistudio.google.com/apikey</a> (đăng nhập Gmail)</span></div>
-      <div class="step"><span class="step-n">2</span><span>Nhấn <strong>"Create API key"</strong> → <strong>"Create API key in new project"</strong></span></div>
-      <div class="step"><span class="step-n">3</span><span>Copy key dạng <code>AIzaSy...</code> dán vào ô bên dưới</span></div>
-    </div>
-  </div>
-
-  <label class="setup-label">Google Gemini API Key</label>
-  <input class="setup-input" id="key-inp" type="password" placeholder="AIzaSy..." autocomplete="off" onkeydown="if(event.key==='Enter')startApp()"/>
-  <button class="setup-btn" onclick="startApp()">
-    <i class="ti ti-rocket" style="font-size:13px;vertical-align:-1px;margin-right:5px"></i>Bắt đầu sử dụng
-  </button>
-  <p class="setup-note">
-    <i class="ti ti-shield-check" style="font-size:11px;vertical-align:-1px;margin-right:3px"></i>
-    Key lưu trong trình duyệt, không gửi đến đâu ngoài Google. Hoàn toàn miễn phí cho dùng cá nhân.
-  </p>
-</div>
-</div>
+  <label style="font-size:12px;font-weight:500;color:var(--t2);margin-bottom:6px;display:block">Gemini API Key</label>
+  <input class="inp" id="key-inp" type="password" placeholder="AIzaSy..." autocomplete="off" onkeydown="if(event.key==='Enter')boot()"/>
+  <button class="btn-primary" onclick="boot()"><i class="ti ti-rocket" style="font-size:13px;vertical-align:-1px;margin-right:5px"></i>Bắt đầu</button>
+  <p class="setup-note"><i class="ti ti-shield-check" style="font-size:11px;vertical-align:-1px;margin-right:3px"></i>Key lưu trên trình duyệt, chỉ gửi đến Google. Dữ liệu giá từ TCBS — không tốn quota AI.</p>
+</div></div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     APP SCREEN
-═══════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════
+     APP
+════════════════════════════════════ -->
 <div class="screen" id="s-app">
 <div class="app">
 
-  <!-- Nav -->
   <div class="nav">
     <span class="nav-logo"><i class="ti ti-chart-candle" style="font-size:17px;color:var(--blue)"></i>VN Stock</span>
-    <form class="search-form" onsubmit="handleSearch(event)">
-      <input id="search-inp" placeholder="Nhập mã (VCB...)" autocomplete="off"/>
-      <button type="submit" aria-label="Tìm kiếm"><i class="ti ti-search"></i></button>
+    <form class="search-form" onsubmit="doSearch(event)">
+      <input id="q" placeholder="Mã CK (VCB...)" autocomplete="off"/>
+      <button type="submit" aria-label="Tìm"><i class="ti ti-search"></i></button>
     </form>
     <div class="nav-end">
-      <span class="nav-mode badge" id="mode-badge"></span>
-      <button class="icon-btn" onclick="showSettings()" title="Cài đặt"><i class="ti ti-settings"></i></button>
+      <span id="src-badge" class="badge badge-g" style="margin:0;font-size:9px">TCBS</span>
+      <button class="icon-btn" onclick="resetKey()" title="Cài đặt"><i class="ti ti-settings"></i></button>
     </div>
   </div>
 
   <div class="body">
 
-    <!-- ── DASHBOARD ────────────────────────── -->
-    <div class="screen active" id="v-dashboard">
+    <!-- Dashboard -->
+    <div class="screen active" id="v-dash">
       <div class="card" style="border-color:var(--blue);border-width:1.5px">
-        <div class="card-header" style="margin-bottom:0">
+        <div style="display:flex;justify-content:space-between;align-items:center">
           <span class="card-title"><i class="ti ti-satellite" style="font-size:13px"></i>Bản tin thị trường</span>
           <button class="pill" id="brief-btn" onclick="loadBrief()">Cập nhật ↗</button>
         </div>
         <div id="brief-body"></div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <p class="sec-label" style="margin:0">Danh mục theo dõi</p>
-        <button class="pill" onclick="loadWlData()" id="wl-refresh-btn" style="font-size:10px;padding:3px 9px">
+        <button class="pill" id="wl-refresh" onclick="loadWlPrices()" style="font-size:10px;padding:3px 9px">
           <i class="ti ti-refresh" style="font-size:10px;margin-right:2px"></i>Cập nhật giá
         </button>
       </div>
-      <div class="card" id="wl-wrap">
-        <div style="font-size:13px;color:var(--t2)">Tìm mã cổ phiếu để thêm vào danh mục.</div>
-      </div>
+      <div class="card" id="wl-body"><div style="font-size:13px;color:var(--t2)">Tìm mã để thêm vào danh mục theo dõi.</div></div>
     </div>
 
-    <!-- ── STOCK ─────────────────────────────── -->
+    <!-- Stock -->
     <div class="screen" id="v-stock">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px">
         <div>
           <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap">
-            <span style="font-size:22px;font-weight:700;letter-spacing:-.3px" id="stk-ticker"></span>
+            <span style="font-size:22px;font-weight:700" id="stk-code"></span>
             <span style="font-size:17px;font-weight:600" id="stk-price"></span>
             <span style="font-size:13px;font-weight:600" id="stk-chg"></span>
           </div>
-          <div style="font-size:12px;color:var(--t2);margin-top:2px" id="stk-company"></div>
+          <div style="font-size:12px;color:var(--t2);margin-top:2px" id="stk-name"></div>
           <div style="font-size:11px;color:var(--t3);margin-top:2px;display:flex;gap:8px" id="stk-meta"></div>
         </div>
-        <button class="pill" style="flex-shrink:0;margin-top:4px" onclick="toggleWatchlist()">
-          <i class="ti ti-star" style="font-size:11px;margin-right:2px" id="wl-icon"></i><span id="wl-label">Theo dõi</span>
+        <button class="pill" id="wl-btn" onclick="toggleWl()" style="flex-shrink:0;margin-top:4px">
+          <i class="ti ti-star" style="font-size:11px;margin-right:2px" id="wl-icon"></i><span id="wl-txt">Theo dõi</span>
         </button>
       </div>
       <div class="tab-row" id="period-tabs"></div>
-      <div id="stk-loading" class="loading-wrap" style="display:none">
-        <div class="spin"><i class="ti ti-refresh"></i></div>
-        <div id="stk-loading-msg" style="font-size:13px"></div>
-        <div style="font-size:11px;color:var(--t3);margin-top:4px">Đang tìm dữ liệu qua Google Search...</div>
-      </div>
-      <div id="stk-content" style="display:none">
-        <div class="card"><div class="chart-wrap"><canvas id="price-chart" role="img" aria-label="Biểu đồ giá"></canvas></div></div>
-        <div class="tab-row" id="indicator-tabs"></div>
-        <div class="met-grid" id="stk-metrics"></div>
-        <div class="card" id="risk-metrics-card" style="display:none">
-          <div class="card-title" style="margin-bottom:10px"><i class="ti ti-activity" style="font-size:13px"></i>Risk metrics</div>
-          <div id="risk-metrics-body"></div>
+      <div id="stk-loading" style="display:none" class="loading-wrap"><i class="ti ti-refresh spin" style="font-size:22px;margin-bottom:8px;display:block"></i>Đang tải dữ liệu từ TCBS...</div>
+      <div id="stk-err" class="err-box" style="display:none"></div>
+      <div id="stk-body" style="display:none">
+        <div class="card">
+          <div class="tab-row" id="ind-tabs" style="margin-bottom:8px"></div>
+          <div class="chart-wrap"><canvas id="chart" role="img" aria-label="Biểu đồ giá"></canvas></div>
         </div>
-        <button class="big-btn" onclick="goAnalysis()">
-          <i class="ti ti-brain" style="font-size:13px;vertical-align:-2px;margin-right:5px"></i>
-          Phân tích AI đa chiều ↗
+        <div class="met-grid" id="stk-mets"></div>
+        <div class="card" id="ta-card">
+          <div class="card-title" style="margin-bottom:10px"><i class="ti ti-activity" style="font-size:13px"></i>Chỉ số kỹ thuật</div>
+          <div id="ta-body"></div>
+        </div>
+        <button class="big-btn" id="ai-btn" onclick="goAnalysis()">
+          <i class="ti ti-brain" style="font-size:13px;vertical-align:-2px;margin-right:5px"></i>Phân tích AI & khuyến nghị ↗
         </button>
       </div>
-      <div id="stk-error" class="error-box" style="display:none"></div>
-      <div class="data-source" id="stk-source"></div>
     </div>
 
-    <!-- ── ANALYSIS ──────────────────────────── -->
+    <!-- Analysis -->
     <div class="screen" id="v-analysis">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-        <button onclick="showView('stock')" style="font-size:12px;color:var(--t2);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:3px">
+        <button onclick="showV('stock')" style="font-size:12px;color:var(--t2);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:3px">
           <i class="ti ti-arrow-left" style="font-size:14px"></i><span id="an-back"></span>
         </button>
-        <span style="font-size:13px;font-weight:600">Phân tích AI đa chiều</span>
-        <button class="pill" style="margin-left:auto" onclick="runAnalysis()">
-          <i class="ti ti-refresh" style="font-size:11px;margin-right:2px"></i>Làm mới
-        </button>
+        <span style="font-size:13px;font-weight:600">Phân tích AI</span>
+        <button class="pill" style="margin-left:auto" id="an-refresh" onclick="runAnalysis()"><i class="ti ti-refresh" style="font-size:11px;margin-right:2px"></i>Làm mới</button>
       </div>
-      <div id="an-loading" class="loading-wrap" style="display:none">
-        <div class="spin"><i class="ti ti-brain"></i></div>
-        <div id="an-loading-msg" style="font-size:13px;margin-bottom:4px"></div>
-        <div style="font-size:10px;color:var(--t3)">Technical · Fundamental · News · Macro</div>
+      <div id="an-loading" style="display:none" class="loading-wrap">
+        <i class="ti ti-brain spin" style="font-size:22px;margin-bottom:8px;display:block"></i>
+        <div id="an-msg" style="margin-bottom:4px"></div>
+        <div style="font-size:10px;color:var(--t3)">Tìm kiếm tin tức · Phân tích kỹ thuật · Cơ bản · Vĩ mô</div>
       </div>
-      <div id="an-error" class="error-box" style="display:none"></div>
-      <div id="an-content"></div>
+      <div id="an-err" class="err-box" style="display:none"></div>
+      <div id="an-body"></div>
     </div>
 
-  </div><!-- /body -->
+  </div>
 
-  <!-- Bottom nav -->
-  <nav class="bnav" aria-label="Điều hướng">
-    <button class="bni on" id="bn-dashboard" onclick="showView('dashboard')"><i class="ti ti-home" style="font-size:21px"></i>Tổng quan</button>
-    <button class="bni" id="bn-stock" onclick="G.ticker&&showView('stock')"><i class="ti ti-chart-bar" style="font-size:21px"></i>Cổ phiếu</button>
+  <nav class="bnav">
+    <button class="bni on" id="bn-dash" onclick="showV('dash')"><i class="ti ti-home" style="font-size:21px"></i>Tổng quan</button>
+    <button class="bni" id="bn-stock" onclick="G.ticker&&showV('stock')"><i class="ti ti-chart-bar" style="font-size:21px"></i>Cổ phiếu</button>
     <button class="bni" id="bn-analysis" onclick="goAnalysis()"><i class="ti ti-brain" style="font-size:21px"></i>Phân tích</button>
-    <button class="bni" id="bn-brief" onclick="loadBrief();showView('dashboard')"><i class="ti ti-satellite" style="font-size:21px"></i>Bản tin</button>
+    <button class="bni" id="bn-brief" onclick="loadBrief();showV('dash')"><i class="ti ti-satellite" style="font-size:21px"></i>Bản tin</button>
   </nav>
-
-</div><!-- /app -->
-</div><!-- /s-app -->
+</div>
+</div>
 
 <script>
 'use strict'
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  CONFIG
-//  Để tích hợp vnstock hoặc backend khác: chỉnh sửa phần này
-// ═══════════════════════════════════════════════════════════════════════════
-const CFG = {
-  version: '2.0.0',
-
-  // DATA MODE
-  // 'gemini'  → Gemini API tự search (hoạt động từ file://)
-  // 'backend' → Python backend với vnstock (cần backendUrl)
-  // 'auto'    → tự chọn: backend nếu có, gemini nếu không
-  mode: 'auto',
-
-  // Khi tích hợp vnstock backend, điền URL vào đây:
-  // Ví dụ: 'https://vn-stock-backend.railway.app'
-  backendUrl: null,
-
-  // Gemini models (thử lần lượt từ đầu)
-  geminiModels: [
-    'gemini-2.0-flash',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-flash',
-    'gemini-1.5-flash-8b',
-  ],
-
-  // Backend API endpoints (khi dùng chế độ backend)
-  // Tương thích với vnstock FastAPI wrapper
-  endpoints: {
-    quote:     '/api/quote',        // GET ?ticker=VCB
-    history:   '/api/history',      // GET ?ticker=VCB&period=3mo
-    company:   '/api/company',      // GET ?ticker=VCB
-    analysis:  '/api/analysis',     // POST {ticker, data}
-    brief:     '/api/brief',        // GET
-    screener:  '/api/screener',     // GET (vnstock screener)
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  GLOBAL STATE
-// ═══════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════
 const G = {
-  apiKey: localStorage.getItem('vnstk_key') || '',
+  key:    localStorage.getItem('vnstk_key') || '',
   ticker: '',
-  stockData: null,
-  analysis: null,
-  watchlist: [],
-  wlData: {},
+  bars:   null,   // OHLCV array from TCBS
+  info:   null,   // Company info from TCBS
+  ta:     null,   // Calculated technical indicators
+  an:     null,   // AI analysis result
   period: 3,
-  indicator: 'ma',
-  activeGeminiModel: null,
-  chartInst: null,
-  dataService: null,
+  ind:    'ma',
+  chart:  null,
+  wl:     [],
+  wlData: {},
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  TECHNICAL INDICATORS (local calculation)
-//  Dùng khi backend trả về raw OHLCV data
-// ═══════════════════════════════════════════════════════════════════════════
-const TA = {
-  ma:  (a,n) => a.map((_,i) => i<n-1 ? null : a.slice(i-n+1,i+1).reduce((s,v)=>s+v,0)/n),
-  ema: (a,n) => {
-    const k=2/(n+1), r=a.map(()=>null); let e=a[0]; r[0]=e
-    for(let i=1;i<a.length;i++){e=a[i]*k+e*(1-k);if(i>=n-1)r[i]=e}
-    return r
-  },
-  rsi: (a,n=14) => {
-    if(a.length<n+1)return a.map(()=>null)
-    const r=a.map(()=>null),d=a.map((v,i)=>i?v-a[i-1]:0)
-    let ag=0,al=0
-    for(let i=1;i<=n;i++){const c=d[i];c>0?ag+=c:al-=c}
-    ag/=n;al/=n;r[n]=al?100-100/(1+ag/al):100
-    for(let i=n+1;i<a.length;i++){
-      const c=d[i];ag=(ag*(n-1)+Math.max(c,0))/n;al=(al*(n-1)+Math.max(-c,0))/n
-      r[i]=al?100-100/(1+ag/al):100
-    }
-    return r
-  },
-  macd: a => {
-    const e12=TA.ema(a,12),e26=TA.ema(a,26)
-    const m=a.map((_,i)=>e12[i]!=null&&e26[i]!=null?e12[i]-e26[i]:null)
-    const s=TA.ema(m.map(v=>v??0),9)
-    return{macd:m,signal:s,hist:m.map((v,i)=>v!=null&&s[i]!=null?v-s[i]:null)}
-  },
-  bb: (a,n=20) => {
-    const ma=TA.ma(a,n)
-    return a.map((_,i)=>{
-      if(ma[i]==null)return{u:null,l:null}
-      const sl=a.slice(Math.max(0,i-n+1),i+1),std=Math.sqrt(sl.reduce((s,v)=>s+Math.pow(v-ma[i],2),0)/sl.length)
-      return{u:ma[i]+2*std,l:ma[i]-2*std}
-    })
-  },
-  volatility: (a,n=20) => {
-    const ret=a.map((v,i)=>i?Math.log(v/a[i-1]):null).filter(Boolean).slice(-n)
-    const mean=ret.reduce((s,v)=>s+v,0)/ret.length
-    return Math.sqrt(ret.reduce((s,v)=>s+Math.pow(v-mean,2),0)/ret.length)*Math.sqrt(252)*100
-  },
-  maxDrawdown: a => {
-    let peak=a[0],dd=0
-    for(const v of a){if(v>peak)peak=v;const d=(peak-v)/peak*100;if(d>dd)dd=d}
-    return dd
-  },
+try { G.wl = JSON.parse(localStorage.getItem('vnstk_wl') || '["VCB","HPG","VNM"]') } catch {}
+
+if (G.key) boot()
+
+// ══════════════════════════════════════════════════════════
+//  BOOT & AUTH
+// ══════════════════════════════════════════════════════════
+function boot() {
+  const v = (document.getElementById('key-inp')?.value.trim()) || G.key
+  if (!v.startsWith('AIza')) { alert('API key không hợp lệ. Cần bắt đầu bằng AIza...'); return }
+  G.key = v
+  localStorage.setItem('vnstk_key', v)
+  sc('s-app')
+  renderWl()
+  // Không tự load giá - tiết kiệm quota, user bấm "Cập nhật giá" khi cần
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  DATA SERVICE — Abstraction layer
-//  Phase 1: GeminiDataService (Gemini search)
-//  Phase 2: BackendDataService (vnstock Python backend)
-// ═══════════════════════════════════════════════════════════════════════════
-
-class GeminiDataService {
-  constructor(apiKey) { this.key = apiKey }
-
-  async call(prompt, sys, search=true) {
-    // Tránh gọi API quá nhanh - rate limit 15 req/phút
-    if(this._lastCall && Date.now() - this._lastCall < 1000) {
-      await new Promise(r => setTimeout(r, 1000))
-    }
-    const models = G.activeGeminiModel
-      ? [G.activeGeminiModel, ...CFG.geminiModels.filter(m=>m!==G.activeGeminiModel)]
-      : CFG.geminiModels
-    const errors=[]
-    for(const model of models){
-      try{
-        const body={
-          systemInstruction:{parts:[{text:sys}]},
-          contents:[{role:'user',parts:[{text:prompt}]}],
-          generationConfig:{maxOutputTokens:2000,temperature:0.15}
-        }
-        if(search) body.tools=[model.startsWith('gemini-2')?{google_search:{}}:{google_search_retrieval:{}}]
-        const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.key}`,
-          {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-        const d=await r.json()
-        if(!r.ok){errors.push(`[${model}] ${d.error?.message||r.status}`);continue}
-        G.activeGeminiModel=model
-        return d.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||''
-      }catch(e){errors.push(`[${model}] ${e.message}`)}
-    }
-    throw new Error(errors[0]||'Không kết nối Gemini')
-  }
-
-  json(txt){ return JSON.parse(txt.replace(/```json|```/g,'').trim()) }
-
-  async getStockData(ticker) {
-    const sys=`Trả về JSON THUẦN TÚY hợp lệ. Dùng Google Search tìm dữ liệu thực từ cafef.vn, vietstock.vn, ssi.com.vn.`
-    const txt=await this.call(`Tìm dữ liệu cổ phiếu ${ticker} trên sàn chứng khoán Việt Nam.
-Dùng Google Search tìm từ cafef.vn hoặc vietstock.vn. Trả về JSON:
-{"ticker":"${ticker}","companyName":"Tên đầy đủ","shortName":"Tên ngắn","sector":"Ngành","exchange":"HOSE","price":87500,"change":1250,"changePct":1.45,"volume":4200000,"pe":12.4,"pb":2.1,"roe":20.1,"eps":7056,"marketCapTrillion":332.5,"high52w":95000,"low52w":72000,"avgVolume":3800000,"priceHistory":[{"date":"DD/MM","close":85000},{"date":"DD/MM","close":86000}],"dataSource":"Nguồn dữ liệu","updatedAt":"HH:MM DD/MM/YYYY"}
-Ghi chú: priceHistory gồm khoảng 30 ngày gần nhất, từ cũ đến mới.`,sys)
-    return this.json(txt)
-  }
-
-  async getAnalysis(ticker, stockData) {
-    const sys=`Bạn là chuyên gia phân tích chứng khoán Việt Nam chuyên nghiệp. Trả về JSON THUẦN TÚY.`
-    const ctx=stockData?`Dữ liệu: Giá ${(stockData.price||0).toLocaleString('vi-VN')}đ (${stockData.changePct>0?'+':''}${stockData.changePct}%), P/E ${stockData.pe}, ROE ${stockData.roe}%, Vốn hóa ${stockData.marketCapTrillion} nghìn tỷ`:''
-    const txt=await this.call(`Phân tích toàn diện ${ticker} (${stockData?.companyName||''}). ${ctx}
-
-Search web: (1) tin tức ${ticker} mới nhất, (2) tin ngành ${stockData?.sector||''}, (3) yếu tố quốc tế liên quan, (4) tâm lý thị trường và VN-Index hiện tại.
-
-JSON:
-{"technicalSignals":{"trend":"Tăng","maSignal":"Giá trên MA20","rsiLevel":"Trung tính (55)","macdSignal":"Bullish","keySupport":84500,"keyResistance":90000,"summary":"Tóm tắt kỹ thuật 2-3 câu"},"fundamentalSignals":{"valuation":"Hợp lý","peVsAvg":14.2,"dividendYield":3.2,"revenueGrowth":"Tăng trưởng doanh thu","summary":"Tóm tắt cơ bản 2-3 câu"},"verdict":"MUA","confidence":72,"targetPrice":96000,"stopLoss":82000,"riskScore":4,"shortTerm":{"outlook":"Tích cực","summary":"Phân tích 1-5 phiên","support":84500,"resistance":90000},"mediumTerm":{"outlook":"Tích cực","summary":"Phân tích 1-3 tháng","targetPrice":96000},"longTerm":{"outlook":"Tích cực","summary":"Phân tích 6-12 tháng","thesis":"Luận điểm đầu tư"},"risks":[{"text":"Rủi ro","level":"high"}],"macro":"Vĩ mô trong nước và quốc tế","sectorOutlook":"Nhận định ngành 3-6 tháng","news":[{"title":"Tiêu đề","source":"Nguồn","timeVN":"HH:MM DD/MM","sentiment":"positive","impact":"Tác động ngắn"}]}`,sys)
-    return this.json(txt)
-  }
-
-  async getBrief() {
-    const now=new Date().toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})
-    const sys=`Trả về JSON THUẦN TÚY.`
-    const txt=await this.call(`${now} giờ VN. Search tin tài chính toàn cầu mới nhất.
-JSON:{"wallStreet":{"sp500":"","nasdaq":"","dow":"","summary":""},"asia":{"nikkei":"","hangseng":"","shanghai":"","summary":""},"oil":{"brent":"$XX"},"gold":"$XXXX","usdvnd":"25,XXX","vnImpact":"Tác động lên VN-Index 2-3 câu","watchSectors":["Ngành 1"],"events":["Sự kiện"]}`,sys)
-    return this.json(txt)
-  }
+function resetKey() {
+  if (!confirm('Đổi API key?')) return
+  localStorage.removeItem('vnstk_key'); G.key = ''; sc('s-setup')
 }
 
-// ─────────────────────────────────────────────────────────
-//  BackendDataService — Phase 2 (tích hợp vnstock)
-//  Khi có Python backend, uncomment class này
-//  và set CFG.backendUrl + CFG.mode = 'backend'
-// ─────────────────────────────────────────────────────────
-/*
-class BackendDataService {
-  constructor(baseUrl){ this.base=baseUrl }
-  async get(path,params={}){
-    const url=new URL(this.base+path)
-    Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v))
-    const r=await fetch(url); if(!r.ok)throw new Error(await r.text())
-    return r.json()
-  }
-  async post(path,body){
-    const r=await fetch(this.base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-    if(!r.ok)throw new Error(await r.text()); return r.json()
-  }
-  // Tương thích với vnstock API endpoints
-  async getStockData(ticker){ return this.get(CFG.endpoints.quote,{ticker}) }
-  async getAnalysis(ticker,data){ return this.post(CFG.endpoints.analysis,{ticker,...data}) }
-  async getBrief(){ return this.get(CFG.endpoints.brief) }
-  // Tính năng nâng cao từ vnstock
-  async getHistory(ticker,period){ return this.get(CFG.endpoints.history,{ticker,period}) }
-  async getScreener(filters){ return this.get(CFG.endpoints.screener,filters) }
-}
-*/
-
-function createDataService(){
-  if(CFG.mode==='backend'&&CFG.backendUrl){ /* return new BackendDataService(CFG.backendUrl) */ }
-  if(CFG.mode==='auto'&&CFG.backendUrl&&location.protocol==='https:'){ /* return new BackendDataService(CFG.backendUrl) */ }
-  return new GeminiDataService(G.apiKey)
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  HELPERS
-// ═══════════════════════════════════════════════════════════════════════════
-const fmtP   = v => v!=null?Math.round(v).toLocaleString('vi-VN'):'—'
-const fmtPct = v => v!=null?`${v>=0?'+':''}${v.toFixed(2)}%`:'—'
-const UP='#1D9E75',DN='#D85A30',NEU='#888780'
-
-function showScreen(id){
-  document.querySelectorAll('body>.screen').forEach(s=>s.classList.remove('active'))
+// ══════════════════════════════════════════════════════════
+//  SCREENS
+// ══════════════════════════════════════════════════════════
+function sc(id) {
+  document.querySelectorAll('body>.screen').forEach(s => s.classList.remove('active'))
   document.getElementById(id).classList.add('active')
 }
-function showView(id){
-  document.querySelectorAll('.body>.screen').forEach(s=>s.classList.remove('active'))
+function showV(id) {
+  document.querySelectorAll('.body>.screen').forEach(s => s.classList.remove('active'))
   document.getElementById('v-'+id).classList.add('active')
-  document.querySelectorAll('.bni').forEach(b=>b.classList.remove('on'))
-  const b=document.getElementById('bn-'+id);if(b)b.classList.add('on')
+  document.querySelectorAll('.bni').forEach(b => b.classList.remove('on'))
+  const b = document.getElementById('bn-'+id); if (b) b.classList.add('on')
+}
+const $ = id => document.getElementById(id)
+
+// ══════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════
+const fmtP   = v => v != null ? Math.round(v).toLocaleString('vi-VN') : '—'
+const fmtPct = v => v != null ? `${v>=0?'+':''}${v.toFixed(2)}%` : '—'
+const UP = '#1D9E75', DN = '#D85A30', NEU = '#888780'
+
+function sparkSVG(data, chg) {
+  if (!data || data.length < 2) return ''
+  const min = Math.min(...data), max = Math.max(...data), rng = max - min || 1
+  const pts = data.map((v,i) => `${(i/(data.length-1))*48+1},${17-((v-min)/rng)*13}`).join(' ')
+  return `<svg width="50" height="20" viewBox="0 0 50 20"><polyline points="${pts}" fill="none" stroke="${chg>=0?UP:DN}" stroke-width="1.5"/></svg>`
 }
 
-function sparkSVG(data,chg){
-  if(!data||data.length<2)return''
-  const min=Math.min(...data),max=Math.max(...data),rng=max-min||1
-  const pts=data.map((v,i)=>`${(i/(data.length-1))*50+1},${18-((v-min)/rng)*14}`).join(' ')
-  return`<svg width="52" height="20" viewBox="0 0 52 20"><polyline points="${pts}" fill="none" stroke="${chg>=0?UP:DN}" stroke-width="1.5"/></svg>`
+// ══════════════════════════════════════════════════════════
+//  TCBS DATA LAYER — Dữ liệu giá (không tốn quota AI)
+// ══════════════════════════════════════════════════════════
+const TCBS = 'https://apipubaws.tcbs.com.vn'
+
+async function fetchBars(ticker, months) {
+  const to   = Math.floor(Date.now() / 1000)
+  const from = Math.floor(to - months * 30 * 24 * 3600)
+  const res  = await fetch(`${TCBS}/stock-insight/v1/stock/bars-long-term?ticker=${ticker}&type=stock&resolution=D&from=${from}&to=${to}`)
+  if (!res.ok) throw new Error(`TCBS ${res.status}`)
+  const d = await res.json()
+  return (d.data || [])
+    .sort((a, b) => new Date(a.tradingDate) - new Date(b.tradingDate))
+    .filter(b => b.close > 0)
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  SETUP & AUTH
-// ═══════════════════════════════════════════════════════════════════════════
-function startApp(){
-  const v=document.getElementById('key-inp').value.trim()
-  if(!v.startsWith('AIza')){alert('Key không hợp lệ. Phải bắt đầu bằng AIza...');return}
-  G.apiKey=v; localStorage.setItem('vnstk_key',v)
-  initApp()
-}
-function showSettings(){
-  if(!confirm('Đổi API key?'))return
-  localStorage.removeItem('vnstk_key');G.apiKey='';G.activeGeminiModel=null
-  showScreen('s-setup')
-}
-function initApp(){
-  G.dataService=createDataService()
-  document.getElementById('mode-badge').textContent=CFG.backendUrl?'Backend':'Gemini AI'
-  document.getElementById('mode-badge').className=`nav-mode badge ${CFG.backendUrl?'badge-blue':'badge-green'}`
-  try{G.watchlist=JSON.parse(localStorage.getItem('vnstk_wl')||'["VCB","HPG","VNM"]')}catch{G.watchlist=['VCB','HPG','VNM']}
-  showScreen('s-app')
-  renderWatchlist()
-  // Không tự load giá watchlist khi khởi động - tiết kiệm quota
-  // loadWlData() — chỉ load khi user bấm nút refresh
-}
-if(G.apiKey) initApp()
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  SEARCH
-// ═══════════════════════════════════════════════════════════════════════════
-function handleSearch(e){
-  e.preventDefault()
-  const t=document.getElementById('search-inp').value.trim().toUpperCase()
-  if(t){document.getElementById('search-inp').value='';loadStock(t)}
+async function fetchInfo(ticker) {
+  const res = await fetch(`${TCBS}/tcanalysis/v1/ticker/${ticker}/overview`)
+  if (!res.ok) throw new Error(`TCBS info ${res.status}`)
+  return res.json()
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  WATCHLIST
-// ═══════════════════════════════════════════════════════════════════════════
-function saveWl(){localStorage.setItem('vnstk_wl',JSON.stringify(G.watchlist))}
-
-function toggleWatchlist(){
-  if(!G.ticker)return
-  const in_=G.watchlist.includes(G.ticker)
-  if(in_){G.watchlist=G.watchlist.filter(x=>x!==G.ticker)}
-  else{G.watchlist.push(G.ticker);if(G.stockData)G.wlData[G.ticker]={...(G.wlData[G.ticker]||{}),name:G.stockData.shortName||G.stockData.companyName,sector:G.stockData.sector}}
-  saveWl();renderWlButton();renderWatchlist()
-}
-
-function renderWlButton(){
-  const in_=G.watchlist.includes(G.ticker)
-  document.getElementById('wl-icon').className=`ti ${in_?'ti-star-filled':'ti-star'}`
-  document.getElementById('wl-label').textContent=in_?'Đang theo dõi':'Theo dõi'
-}
-
-async function loadWlData(){
-  const btn = document.getElementById('wl-refresh-btn')
-  if(btn){ btn.disabled=true; btn.innerHTML='<i class="ti ti-loader" style="font-size:10px;margin-right:2px;animation:spin 1s linear infinite"></i>Đang tải...' }
-  for(const t of G.watchlist){
-    try{
-      const d=await G.dataService.getStockData(t)
-      G.wlData[t]={price:d.price,chg:d.changePct,spark:d.priceHistory?.map(p=>p.close)||[],name:d.shortName||d.companyName,sector:d.sector}
-    }catch(e){
-      console.warn('Lỗi load',t,e.message)
+// ══════════════════════════════════════════════════════════
+//  TECHNICAL INDICATORS — Tính local, không cần API
+// ══════════════════════════════════════════════════════════
+const TA = {
+  ma: (a, n) => a.map((_, i) => i < n-1 ? null : a.slice(i-n+1, i+1).reduce((s,v)=>s+v,0)/n),
+  ema(a, n) {
+    const k = 2/(n+1), r = a.map(()=>null); let e = a[0]; r[0] = e
+    for (let i=1; i<a.length; i++) { e=a[i]*k+e*(1-k); if(i>=n-1) r[i]=e }
+    return r
+  },
+  rsi(a, n=14) {
+    if (a.length < n+1) return a.map(()=>null)
+    const r = a.map(()=>null), d = a.map((v,i)=>i?v-a[i-1]:0)
+    let ag=0, al=0
+    for (let i=1; i<=n; i++) { const c=d[i]; c>0?ag+=c:al-=c }
+    ag/=n; al/=n; r[n] = al?100-100/(1+ag/al):100
+    for (let i=n+1; i<a.length; i++) {
+      const c=d[i]; ag=(ag*(n-1)+Math.max(c,0))/n; al=(al*(n-1)+Math.max(-c,0))/n
+      r[i] = al?100-100/(1+ag/al):100
     }
-    renderWatchlist()
-    // Delay 2s giữa mỗi mã để tránh rate limit
-    await new Promise(r=>setTimeout(r,2000))
+    return r
+  },
+  macd(a) {
+    const e12=this.ema(a,12), e26=this.ema(a,26)
+    const m = a.map((_,i)=>e12[i]!=null&&e26[i]!=null?e12[i]-e26[i]:null)
+    const s = this.ema(m.map(v=>v??0), 9)
+    return { macd:m, signal:s, hist:m.map((v,i)=>v!=null&&s[i]!=null?v-s[i]:null) }
+  },
+  bb(a, n=20) {
+    const ma = this.ma(a, n)
+    return a.map((_,i) => {
+      if (ma[i]==null) return {u:null,l:null}
+      const sl = a.slice(Math.max(0,i-n+1),i+1)
+      const std = Math.sqrt(sl.reduce((s,v)=>s+Math.pow(v-ma[i],2),0)/sl.length)
+      return { u: ma[i]+2*std, l: ma[i]-2*std }
+    })
+  },
+  volatility(a, n=20) {
+    const ret = a.map((v,i)=>i?Math.log(v/a[i-1]):null).filter(Boolean).slice(-n)
+    const mean = ret.reduce((s,v)=>s+v,0)/ret.length
+    return Math.sqrt(ret.reduce((s,v)=>s+Math.pow(v-mean,2),0)/ret.length)*Math.sqrt(252)*100
+  },
+  maxDrawdown(a) {
+    let peak=a[0], dd=0
+    for (const v of a) { if(v>peak)peak=v; const d=(peak-v)/peak*100; if(d>dd)dd=d }
+    return dd
+  },
+  calc(closes) {
+    const rsiArr = this.rsi(closes)
+    const {macd, signal, hist} = this.macd(closes)
+    const ma20 = this.ma(closes, 20)
+    const ma50 = this.ma(closes, 50)
+    const last = i => arr => arr[arr.length-1+i] ?? null
+    const L = arr => arr[arr.length-1] ?? null
+    const lastRSI = L(rsiArr)
+    const lastMACD = L(macd)
+    const lastSig  = L(signal)
+    const lastMA20 = L(ma20)
+    const lastMA50 = L(ma50)
+    const lastClose = closes[closes.length-1]
+    return {
+      rsi: lastRSI, ma20: lastMA20, ma50: lastMA50,
+      macd: lastMACD, signal: lastSig,
+      macdBull: lastMACD != null && lastSig != null && lastMACD > lastSig,
+      aboveMA20: lastClose > (lastMA20||0),
+      aboveMA50: lastClose > (lastMA50||0),
+      vol: closes.length >= 20 ? this.volatility(closes) : null,
+      dd:  this.maxDrawdown(closes),
+      rsiArr, macd, signal, hist, ma20, ma50,
+      bb: this.bb(closes),
+    }
   }
-  if(btn){ btn.disabled=false; btn.innerHTML='<i class="ti ti-refresh" style="font-size:10px;margin-right:2px"></i>Cập nhật giá' }
 }
 
-function renderWatchlist(){
-  const el=document.getElementById('wl-wrap')
-  if(!G.watchlist.length){el.innerHTML='<div style="font-size:13px;color:var(--t2)">Chưa có mã. Tìm kiếm để thêm.</div>';return}
-  el.innerHTML=G.watchlist.map((t,i)=>{
-    const d=G.wlData[t]
-    return`<div class="wl-row" style="${i?'':'border-top:none'}">
+// ══════════════════════════════════════════════════════════
+//  GEMINI AI — Chỉ gọi khi user YÊU CẦU (tiết kiệm quota)
+// ══════════════════════════════════════════════════════════
+const MODELS = ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-2.0-flash-exp']
+let _activeModel = null, _lastCall = 0
+
+async function callGemini(prompt, sys, withSearch=true) {
+  // Delay nếu gọi quá nhanh (tránh rate limit)
+  const elapsed = Date.now() - _lastCall
+  if (elapsed < 2000) await new Promise(r => setTimeout(r, 2000 - elapsed))
+
+  const models = _activeModel
+    ? [_activeModel, ...MODELS.filter(m=>m!==_activeModel)]
+    : MODELS
+
+  const errs = []
+  for (const model of models) {
+    const attempts = withSearch
+      ? [{ tools:[{google_search:{}}] }, { tools:[] }]
+      : [{ tools:[] }]
+
+    for (const att of attempts) {
+      try {
+        const body = {
+          systemInstruction: { parts:[{text:sys}] },
+          contents: [{ role:'user', parts:[{text:prompt}] }],
+          generationConfig: { maxOutputTokens:2000, temperature:0.15 }
+        }
+        if (att.tools.length) body.tools = att.tools
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${G.key}`
+        const r = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+        const d = await r.json()
+
+        if (r.status === 429) throw new Error('Hết quota. Thử lại sau vài phút hoặc tạo API key mới.')
+        if (r.status === 404) { errs.push(`${model}: không hỗ trợ`); break } // skip model
+        if (!r.ok) { errs.push(`${model}: ${d.error?.message||r.status}`); continue }
+
+        _activeModel = model
+        _lastCall = Date.now()
+        return d.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || ''
+      } catch(e) {
+        if (e.message.includes('quota') || e.message.includes('Hết quota')) throw e
+        errs.push(`${model}: ${e.message}`)
+      }
+    }
+  }
+  throw new Error(errs[0] || 'Không kết nối Gemini API')
+}
+
+function parseJSON(txt) {
+  return JSON.parse(txt.replace(/```json|```/g,'').trim())
+}
+
+// ══════════════════════════════════════════════════════════
+//  SEARCH
+// ══════════════════════════════════════════════════════════
+function doSearch(e) {
+  e.preventDefault()
+  const t = $('q').value.trim().toUpperCase()
+  if (!t) return
+  $('q').value = ''
+  loadStock(t)
+}
+
+// ══════════════════════════════════════════════════════════
+//  WATCHLIST
+// ══════════════════════════════════════════════════════════
+function saveWl() { localStorage.setItem('vnstk_wl', JSON.stringify(G.wl)) }
+
+function toggleWl() {
+  if (!G.ticker) return
+  if (G.wl.includes(G.ticker)) {
+    G.wl = G.wl.filter(x=>x!==G.ticker)
+  } else {
+    G.wl.push(G.ticker)
+    if (G.info) G.wlData[G.ticker] = {
+      ...(G.wlData[G.ticker]||{}),
+      name: G.info.shortName || G.info.companyName || '',
+      sector: G.info.industryName || ''
+    }
+  }
+  saveWl(); renderWl(); updateWlBtn()
+}
+
+function updateWlBtn() {
+  const in_ = G.wl.includes(G.ticker)
+  $('wl-icon').className = `ti ${in_?'ti-star-filled':'ti-star'}`
+  $('wl-txt').textContent = in_ ? 'Đang theo dõi' : 'Theo dõi'
+}
+
+async function loadWlPrices() {
+  const btn = $('wl-refresh')
+  btn.disabled = true
+  btn.innerHTML = '<i class="ti ti-loader spin" style="font-size:10px;margin-right:2px"></i>Đang tải...'
+
+  for (const t of G.wl) {
+    try {
+      const [bars, info] = await Promise.all([
+        fetchBars(t, 1).catch(()=>null),
+        G.wlData[t]?.name ? Promise.resolve(null) : fetchInfo(t).catch(()=>null)
+      ])
+      if (!G.wlData[t]) G.wlData[t] = {}
+      if (bars && bars.length > 1) {
+        const last = bars[bars.length-1], prev = bars[bars.length-2]
+        G.wlData[t].price = last.close
+        G.wlData[t].chg   = (last.close - prev.close) / prev.close * 100
+        G.wlData[t].spark = bars.slice(-10).map(b=>b.close)
+      }
+      if (info) {
+        G.wlData[t].name   = info.shortName || info.companyName || ''
+        G.wlData[t].sector = info.industryName || ''
+      }
+    } catch(e) { console.warn(t, e.message) }
+    renderWl()
+    await new Promise(r=>setTimeout(r, 500)) // tránh spam TCBS
+  }
+
+  btn.disabled = false
+  btn.innerHTML = '<i class="ti ti-refresh" style="font-size:10px;margin-right:2px"></i>Cập nhật giá'
+}
+
+function renderWl() {
+  const el = $('wl-body')
+  if (!G.wl.length) { el.innerHTML='<div style="font-size:13px;color:var(--t2)">Chưa có mã. Tìm mã để thêm.</div>'; return }
+  el.innerHTML = G.wl.map((t,i) => {
+    const d = G.wlData[t]
+    return `<div class="wl-row" style="${i?'':'border-top:none'}">
       <button class="wl-code" onclick="loadStock('${t}')">${t}</button>
       <div class="wl-info">
         <div class="wl-name">${d?.name||''}</div>
         <div class="wl-sector">${d?.sector||''}</div>
       </div>
-      <div class="wl-spark">${d?.spark?.length>1?sparkSVG(d.spark,d.chg):''}</div>
-      <span class="wl-price">${d?.price?fmtP(d.price):'—'}</span>
+      <div class="wl-spark">${d?.spark ? sparkSVG(d.spark, d.chg) : ''}</div>
+      <span class="wl-price">${d?.price ? fmtP(d.price) : '—'}</span>
       <span class="wl-chg" style="color:${d?.chg!=null?(d.chg>=0?UP:DN):'var(--t2)'}">${d?.chg!=null?fmtPct(d.chg):'—'}</span>
-      <button class="wl-del" onclick="removeWl('${t}')" aria-label="Xóa"><i class="ti ti-x" style="font-size:12px"></i></button>
+      <button class="wl-del" onclick="G.wl=G.wl.filter(x=>x!=='${t}');saveWl();renderWl()" aria-label="Xóa"><i class="ti ti-x" style="font-size:12px"></i></button>
     </div>`
   }).join('')
 }
 
-function removeWl(t){G.watchlist=G.watchlist.filter(x=>x!==t);saveWl();renderWatchlist()}
+// ══════════════════════════════════════════════════════════
+//  STOCK — Dữ liệu từ TCBS (0 quota AI)
+// ══════════════════════════════════════════════════════════
+async function loadStock(ticker) {
+  G.ticker = ticker; G.bars = null; G.info = null; G.ta = null; G.an = null
+  $('stk-code').textContent = ticker
+  $('stk-price').textContent = ''
+  $('stk-chg').textContent = ''
+  $('stk-name').textContent = ''
+  $('stk-meta').textContent = ''
+  $('an-back').textContent = ticker
+  showV('stock')
+  renderPeriodTabs(); renderIndTabs()
+  updateWlBtn()
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  STOCK DETAIL
-// ═══════════════════════════════════════════════════════════════════════════
-async function loadStock(t){
-  G.ticker=t; G.analysis=null
-  document.getElementById('an-back').textContent=t
-  document.getElementById('stk-ticker').textContent=t
-  document.getElementById('stk-price').textContent=''
-  document.getElementById('stk-chg').textContent=''
-  document.getElementById('stk-company').textContent=''
-  document.getElementById('stk-meta').textContent=''
-  document.getElementById('stk-source').textContent=''
-  showView('stock')
-  renderPeriodTabs(); renderIndicatorTabs()
-  renderWlButton()
+  $('stk-loading').style.display = 'block'
+  $('stk-body').style.display   = 'none'
+  $('stk-err').style.display    = 'none'
 
-  el('stk-loading').style.display='block'
-  el('stk-loading-msg').textContent=`Đang tìm dữ liệu ${t}...`
-  el('stk-content').style.display='none'
-  el('stk-error').style.display='none'
+  try {
+    const [bars, info] = await Promise.all([
+      fetchBars(ticker, G.period),
+      fetchInfo(ticker)
+    ])
+    G.bars = bars; G.info = info
+    $('stk-loading').style.display = 'none'
 
-  try{
-    G.stockData=await G.dataService.getStockData(t)
-    const d=G.stockData
-    el('stk-loading').style.display='none'
-
-    if(!d||!d.price){
-      el('stk-error').textContent=`Không tìm thấy dữ liệu cho "${t}". Kiểm tra lại mã cổ phiếu.`
-      el('stk-error').style.display='block'; return
+    if (!bars.length) {
+      $('stk-err').textContent = `Không tìm thấy dữ liệu cho "${ticker}". Kiểm tra lại mã cổ phiếu.`
+      $('stk-err').style.display = 'block'; return
     }
 
     // Header
-    el('stk-price').textContent=fmtP(d.price)
-    const chgEl=el('stk-chg')
-    chgEl.textContent=`${d.change>=0?'▲':'▼'} ${fmtP(Math.abs(d.change||0))} (${fmtPct(d.changePct)})`
-    chgEl.style.color=d.changePct>=0?UP:DN
-    el('stk-company').textContent=d.companyName||d.shortName||''
-    el('stk-meta').innerHTML=[
-      d.exchange?`<span>${d.exchange}</span>`:null,
-      d.sector?`<span>· ${d.sector}</span>`:null,
-      d.volume?`<span>· KL: ${(d.volume/1e6).toFixed(1)}M</span>`:null,
-    ].filter(Boolean).join('')
-    if(d.dataSource) el('stk-source').textContent=`Nguồn: ${d.dataSource} · ${d.updatedAt||''}`
+    const last = bars[bars.length-1], prev = bars[bars.length-2]
+    const chg  = prev ? last.close - prev.close : 0
+    const pct  = prev ? chg/prev.close*100 : 0
+    $('stk-price').textContent = fmtP(last.close)
+    const ce = $('stk-chg')
+    ce.textContent = `${chg>=0?'▲':'▼'} ${fmtP(Math.abs(chg))} (${fmtPct(pct)})`
+    ce.style.color = chg>=0?UP:DN
 
-    // Cache watchlist info
-    if(!G.wlData[t])G.wlData[t]={}
-    G.wlData[t].name=d.shortName||d.companyName
-    G.wlData[t].sector=d.sector
+    if (info) {
+      $('stk-name').textContent = info.companyName || info.shortName || ''
+      $('stk-meta').innerHTML = [
+        info.exchange ? `<span>${info.exchange}</span>` : null,
+        info.industryName ? `<span>· ${info.industryName}</span>` : null,
+        `<span>· KL: ${(last.volume/1e6).toFixed(1)}M</span>`
+      ].filter(Boolean).join('')
+    }
 
-    renderChart(); renderMetrics(); renderRiskMetrics()
-    el('stk-content').style.display='block'
-  }catch(e){
-    el('stk-loading').style.display='none'
-    el('stk-error').textContent=`Lỗi: ${e.message}`
-    el('stk-error').style.display='block'
+    // Cache watchlist
+    if (!G.wlData[ticker]) G.wlData[ticker] = {}
+    G.wlData[ticker].name   = info?.shortName || info?.companyName || ''
+    G.wlData[ticker].sector = info?.industryName || ''
+
+    // Calculate TA
+    const closes = bars.map(b=>b.close)
+    G.ta = TA.calc(closes)
+
+    renderChart(); renderMets(); renderTA()
+    $('stk-body').style.display = 'block'
+
+  } catch(e) {
+    $('stk-loading').style.display = 'none'
+    $('stk-err').textContent = `Lỗi: ${e.message}`
+    $('stk-err').style.display = 'block'
   }
 }
 
-function el(id){return document.getElementById(id)}
-
-function renderPeriodTabs(){
-  el('period-tabs').innerHTML=[{l:'1T',v:1},{l:'3T',v:3},{l:'6T',v:6},{l:'1Y',v:12}]
-    .map(({l,v})=>`<button class="pill${G.period===v?' on':''}" onclick="G.period=${v};loadStock(G.ticker)">${l}</button>`).join('')
+function renderPeriodTabs() {
+  $('period-tabs').innerHTML = [{l:'1T',v:1},{l:'3T',v:3},{l:'6T',v:6},{l:'1Y',v:12}]
+    .map(({l,v}) => `<button class="pill${G.period===v?' on':''}" onclick="G.period=${v};loadStock(G.ticker)">${l}</button>`).join('')
 }
-function renderIndicatorTabs(){
-  el('indicator-tabs').innerHTML=[{l:'MA20/50',v:'ma'},{l:'Bollinger',v:'bb'},{l:'RSI',v:'rsi'},{l:'MACD',v:'macd'}]
-    .map(({l,v})=>`<button class="pill${G.indicator===v?' on':''}" onclick="G.indicator='${v}';renderIndicatorTabs();renderChart()">${l}</button>`).join('')
+function renderIndTabs() {
+  $('ind-tabs').innerHTML = [{l:'MA20/50',v:'ma'},{l:'Bollinger',v:'bb'},{l:'RSI',v:'rsi'},{l:'MACD',v:'macd'}]
+    .map(({l,v}) => `<button class="pill${G.ind===v?' on':''}" onclick="G.ind='${v}';renderIndTabs();renderChart()">${l}</button>`).join('')
 }
 
-function renderChart(){
-  const d=G.stockData
-  if(!d?.priceHistory?.length)return
-  if(G.chartInst){G.chartInst.destroy();G.chartInst=null}
+function renderChart() {
+  if (!G.bars) return
+  if (G.chart) { G.chart.destroy(); G.chart=null }
 
-  const history=d.priceHistory
-  const labels=history.map(p=>p.date)
-  const closes=history.map(p=>p.close)
-  const volumes=history.map(p=>p.volume||0)
-  const ma20=TA.ma(closes,20),ma50=TA.ma(closes,50)
-  const bb=TA.bb(closes)
-  const{macd,signal,hist}=TA.macd(closes)
-  const rsi=TA.rsi(closes)
+  const closes  = G.bars.map(b=>b.close)
+  const volumes = G.bars.map(b=>b.volume)
+  const labels  = G.bars.map(b=>new Date(b.tradingDate).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}))
+  const ta = G.ta || TA.calc(closes)
+  let ds = []
 
-  let ds=[]
-  if(G.indicator==='rsi'){
-    ds=[
-      {label:'RSI',data:rsi,borderColor:'#7F77DD',borderWidth:1.5,fill:false,tension:.2,pointRadius:0},
+  if (G.ind === 'rsi') {
+    ds = [
+      {label:'RSI',data:ta.rsiArr,borderColor:'#7F77DD',borderWidth:1.5,fill:false,tension:.2,pointRadius:0},
       {label:'70',data:labels.map(()=>70),borderColor:'rgba(216,90,48,.4)',borderWidth:.8,fill:false,pointRadius:0,borderDash:[3,3]},
       {label:'30',data:labels.map(()=>30),borderColor:'rgba(29,158,117,.4)',borderWidth:.8,fill:false,pointRadius:0,borderDash:[3,3]},
     ]
-  } else if(G.indicator==='macd'){
-    ds=[
-      {label:'MACD',data:macd,borderColor:UP,borderWidth:1.2,fill:false,tension:.2,pointRadius:0,yAxisID:'y'},
-      {label:'Signal',data:signal,borderColor:'#EF9F27',borderWidth:1,fill:false,tension:.2,pointRadius:0,borderDash:[3,2],yAxisID:'y'},
-      {label:'Hist',data:hist,backgroundColor:hist.map(v=>v>=0?'rgba(29,158,117,.5)':'rgba(216,90,48,.5)'),type:'bar',yAxisID:'y'},
+  } else if (G.ind === 'macd') {
+    ds = [
+      {label:'MACD',data:ta.macd,borderColor:UP,borderWidth:1.2,fill:false,tension:.2,pointRadius:0,yAxisID:'y'},
+      {label:'Signal',data:ta.signal,borderColor:'#EF9F27',borderWidth:1,fill:false,tension:.2,pointRadius:0,borderDash:[3,2],yAxisID:'y'},
+      {label:'Hist',data:ta.hist,backgroundColor:ta.hist.map(v=>v>=0?'rgba(29,158,117,.5)':'rgba(216,90,48,.5)'),type:'bar',yAxisID:'y'},
     ]
   } else {
-    ds=[
+    ds = [
       {label:'Giá',data:closes,borderColor:'#1a73e8',borderWidth:1.5,fill:false,tension:.2,pointRadius:0,yAxisID:'y'},
-      {label:'MA20',data:ma20,borderColor:'#378ADD',borderWidth:1,fill:false,tension:.2,pointRadius:0,borderDash:[4,2],yAxisID:'y'},
-      {label:'MA50',data:ma50,borderColor:'#EF9F27',borderWidth:1,fill:false,tension:.2,pointRadius:0,borderDash:[4,2],yAxisID:'y'},
+      {label:'MA20',data:ta.ma20,borderColor:'#378ADD',borderWidth:1,fill:false,tension:.2,pointRadius:0,borderDash:[4,2],yAxisID:'y'},
+      {label:'MA50',data:ta.ma50,borderColor:'#EF9F27',borderWidth:1,fill:false,tension:.2,pointRadius:0,borderDash:[4,2],yAxisID:'y'},
     ]
-    if(G.indicator==='bb'){
-      ds.push({label:'BB+',data:bb.map(b=>b.u),borderColor:'rgba(212,83,126,.6)',borderWidth:.8,fill:false,tension:.2,pointRadius:0,yAxisID:'y'})
-      ds.push({label:'BB-',data:bb.map(b=>b.l),borderColor:'rgba(212,83,126,.6)',borderWidth:.8,fill:false,tension:.2,pointRadius:0,yAxisID:'y'})
+    if (G.ind === 'bb') {
+      ds.push({label:'BB+',data:ta.bb.map(b=>b.u),borderColor:'rgba(212,83,126,.6)',borderWidth:.8,fill:false,tension:.2,pointRadius:0,yAxisID:'y'})
+      ds.push({label:'BB-',data:ta.bb.map(b=>b.l),borderColor:'rgba(212,83,126,.6)',borderWidth:.8,fill:false,tension:.2,pointRadius:0,yAxisID:'y'})
     }
-    if(volumes.some(v=>v>0)){
-      ds.push({label:'KL',data:volumes,backgroundColor:closes.map((c,i)=>i>0&&c>=closes[i-1]?'rgba(29,158,117,.35)':'rgba(216,90,48,.35)'),type:'bar',yAxisID:'y2'})
-    }
+    const maxVol = Math.max(...volumes)
+    ds.push({label:'KL',data:volumes,backgroundColor:closes.map((c,i)=>i>0&&c>=closes[i-1]?'rgba(29,158,117,.35)':'rgba(216,90,48,.35)'),type:'bar',yAxisID:'y2'})
   }
 
-  const yOpts=G.indicator==='rsi'?{min:0,max:100}:{}
-  const maxVol=volumes.length?Math.max(...volumes):1
-
-  G.chartInst=new Chart(el('price-chart'),{
-    type:'line',data:{labels,datasets:ds},
-    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+  G.chart = new Chart($('chart'), {
+    type:'line', data:{labels,datasets:ds},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
       plugins:{legend:{display:false}},
       scales:{
         x:{ticks:{maxTicksLimit:8,font:{size:9},color:NEU},grid:{color:'rgba(136,135,128,.1)'}},
-        y:{...yOpts,position:'right',ticks:{font:{size:9},color:NEU,callback:v=>G.indicator==='rsi'?v:v>=1000?(v/1000).toFixed(0)+'k':v},grid:{color:'rgba(136,135,128,.1)'}},
-        ...(G.indicator!=='rsi'&&G.indicator!=='macd'&&maxVol>0?{y2:{position:'left',max:maxVol*5,ticks:{display:false},grid:{display:false}}}:{})
+        y:{...(G.ind==='rsi'?{min:0,max:100}:{}),position:'right',ticks:{font:{size:9},color:NEU,callback:v=>G.ind==='rsi'?v:v>=1000?(v/1000).toFixed(0)+'k':v},grid:{color:'rgba(136,135,128,.1)'}},
+        ...(G.ind!=='rsi'&&G.ind!=='macd'?{y2:{position:'left',max:Math.max(...volumes)*5,ticks:{display:false},grid:{display:false}}}:{})
       }
     }
   })
 }
 
-function renderMetrics(){
-  const d=G.stockData; if(!d)return
-  el('stk-metrics').innerHTML=[
-    {l:'P/E',v:d.pe?.toFixed(1)??'—',s:''},
-    {l:'P/B',v:d.pb?.toFixed(2)??'—',s:''},
-    {l:'ROE',v:d.roe?d.roe.toFixed(1)+'%':'—',s:''},
-    {l:'EPS',v:d.eps?fmtP(Math.round(d.eps)):'—',s:'đ'},
-    {l:'52w High',v:fmtP(d.high52w),s:''},
-    {l:'52w Low',v:fmtP(d.low52w),s:''},
-    {l:'Vốn hóa',v:d.marketCapTrillion?(d.marketCapTrillion.toFixed(1)+' nghìn tỷ'):'—',s:''},
-    {l:'Thanh khoản',v:d.volume?(d.volume/1e6).toFixed(1)+'M':'—',s:''},
-  ].map(({l,v})=>`<div class="met"><div class="met-l">${l}</div><div class="met-v">${v}</div></div>`).join('')
+function renderMets() {
+  const d = G.info
+  if (!d) { $('stk-mets').innerHTML=''; return }
+  $('stk-mets').innerHTML = [
+    {l:'P/E',  v: d.pe?.toFixed(1)??'—'},
+    {l:'P/B',  v: d.pb?.toFixed(2)??'—'},
+    {l:'ROE',  v: d.roe  ? d.roe.toFixed(1)+'%':'—'},
+    {l:'EPS',  v: d.eps  ? fmtP(Math.round(d.eps)):'—'},
+    {l:'52w Cao', v: G.bars ? fmtP(Math.max(...G.bars.map(b=>b.high||b.close))) : '—'},
+    {l:'52w Thấp',v: G.bars ? fmtP(Math.min(...G.bars.map(b=>b.low||b.close)))  : '—'},
+    {l:'Vốn hóa', v: d.marketCap ? (d.marketCap/1e12).toFixed(1)+' nghìn tỷ':'—'},
+    {l:'KL TB',   v: G.bars && G.bars.length ? (G.bars.slice(-20).reduce((s,b)=>s+(b.volume||0),0)/Math.min(G.bars.length,20)/1e6).toFixed(1)+'M':'—'},
+  ].map(({l,v}) => `<div class="met"><div class="met-l">${l}</div><div class="met-v">${v}</div></div>`).join('')
 }
 
-function renderRiskMetrics(){
-  const d=G.stockData
-  if(!d?.priceHistory?.length){el('risk-metrics-card').style.display='none';return}
-  const closes=d.priceHistory.map(p=>p.close)
-  if(closes.length<10){el('risk-metrics-card').style.display='none';return}
-  const vol=TA.volatility(closes).toFixed(1)
-  const dd=TA.maxDrawdown(closes).toFixed(1)
-  const rsiArr=TA.rsi(closes)
-  const lastRSI=rsiArr[rsiArr.length-1]?.toFixed(0)??'—'
-  const {macd,signal}=TA.macd(closes)
-  const lastMACD=macd[macd.length-1],lastSig=signal[signal.length-1]
-  const macdBull=lastMACD&&lastSig&&lastMACD>lastSig
-
-  el('risk-metrics-card').style.display='block'
-  el('risk-metrics-body').innerHTML=[
-    {l:'Biến động hàng năm',v:`${vol}%`,c:parseFloat(vol)>30?DN:parseFloat(vol)>15?'#EF9F27':UP,w:Math.min(parseFloat(vol)/60*100,100)},
-    {l:'Max Drawdown',v:`-${dd}%`,c:parseFloat(dd)>20?DN:parseFloat(dd)>10?'#EF9F27':UP,w:Math.min(parseFloat(dd)/40*100,100)},
-    {l:'RSI (14)',v:lastRSI,c:parseInt(lastRSI)>70?DN:parseInt(lastRSI)<30?UP:NEU,w:parseInt(lastRSI)||50},
-    {l:'MACD Signal',v:macdBull?'Bullish':'Bearish',c:macdBull?UP:DN,w:macdBull?70:30},
-  ].map(({l,v,c,w})=>`<div class="signal-row">
-    <span class="signal-label">${l}</span>
-    <div class="signal-bar"><div class="signal-fill" style="width:${w}%;background:${c}"></div></div>
-    <span class="signal-val" style="color:${c}">${v}</span>
-  </div>`).join('')
+function renderTA() {
+  const t = G.ta; if (!t) return
+  const rsiColor = t.rsi>70?DN:t.rsi<30?UP:NEU
+  const rsiLabel = t.rsi>70?'Quá mua':t.rsi<30?'Quá bán':'Trung tính'
+  const signals = [
+    {l:'RSI (14)',       v:`${t.rsi?.toFixed(0)??'—'} — ${rsiLabel}`,      c:rsiColor,  w:t.rsi??50},
+    {l:'MACD vs Signal', v:t.macdBull?'Bullish':'Bearish',                  c:t.macdBull?UP:DN, w:t.macdBull?70:30},
+    {l:'Giá vs MA20',    v:t.aboveMA20?'Trên — Tăng':'Dưới — Giảm',        c:t.aboveMA20?UP:DN, w:t.aboveMA20?72:30},
+    {l:'Giá vs MA50',    v:t.aboveMA50?'Trên — Tăng':'Dưới — Giảm',        c:t.aboveMA50?UP:DN, w:t.aboveMA50?68:32},
+    {l:'Biến động/năm',  v:t.vol!=null?t.vol.toFixed(1)+'%':'—',            c:t.vol>30?DN:t.vol>15?'#EF9F27':UP, w:t.vol?Math.min(t.vol/60*100,100):50},
+    {l:'Max Drawdown',   v:t.dd!=null?'-'+t.dd.toFixed(1)+'%':'—',          c:t.dd>20?DN:t.dd>10?'#EF9F27':UP, w:t.dd?Math.min(t.dd/40*100,100):10},
+  ]
+  $('ta-body').innerHTML = signals.map(({l,v,c,w}) => `
+    <div class="sig-row">
+      <span class="sig-lbl">${l}</span>
+      <div class="sig-track"><div class="sig-fill" style="width:${w}%;background:${c}"></div></div>
+      <span class="sig-val" style="color:${c}">${v}</span>
+    </div>`).join('')
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  ANALYSIS
-// ═══════════════════════════════════════════════════════════════════════════
-function goAnalysis(){
-  if(!G.ticker||!G.stockData)return
-  showView('analysis')
-  if(!G.analysis)runAnalysis()
+// ══════════════════════════════════════════════════════════
+//  AI ANALYSIS — 1 Gemini call, chỉ khi user bấm nút
+// ══════════════════════════════════════════════════════════
+function goAnalysis() {
+  if (!G.ticker || !G.bars) return
+  showV('analysis')
+  if (!G.an) runAnalysis()
 }
 
-async function runAnalysis(){
-  el('an-content').innerHTML=''
-  el('an-error').style.display='none'
-  el('an-loading').style.display='block'
-  el('an-loading-msg').textContent='Đang kết nối các agent phân tích...'
+async function runAnalysis() {
+  $('an-body').innerHTML = ''
+  $('an-err').style.display = 'none'
+  $('an-loading').style.display = 'block'
+  $('an-refresh').disabled = true
+  $('an-msg').textContent = 'Đang tìm kiếm tin tức và phân tích...'
 
-  try{
-    el('an-loading-msg').textContent='Technical · Fundamental · News · Macro đang chạy...'
-    G.analysis=await G.dataService.getAnalysis(G.ticker,G.stockData)
+  const ta = G.ta, d = G.info
+  const closes = G.bars.map(b=>b.close)
+  const last = closes[closes.length-1]
+  const prev = closes[closes.length-2]
+  const chgPct = prev ? ((last-prev)/prev*100).toFixed(2) : 0
+  const name = d?.companyName || d?.shortName || G.ticker
+
+  const sys = `Bạn là chuyên gia phân tích chứng khoán Việt Nam chuyên nghiệp.
+Dùng Google Search tìm tin tức mới nhất. Trả về JSON THUẦN TÚY, không markdown, không backtick.`
+
+  const prompt = `Phân tích chuyên sâu cổ phiếu ${G.ticker} (${name}).
+
+DỮ LIỆU KỸ THUẬT ĐÃ TÍNH (từ TCBS):
+- Giá: ${fmtP(last)} VND (${chgPct>0?'+':''}${chgPct}% phiên trước)
+- RSI(14): ${ta?.rsi?.toFixed(1)??'N/A'} ${ta?.rsi>70?'— quá mua':ta?.rsi<30?'— quá bán':'— trung tính'}
+- MACD: ${ta?.macd?.toFixed(0)??'N/A'} / Signal: ${ta?.signal?.toFixed(0)??'N/A'} → ${ta?.macdBull?'Bullish':'Bearish'}
+- MA20: ${fmtP(Math.round(ta?.ma20??0))} | MA50: ${fmtP(Math.round(ta?.ma50??0))}
+- Giá vs MA20: ${ta?.aboveMA20?'Trên (bullish)':'Dưới (bearish)'}
+- Biến động hàng năm: ${ta?.vol?.toFixed(1)??'N/A'}%
+- Max Drawdown: ${ta?.dd?.toFixed(1)??'N/A'}%
+${d?`
+CƠ BẢN:
+- P/E: ${d.pe?.toFixed(1)??'N/A'} | P/B: ${d.pb?.toFixed(2)??'N/A'} | ROE: ${d.roe?.toFixed(1)??'N/A'}%
+- EPS: ${d.eps?fmtP(Math.round(d.eps)):' N/A'}đ | Vốn hóa: ${d.marketCap?(d.marketCap/1e12).toFixed(1)+' nghìn tỷ':'N/A'}
+- Ngành: ${d.industryName||'N/A'} | Sàn: ${d.exchange||'N/A'}`:``}
+
+YÊU CẦU SEARCH (bắt buộc):
+1. Tìm tin tức mới nhất về "${name}" hoặc "${G.ticker}" trong tuần này
+2. Tin tức ngành ${d?.industryName||''} tại Việt Nam
+3. Yếu tố quốc tế: lãi suất Fed, tỷ giá USD/VND, thị trường thế giới
+4. Diễn biến VN-Index và dòng tiền thị trường hiện tại
+
+Trả về JSON với cấu trúc CHÍNH XÁC:
+{"verdict":"MUA","confidence":72,"targetPrice":96000,"stopLoss":82000,"riskScore":4,
+"shortTerm":{"outlook":"Tích cực","summary":"Phân tích ngắn hạn 1-5 phiên cụ thể","support":84500,"resistance":90000},
+"mediumTerm":{"outlook":"Tích cực","summary":"Phân tích trung hạn 1-3 tháng","targetPrice":96000},
+"longTerm":{"outlook":"Tích cực","summary":"Phân tích dài hạn 6-12 tháng","thesis":"Luận điểm đầu tư chính"},
+"risks":[{"text":"Rủi ro cụ thể","level":"high"}],
+"macro":"Tóm tắt vĩ mô trong nước và quốc tế tác động trực tiếp",
+"sectorOutlook":"Triển vọng ngành 3-6 tháng tới",
+"news":[{"title":"Tiêu đề tin","source":"Tên nguồn","timeVN":"HH:MM DD/MM","sentiment":"positive","impact":"Tác động ngắn gọn"}]}`
+
+  try {
+    const txt = await callGemini(prompt, sys, true)
+    G.an = parseJSON(txt)
     renderAnalysis()
-  }catch(e){
-    el('an-error').textContent=`Lỗi: ${e.message}`
-    el('an-error').style.display='block'
+  } catch(e) {
+    $('an-err').textContent = `Lỗi: ${e.message}`
+    $('an-err').style.display = 'block'
   }
-  el('an-loading').style.display='none'
+  $('an-loading').style.display = 'none'
+  $('an-refresh').disabled = false
 }
 
-function renderAnalysis(){
-  const a=G.analysis
-  if(!a){el('an-content').innerHTML='';return}
-  const vmap={MUA:{c:UP,bg:'#E1F5EE',ic:'ti-trending-up'},BÁN:{c:DN,bg:'#FAECE7',ic:'ti-trending-down'},GIỮ:{c:NEU,bg:'#F1EFE8',ic:'ti-minus'}}
-  const vd=vmap[a.verdict]||vmap.GIỮ
-  const d=G.stockData
+function renderAnalysis() {
+  const a = G.an, d = G.info
+  const vmap = {
+    MUA: {c:UP, bg:'#E1F5EE', ic:'ti-trending-up'},
+    BÁN: {c:DN, bg:'#FAECE7', ic:'ti-trending-down'},
+    GIỮ: {c:NEU,bg:'#F1EFE8', ic:'ti-minus'}
+  }
+  const vd = vmap[a.verdict] || vmap.GIỮ
+  const last = G.bars?.[G.bars.length-1]?.close
 
-  const tfHTML=[
-    {k:'shortTerm',l:'Ngắn hạn',sub:'1–5 phiên',ic:'ti-clock'},
-    {k:'mediumTerm',l:'Trung hạn',sub:'1–3 tháng',ic:'ti-calendar'},
-    {k:'longTerm',l:'Dài hạn',sub:'6–12 tháng',ic:'ti-calendar-stats'},
-  ].map(({k,l,sub,ic})=>{
-    const t=a[k];if(!t)return''
-    const ol=(t.outlook||'').toLowerCase()
-    const oc=ol.includes('tích cực')||ol.includes('tăng')?UP:ol.includes('tiêu cực')||ol.includes('giảm')?DN:NEU
-    return`<div class="card">
+  const tfHTML = [
+    {k:'shortTerm', l:'Ngắn hạn',  sub:'1–5 phiên',   ic:'ti-clock'},
+    {k:'mediumTerm',l:'Trung hạn', sub:'1–3 tháng',   ic:'ti-calendar'},
+    {k:'longTerm',  l:'Dài hạn',   sub:'6–12 tháng',  ic:'ti-calendar-stats'},
+  ].map(({k,l,sub,ic}) => {
+    const t = a[k]; if (!t) return ''
+    const ol = (t.outlook||'').toLowerCase()
+    const oc = ol.includes('tích cực')||ol.includes('tăng')?UP:ol.includes('tiêu cực')||ol.includes('giảm')?DN:NEU
+    return `<div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
         <span class="card-title"><i class="ti ${ic}" style="font-size:13px"></i>${l}</span>
-        <div style="display:flex;align-items:center;gap:7px">
+        <div style="display:flex;align-items:center;gap:6px">
           <span style="font-size:10px;color:var(--t3)">${sub}</span>
           <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;background:${oc}22;color:${oc}">${t.outlook}</span>
         </div>
       </div>
       <p style="font-size:12px;color:var(--t2);margin:0;line-height:1.65">${t.summary}</p>
-      ${t.support?`<div style="font-size:10px;color:var(--t3);margin-top:6px">Hỗ trợ: <strong>${fmtP(t.support)}</strong> · Kháng cự: <strong>${fmtP(t.resistance)}</strong></div>`:''}
-      ${t.thesis?`<div style="font-size:10px;color:var(--t3);margin-top:5px;font-style:italic">"${t.thesis}"</div>`:''}
+      ${t.support?`<div style="font-size:10px;color:var(--t3);margin-top:5px">Hỗ trợ: <strong>${fmtP(t.support)}</strong> · Kháng cự: <strong>${fmtP(t.resistance)}</strong></div>`:''}
+      ${t.thesis?`<div style="font-size:10px;color:var(--t3);margin-top:4px;font-style:italic">"${t.thesis}"</div>`:''}
     </div>`
   }).join('')
 
-  const signalHTML=a.technicalSignals?`<div class="card">
-    <div class="card-title" style="margin-bottom:10px"><i class="ti ti-chart-line" style="font-size:13px"></i>Tín hiệu kỹ thuật</div>
-    ${[
-      {l:'Xu hướng',v:a.technicalSignals.trend,c:a.technicalSignals.trend?.includes('Tăng')?UP:DN,w:a.technicalSignals.trend?.includes('Tăng')?75:35},
-      {l:'MA Signal',v:a.technicalSignals.maSignal,c:a.technicalSignals.maSignal?.includes('trên')?UP:DN,w:a.technicalSignals.maSignal?.includes('trên')?65:40},
-      {l:'RSI',v:a.technicalSignals.rsiLevel,c:a.technicalSignals.rsiLevel?.includes('Trung')?NEU:a.technicalSignals.rsiLevel?.includes('mua')?UP:DN,w:50},
-      {l:'MACD',v:a.technicalSignals.macdSignal,c:a.technicalSignals.macdSignal==='Bullish'?UP:DN,w:a.technicalSignals.macdSignal==='Bullish'?70:30},
-    ].map(({l,v,c,w})=>`<div class="signal-row">
-      <span class="signal-label">${l}</span>
-      <div class="signal-bar"><div class="signal-fill" style="width:${w}%;background:${c}"></div></div>
-      <span class="signal-val" style="color:${c}">${v||'—'}</span>
-    </div>`).join('')}
-    <p style="font-size:12px;color:var(--t2);margin-top:8px;line-height:1.6">${a.technicalSignals.summary||''}</p>
-  </div>`:'';
-
-  const fundamentalHTML=a.fundamentalSignals?`<div class="card">
-    <div class="card-title" style="margin-bottom:7px"><i class="ti ti-building-bank" style="font-size:13px"></i>Cơ bản doanh nghiệp</div>
-    <div style="display:flex;gap:8px;margin-bottom:7px;flex-wrap:wrap">
-      ${[
-        {l:'Định giá',v:a.fundamentalSignals.valuation},
-        {l:'P/E ngành',v:a.fundamentalSignals.peVsAvg+'x'},
-        {l:'Tăng trưởng',v:a.fundamentalSignals.growthOutlook},
-        {l:'Cổ tức',v:a.fundamentalSignals.dividendYield?a.fundamentalSignals.dividendYield+'%':'—'},
-      ].map(({l,v})=>`<div class="met" style="flex:1;min-width:100px"><div class="met-l">${l}</div><div class="met-v" style="font-size:12px">${v||'—'}</div></div>`).join('')}
-    </div>
-    <p style="font-size:12px;color:var(--t2);line-height:1.6">${a.fundamentalSignals.summary||''}</p>
-  </div>`:'';
-
-  el('an-content').innerHTML=`
-    ${G.activeGeminiModel?`<div style="font-size:10px;color:var(--t3);text-align:right;margin-bottom:6px">Model: ${G.activeGeminiModel}</div>`:''}
-
+  $('an-body').innerHTML = `
+    ${_activeModel?`<div style="font-size:10px;color:var(--t3);text-align:right;margin-bottom:5px">Model: ${_activeModel} · Dữ liệu: TCBS</div>`:''}
     <div class="card" style="border-width:1.5px;border-color:${vd.c}">
-      <div style="display:flex;align-items:center;gap:12px">
+      <div class="verdict-wrap">
         <div class="verdict-ring" style="background:${vd.bg}"><i class="ti ${vd.ic}" style="color:${vd.c}"></i></div>
         <div style="flex:1">
           <div style="font-size:10px;color:var(--t2);margin-bottom:3px">Khuyến nghị tổng hợp</div>
-          <div style="font-size:18px;font-weight:700;margin-bottom:5px">${a.verdict} — Độ tin cậy ${a.confidence}%</div>
+          <div style="font-size:18px;font-weight:700;margin-bottom:5px">${a.verdict} — Tin cậy ${a.confidence}%</div>
           <div class="conf-track"><div class="conf-fill" style="width:${a.confidence}%;background:${vd.c}"></div></div>
         </div>
-        ${a.riskScore?`<div style="text-align:center;flex-shrink:0">
+        ${a.riskScore!=null?`<div style="text-align:center;flex-shrink:0">
           <div style="font-size:20px;font-weight:700;color:${a.riskScore>6?DN:a.riskScore>3?'#EF9F27':UP}">${a.riskScore}/10</div>
           <div style="font-size:9px;color:var(--t3);font-weight:600">RISK</div>
         </div>`:''}
       </div>
     </div>
 
-    <div class="target-grid">
-      <div class="met"><div class="met-l">Giá hiện tại</div><div class="met-v">${fmtP(d?.price)}</div></div>
-      <div class="met"><div class="met-l">Mục tiêu</div><div class="met-v" style="color:${UP}">${fmtP(a.targetPrice)}</div><div class="met-sub">${a.targetPrice&&d?.price?'+'+((a.targetPrice-d.price)/d.price*100).toFixed(1)+'%':''}</div></div>
-      <div class="met"><div class="met-l">Cắt lỗ</div><div class="met-v" style="color:${DN}">${fmtP(a.stopLoss)}</div><div class="met-sub">${a.stopLoss&&d?.price?((a.stopLoss-d.price)/d.price*100).toFixed(1)+'%':''}</div></div>
+    <div class="tgt-grid">
+      <div class="met"><div class="met-l">Giá hiện tại</div><div class="met-v">${fmtP(last)}</div></div>
+      <div class="met"><div class="met-l">Mục tiêu</div><div class="met-v" style="color:${UP}">${fmtP(a.targetPrice)}</div>
+        <div class="met-sub">${a.targetPrice&&last?'+'+((a.targetPrice-last)/last*100).toFixed(1)+'%':''}</div></div>
+      <div class="met"><div class="met-l">Cắt lỗ</div><div class="met-v" style="color:${DN}">${fmtP(a.stopLoss)}</div>
+        <div class="met-sub">${a.stopLoss&&last?((a.stopLoss-last)/last*100).toFixed(1)+'%':''}</div></div>
     </div>
 
-    ${signalHTML}${fundamentalHTML}${tfHTML}
-
-    ${a.sectorOutlook?`<div class="card">
-      <div class="card-title" style="margin-bottom:6px"><i class="ti ti-building-factory" style="font-size:13px"></i>Triển vọng ngành</div>
-      <p style="font-size:12px;color:var(--t2);margin:0;line-height:1.6">${a.sectorOutlook}</p>
-    </div>`:''}
+    ${tfHTML}
 
     ${a.macro?`<div class="card">
       <div class="card-title" style="margin-bottom:6px"><i class="ti ti-world" style="font-size:13px"></i>Vĩ mô & quốc tế</div>
       <p style="font-size:12px;color:var(--t2);margin:0;line-height:1.6">${a.macro}</p>
     </div>`:''}
 
+    ${a.sectorOutlook?`<div class="card">
+      <div class="card-title" style="margin-bottom:6px"><i class="ti ti-building-factory" style="font-size:13px"></i>Triển vọng ngành</div>
+      <p style="font-size:12px;color:var(--t2);margin:0;line-height:1.6">${a.sectorOutlook}</p>
+    </div>`:''}
+
     ${a.risks?.length?`<div class="card">
       <div class="card-title" style="margin-bottom:8px"><i class="ti ti-alert-triangle" style="font-size:13px;color:#BA7517"></i>Rủi ro cần theo dõi</div>
       ${a.risks.map((r,i)=>{
-        const rk=r.level||'medium'
-        const rc=rk==='high'?DN:rk==='medium'?'#EF9F27':NEU
-        return`<div class="risk-item">
-          <span class="risk-dot" style="background:${rc}"></span>
-          <span style="font-size:12px;color:var(--t2);line-height:1.5">${r.text||r}</span>
-        </div>`
+        const lv=r.level||'medium'
+        const rc=lv==='high'?DN:lv==='medium'?'#EF9F27':NEU
+        return`<div class="risk-row"><span class="risk-dot" style="background:${rc}"></span><span style="font-size:12px;color:var(--t2);line-height:1.5">${r.text||r}</span></div>`
       }).join('')}
     </div>`:''}
 
@@ -907,10 +883,10 @@ function renderAnalysis(){
       <div class="card-title" style="margin-bottom:8px"><i class="ti ti-news" style="font-size:13px"></i>Nguồn tin tham khảo</div>
       ${a.news.map((n,i)=>{
         const sc=n.sentiment==='positive'?UP:n.sentiment==='negative'?DN:NEU
-        return`<div class="src-item" style="${i===0?'border-top:none':''}">
-          <span class="src-dot" style="background:${sc}"></span>
+        return`<div class="news-row" style="${i===0?'border-top:none':''}">
+          <span class="news-dot" style="background:${sc}"></span>
           <div style="flex:1">
-            <div style="font-size:12px;line-height:1.4;font-weight:500">${n.title}</div>
+            <div style="font-size:12px;font-weight:500;line-height:1.4">${n.title}</div>
             <div style="font-size:10px;color:var(--t3);margin-top:2px">${n.source} · ${n.timeVN} (giờ VN)</div>
             ${n.impact?`<div style="font-size:10px;color:var(--t2);margin-top:2px;font-style:italic">${n.impact}</div>`:''}
           </div>
@@ -918,36 +894,42 @@ function renderAnalysis(){
       }).join('')}
     </div>`:''}
 
-    <p class="disclaimer">
-      <i class="ti ti-info-circle" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>
-      Phân tích do AI tổng hợp từ dữ liệu công khai, chỉ mang tính tham khảo. Không phải tư vấn tài chính chuyên nghiệp. Nhà đầu tư tự chịu trách nhiệm về quyết định của mình.
-    </p>`
+    <p class="disclaimer"><i class="ti ti-info-circle" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>Phân tích do AI tổng hợp từ dữ liệu công khai. Dữ liệu giá từ TCBS. Chỉ mang tính tham khảo, không phải tư vấn tài chính.</p>`
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  MARKET BRIEF
-// ═══════════════════════════════════════════════════════════════════════════
-async function loadBrief(){
-  const btn=el('brief-btn'); btn.textContent='Đang tải...'; btn.disabled=true
-  el('brief-body').innerHTML=''
-  try{
-    const d=await G.dataService.getBrief()
-    el('brief-body').style.marginTop='10px'
-    el('brief-body').innerHTML=`
+// ══════════════════════════════════════════════════════════
+//  MARKET BRIEF — 1 Gemini call, chỉ khi user bấm
+// ══════════════════════════════════════════════════════════
+async function loadBrief() {
+  const btn = $('brief-btn'), body = $('brief-body')
+  btn.textContent = 'Đang tải...'; btn.disabled = true
+  body.innerHTML = ''
+
+  const now = new Date().toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})
+  try {
+    const txt = await callGemini(
+      `${now} giờ VN. Search tin tài chính toàn cầu mới nhất. JSON THUẦN TÚY:
+{"wallStreet":{"sp500":"+0.5%","nasdaq":"+0.3%","dow":"-0.1%","summary":"1 câu tóm tắt"},"asia":{"nikkei":"+0.2%","hangseng":"-0.5%","shanghai":"+0.1%","summary":"1 câu"},"oil":{"brent":"$75"},"gold":"$2350","usdvnd":"25,480","vnImpact":"Tác động lên VN-Index hôm nay 2-3 câu cụ thể","watchSectors":["Ngân hàng"],"events":["Sự kiện quan trọng"]}`,
+      `Trả về JSON THUẦN TÚY không markdown.`, true
+    )
+    const d = parseJSON(txt)
+    body.style.marginTop = '10px'
+    body.innerHTML = `
       <div class="brief-g2">
         ${[['S&P 500',d.wallStreet?.sp500],['Nasdaq',d.wallStreet?.nasdaq],['Nikkei',d.asia?.nikkei],['Hang Seng',d.asia?.hangseng]]
-          .map(([l,v])=>`<div class="brief-item"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">${l}</div><div style="font-size:13px;font-weight:600;color:${String(v).startsWith('+')?UP:String(v).startsWith('-')?DN:'var(--t)'}">${v||'—'}</div></div>`).join('')}
+          .map(([l,v])=>`<div class="bi"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">${l}</div><div style="font-size:13px;font-weight:600;color:${String(v).startsWith('+')?UP:String(v).startsWith('-')?DN:'var(--t)'}">${v||'—'}</div></div>`).join('')}
       </div>
       <div class="brief-g3">
         ${[['Dầu Brent',d.oil?.brent],['Vàng',d.gold],['USD/VND',d.usdvnd]]
-          .map(([l,v])=>`<div class="brief-item-c"><div style="font-size:9px;color:var(--t3);margin-bottom:2px">${l}</div><div style="font-size:12px;font-weight:600">${v||'—'}</div></div>`).join('')}
+          .map(([l,v])=>`<div class="bi-c"><div style="font-size:9px;color:var(--t3);margin-bottom:2px">${l}</div><div style="font-size:12px;font-weight:600">${v||'—'}</div></div>`).join('')}
       </div>
       <p style="font-size:12px;color:var(--t2);margin:0 0 6px;line-height:1.6">${d.vnImpact||''}</p>
-      ${d.watchSectors?.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">${d.watchSectors.map(s=>`<span class="sector-tag">${s}</span>`).join('')}</div>`:''}
-      ${d.events?.length?`<div style="font-size:11px;color:var(--t2)">${d.events.map(e=>`<div style="margin-bottom:3px">· ${e}</div>`).join('')}</div>`:''}
-      ${d.wallStreet?.summary?`<p style="font-size:11px;color:var(--t3);margin-top:6px;line-height:1.5;font-style:italic">${d.wallStreet.summary}</p>`:''}`
-  }catch(e){
-    el('brief-body').innerHTML=`<div style="font-size:12px;color:var(--dn);margin-top:8px">${e.message}</div>`
+      ${d.wallStreet?.summary?`<p style="font-size:11px;color:var(--t3);margin:0 0 6px;font-style:italic">${d.wallStreet.summary}</p>`:''}
+      ${d.watchSectors?.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px">${d.watchSectors.map(s=>`<span class="stag">${s}</span>`).join('')}</div>`:''}
+      ${d.events?.length?`<div style="font-size:11px;color:var(--t2)">${d.events.map(e=>`<div style="margin-bottom:2px">· ${e}</div>`).join('')}</div>`:''}`
+  } catch(e) {
+    body.style.marginTop='8px'
+    body.innerHTML=`<div style="font-size:12px;color:var(--dn)">${e.message}</div>`
   }
   btn.textContent='Cập nhật ↗'; btn.disabled=false
 }
