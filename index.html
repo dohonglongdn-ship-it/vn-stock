@@ -139,7 +139,13 @@ code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <p style="font-size:10px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin:0">Danh mục theo dõi</p>
-        <button class="pill" onclick="loadWlData()" style="font-size:10px;padding:3px 9px"><i class="ti ti-refresh" style="font-size:10px;margin-right:2px"></i>Cập nhật</button>
+        <button class="pill" onclick="loadWlData()" style="font-size:10px;padding:3px 9px"><i class="ti ti-refresh" style="font-size:10px;margin-right:2px"></i>Cập nhật giá</button>
+      </div>
+      <div class="card" style="padding:8px 10px;margin-bottom:8px">
+        <form onsubmit="addToWlDirect(event)" style="display:flex;gap:6px">
+          <input id="wl-inp" placeholder="Thêm mã (VCB, HPG...)" style="flex:1;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);text-transform:uppercase" autocomplete="off"/>
+          <button type="submit" style="font-size:12px;padding:6px 14px;border:0.5px solid var(--blue);border-radius:var(--r);background:var(--blue);color:#fff;cursor:pointer;font-weight:500">+ Thêm</button>
+        </form>
       </div>
       <div class="card" id="wl-body"><div style="font-size:13px;color:var(--t2)">Tìm mã cổ phiếu để thêm vào danh mục.</div></div>
     </div>
@@ -269,6 +275,33 @@ function doSearch(e){e.preventDefault();const t=$('q').value.trim().toUpperCase(
 
 // ── Watchlist ─────────────────────────────────────────────
 function saveWl(){localStorage.setItem('vnstk_wl',JSON.stringify(G.wl))}
+
+function addToWlDirect(e){
+  e.preventDefault()
+  const inp = $('wl-inp')
+  const t = inp.value.trim().toUpperCase()
+  if(!t){return}
+  if(G.wl.includes(t)){alert(`${t} đã có trong danh mục`);inp.value='';return}
+  G.wl.push(t)
+  saveWl()
+  renderWl()
+  inp.value=''
+  // Tự động load dữ liệu cho mã mới
+  loadSingleWlData(t)
+}
+
+async function loadSingleWlData(t){
+  try{
+    const txt=await groq(
+      `Cho tôi thông tin cổ phiếu ${t} trên sàn chứng khoán VIỆT NAM. JSON thuần túy:{"price":50000,"changePct":1.2,"companyName":"Tên công ty VN","sector":"Ngành"}`,
+      `Đây là mã cổ phiếu Việt Nam, không phải chỉ số quốc tế. Trả về JSON thuần túy không markdown.`
+    )
+    const d=pj(txt)
+    G.wlData[t]={price:d.price,chg:d.changePct,name:d.companyName,sector:d.sector,
+      spark:[d.price*0.97,d.price*0.98,d.price*0.99,d.price*1.0,d.price*1.01,d.price*1.02,d.price]}
+  }catch{}
+  renderWl()
+}
 function toggleWl(){
   if(!G.ticker)return
   if(G.wl.includes(G.ticker)){G.wl=G.wl.filter(x=>x!==G.ticker)}
@@ -280,7 +313,7 @@ async function loadWlData(){
   for(const t of G.wl){
     if(G.wlData[t]?.price)continue // skip nếu đã có
     try{
-      const txt=await groq(`Cho tôi thông tin cổ phiếu ${t} sàn chứng khoán Việt Nam. JSON thuần túy:{"price":87500,"changePct":1.45,"companyName":"Tên công ty","sector":"Ngành"}`,`Trả về JSON thuần túy không markdown.`)
+      const txt=await groq(`Cho tôi thông tin cổ phiếu ${t} niêm yết trên sàn chứng khoán VIỆT NAM (HOSE/HNX/UPCOM). JSON thuần túy:{"price":87500,"changePct":1.45,"companyName":"Tên công ty Việt Nam","sector":"Ngành"}`,`Đây là mã cổ phiếu Việt Nam. Trả về JSON thuần túy không markdown.`)
       const d=pj(txt);G.wlData[t]={...(G.wlData[t]||{}),price:d.price,chg:d.changePct,name:d.companyName,sector:d.sector,spark:[d.price*0.96,d.price*0.97,d.price*0.99,d.price*0.98,d.price*1.01,d.price*1.02,d.price]}
     }catch{}
     renderWl()
@@ -319,7 +352,19 @@ async function loadStock(ticker){
   $('stk-msg').textContent=`Đang lấy dữ liệu cổ phiếu ${ticker}...`
 
   const sys=`Bạn là chuyên gia chứng khoán Việt Nam. Trả về JSON THUẦN TÚY, không markdown, không backtick.`
-  const prompt=`Cung cấp đầy đủ thông tin cổ phiếu ${ticker} trên sàn chứng khoán Việt Nam.
+  // Danh sách mã VN hay bị nhầm với chỉ số/term quốc tế
+  const vnNotes = {
+    'VIX': 'Công ty Cổ phần Chứng khoán VIX (không phải CBOE VIX index)',
+    'VND': 'Công ty Cổ phần Chứng khoán VNDirect (không phải tiền tệ VND)',
+    'SSI': 'Công ty Cổ phần Chứng khoán SSI',
+    'HDB': 'Ngân hàng TMCP Phát triển TP.HCM HDBank',
+    'TCB': 'Ngân hàng TMCP Kỹ Thương Techcombank',
+    'MBB': 'Ngân hàng TMCP Quân đội MB Bank',
+  }
+  const extraNote = vnNotes[ticker] ? `LƯU Ý QUAN TRỌNG: ${ticker} tại Việt Nam là ${vnNotes[ticker]}.` : ''
+
+  const prompt=`QUAN TRỌNG: Đây là mã cổ phiếu "${ticker}" niêm yết trên sàn chứng khoán VIỆT NAM (HOSE/HNX/UPCOM), KHÔNG PHẢI chỉ số hay sản phẩm tài chính quốc tế. ${extraNote}
+Cung cấp thông tin chính xác về cổ phiếu này tại Việt Nam.
 Trả về JSON chính xác:
 {
   "companyName": "Tên công ty đầy đủ",
