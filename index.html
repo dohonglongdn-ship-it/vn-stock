@@ -333,24 +333,46 @@ function sparkSVG(data, chg) {
 
 // ══════════════════════════════════════════════════════════
 //  TCBS DATA LAYER — Dữ liệu giá (không tốn quota AI)
+//  Dùng CORS proxy vì TCBS chặn cross-origin từ GitHub Pages
 // ══════════════════════════════════════════════════════════
 const TCBS = 'https://apipubaws.tcbs.com.vn'
+
+// Thử proxy lần lượt cho đến khi thành công
+async function proxyFetch(url) {
+  const proxies = [
+    u => u,  // Thử trực tiếp trước
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  ]
+  let lastErr = null
+  for (const proxy of proxies) {
+    try {
+      const r = await fetch(proxy(url), { signal: AbortSignal.timeout(8000) })
+      if (!r.ok) continue
+      const txt = await r.text()
+      // allorigins bọc trong {contents: "..."}
+      try {
+        const wrapper = JSON.parse(txt)
+        if (wrapper.contents) return JSON.parse(wrapper.contents)
+        return wrapper
+      } catch { return JSON.parse(txt) }
+    } catch(e) { lastErr = e }
+  }
+  throw lastErr || new Error('Không kết nối được TCBS')
+}
 
 async function fetchBars(ticker, months) {
   const to   = Math.floor(Date.now() / 1000)
   const from = Math.floor(to - months * 30 * 24 * 3600)
-  const res  = await fetch(`${TCBS}/stock-insight/v1/stock/bars-long-term?ticker=${ticker}&type=stock&resolution=D&from=${from}&to=${to}`)
-  if (!res.ok) throw new Error(`TCBS ${res.status}`)
-  const d = await res.json()
+  const d = await proxyFetch(`${TCBS}/stock-insight/v1/stock/bars-long-term?ticker=${ticker}&type=stock&resolution=D&from=${from}&to=${to}`)
   return (d.data || [])
     .sort((a, b) => new Date(a.tradingDate) - new Date(b.tradingDate))
     .filter(b => b.close > 0)
 }
 
 async function fetchInfo(ticker) {
-  const res = await fetch(`${TCBS}/tcanalysis/v1/ticker/${ticker}/overview`)
-  if (!res.ok) throw new Error(`TCBS info ${res.status}`)
-  return res.json()
+  return proxyFetch(`${TCBS}/tcanalysis/v1/ticker/${ticker}/overview`)
 }
 
 // ══════════════════════════════════════════════════════════
