@@ -213,7 +213,7 @@ code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font
         </button>
       </div>
       <div class="tab-row" id="period-tabs"></div>
-      <div id="stk-loading" style="display:none" class="loading-wrap"><i class="ti ti-refresh spin" style="font-size:22px;margin-bottom:8px;display:block"></i>Đang tải dữ liệu từ TCBS...</div>
+      <div id="stk-loading" style="display:none" class="loading-wrap"><i class="ti ti-refresh spin" style="font-size:22px;margin-bottom:8px;display:block"></i>Đang tải dữ liệu...</div>
       <div id="stk-err" class="err-box" style="display:none"></div>
       <div id="stk-body" style="display:none">
         <div class="card">
@@ -333,32 +333,54 @@ function sparkSVG(data, chg) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  DATA LAYER — TCBS qua Cloudflare Worker (giải quyết CORS)
+//  DATA LAYER — VNDirect qua Cloudflare Worker
 //  Worker: https://cool-resonance-b12e.dohonglong-dn.workers.dev
-//  Miễn phí, 100.000 request/ngày
+//  VNDirect: API công khai, dữ liệu HOSE + HNX + UPCOM
 // ══════════════════════════════════════════════════════════
 const WORKER = 'https://cool-resonance-b12e.dohonglong-dn.workers.dev'
-const TCBS   = 'https://apipubaws.tcbs.com.vn'
 
-async function tcbsFetch(path) {
-  const url = `${WORKER}${path}`
-  const r = await fetch(url, { signal: AbortSignal.timeout(10000) })
+async function wfetch(path) {
+  const r = await fetch(WORKER + path, { signal: AbortSignal.timeout(12000) })
   if (!r.ok) throw new Error(`Lỗi ${r.status}`)
   return r.json()
 }
 
 async function fetchBars(ticker, months) {
-  const to   = Math.floor(Date.now() / 1000)
-  const from = Math.floor(to - months * 30 * 24 * 3600)
-  const d = await tcbsFetch(`/stock-insight/v1/stock/bars-long-term?ticker=${ticker}&type=stock&resolution=D&from=${from}&to=${to}`)
+  const today = new Date()
+  const from  = new Date(today - months * 30 * 24 * 3600 * 1000)
+  const toStr   = today.toISOString().slice(0,10).replace(/-/g,'')
+  const fromStr = from.toISOString().slice(0,10).replace(/-/g,'')
+  const size  = months * 25 // ~25 phiên/tháng
+  const d = await wfetch(`/stock_prices?q=code:${ticker}~date:gte:${fromStr}~date:lte:${toStr}&sort=date&size=${size}&page=1`)
   return (d.data || [])
-    .sort((a, b) => new Date(a.tradingDate) - new Date(b.tradingDate))
+    .sort((a,b) => new Date(a.date) - new Date(b.date))
     .filter(b => b.close > 0)
+    .map(b => ({
+      tradingDate: b.date,
+      open:   b.open,
+      high:   b.high || b.close,
+      low:    b.low  || b.close,
+      close:  b.close || b.adClose,
+      volume: b.nmVolume || b.volume || 0,
+    }))
 }
 
 async function fetchInfo(ticker) {
   try {
-    return await tcbsFetch(`/tcanalysis/v1/ticker/${ticker}/overview`)
+    const d = await wfetch(`/stocks?q=code:${ticker}&size=1`)
+    const s = d.data?.[0]
+    if (!s) return null
+    return {
+      companyName:  s.companyName || s.shortName || ticker,
+      shortName:    s.shortName   || ticker,
+      exchange:     s.floor       || '',
+      industryName: s.industryName|| s.icbName || '',
+      pe:    s.pe    || null,
+      pb:    s.pb    || null,
+      roe:   s.roe   || null,
+      eps:   s.eps   || null,
+      marketCap: s.marketCap || null,
+    }
   } catch { return null }
 }
 
@@ -910,7 +932,7 @@ function renderAnalysis() {
       }).join('')}
     </div>`:''}
 
-    <p class="disclaimer"><i class="ti ti-info-circle" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>Dữ liệu giá từ TCBS (qua Cloudflare Worker). Phân tích từ Groq AI dựa trên dữ liệu kỹ thuật và kiến thức thị trường. Chỉ mang tính tham khảo, không phải tư vấn tài chính.</p>`
+    <p class="disclaimer"><i class="ti ti-info-circle" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>Dữ liệu giá từ VNDirect (qua Cloudflare Worker). Phân tích từ Groq AI dựa trên dữ liệu kỹ thuật và kiến thức thị trường. Chỉ mang tính tham khảo, không phải tư vấn tài chính.</p>`
 }
 
 // ══════════════════════════════════════════════════════════
