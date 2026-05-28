@@ -85,6 +85,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font-family:monospace}
 </style>
 </head>
+<script>
+// Khai báo boot sớm để onclick có thể gọi ngay
+function boot() {
+  var inp = document.getElementById('key-inp')
+  var v = (inp ? inp.value.trim() : '') || localStorage.getItem('vnstk_key') || ''
+  if (!v.startsWith('gsk_')) {
+    alert('API key không hợp lệ. Phải bắt đầu bằng gsk_\n\nLấy key tại: console.groq.com/keys')
+    return
+  }
+  localStorage.setItem('vnstk_key', v)
+  // Reload để script chính chạy với key mới
+  location.reload()
+}
+</script>
 <body>
 
 <!-- SETUP -->
@@ -104,7 +118,7 @@ code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font
   </div>
   <label style="font-size:12px;font-weight:500;color:var(--t2);margin-bottom:6px;display:block">Groq API Key</label>
   <input class="inp" id="key-inp" type="password" placeholder="gsk_..." autocomplete="off"/>
-  <button class="btn-p" id="boot-btn" id="boot-btn2"><i class="ti ti-rocket" style="font-size:13px;vertical-align:-1px;margin-right:5px"></i>Bắt đầu</button>
+  <button class="btn-p" id="boot-btn" onclick="boot()"><i class="ti ti-rocket" style="font-size:13px;vertical-align:-1px;margin-right:5px"></i>Bắt đầu</button>
   <p class="note"><i class="ti ti-shield-check" style="font-size:11px;vertical-align:-1px;margin-right:3px"></i>Groq miễn phí 14.400 req/ngày. Key lưu trong trình duyệt của bạn.</p>
 </div></div>
 </div>
@@ -204,14 +218,6 @@ code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font
 
 <script>
 // Boot gắn bằng addEventListener để tránh hoisting issue
-document.addEventListener('DOMContentLoaded', function() {
-  var btn = document.getElementById('boot-btn2')
-  if (btn) btn.addEventListener('click', function() { boot() })
-  // Cũng gắn Enter key
-  var inp = document.getElementById('key-inp')
-  if (inp) inp.addEventListener('keydown', function(e) { if(e.key==='Enter') boot() })
-})
-
 // ─── Helper (khai báo trước mọi thứ) ──────────────────────
 function $(id){ return document.getElementById(id) }
 
