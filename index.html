@@ -143,18 +143,18 @@ code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font
   <div class="setup-sub">Phân tích chứng khoán Việt Nam bằng AI</div>
   <div>
     <span class="badge badge-g"><i class="ti ti-database" style="font-size:10px"></i>TCBS API — Dữ liệu thực</span>
-    <span class="badge badge-b"><i class="ti ti-brain" style="font-size:10px"></i>Gemini AI — Phân tích</span>
+    <span class="badge badge-b"><i class="ti ti-brain" style="font-size:10px"></i>Groq AI — Phân tích</span>
     <span class="badge badge-gray">HOSE · HNX · UPCOM</span>
   </div>
   <div class="steps">
-    <div class="step"><span class="sn">1</span><span>Vào <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--blue);font-weight:500">aistudio.google.com/apikey</a> (đăng nhập Gmail)</span></div>
-    <div class="step"><span class="sn">2</span><span>Nhấn <strong>"Create API key"</strong> → <strong>"Create API key in new project"</strong></span></div>
-    <div class="step"><span class="sn">3</span><span>Copy key dạng <code>AIzaSy...</code> dán vào ô bên dưới</span></div>
+    <div class="step"><span class="sn">1</span><span>Vào <a href="https://console.groq.com" target="_blank" style="color:var(--blue);font-weight:500">console.groq.com</a> (đăng nhập Gmail)</span></div>
+    <div class="step"><span class="sn">2</span><span>Nhấn <strong>"API Keys"</strong> ở menu trái → <strong>"Create API Key"</strong></span></div>
+    <div class="step"><span class="sn">3</span><span>Copy key dạng <code>gsk_...</code> dán vào ô bên dưới</span></div>
   </div>
-  <label style="font-size:12px;font-weight:500;color:var(--t2);margin-bottom:6px;display:block">Gemini API Key</label>
-  <input class="inp" id="key-inp" type="password" placeholder="AIzaSy..." autocomplete="off" onkeydown="if(event.key==='Enter')boot()"/>
+  <label style="font-size:12px;font-weight:500;color:var(--t2);margin-bottom:6px;display:block">Groq API Key</label>
+  <input class="inp" id="key-inp" type="password" placeholder="gsk_..." autocomplete="off" onkeydown="if(event.key==='Enter')boot()"/>
   <button class="btn-primary" onclick="boot()"><i class="ti ti-rocket" style="font-size:13px;vertical-align:-1px;margin-right:5px"></i>Bắt đầu</button>
-  <p class="setup-note"><i class="ti ti-shield-check" style="font-size:11px;vertical-align:-1px;margin-right:3px"></i>Key lưu trên trình duyệt, chỉ gửi đến Google. Dữ liệu giá từ TCBS — không tốn quota AI.</p>
+  <p class="setup-note"><i class="ti ti-shield-check" style="font-size:11px;vertical-align:-1px;margin-right:3px"></i>Key lưu trên trình duyệt, chỉ gửi đến Groq. Dữ liệu giá từ TCBS. Groq miễn phí, không lo hết quota.</p>
 </div></div>
 </div>
 
@@ -171,7 +171,7 @@ code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font
       <button type="submit" aria-label="Tìm"><i class="ti ti-search"></i></button>
     </form>
     <div class="nav-end">
-      <span id="src-badge" class="badge badge-g" style="margin:0;font-size:9px">TCBS</span>
+      <span id="src-badge" class="badge badge-g" style="margin:0;font-size:9px">TCBS + Groq</span>
       <button class="icon-btn" onclick="resetKey()" title="Cài đặt"><i class="ti ti-settings"></i></button>
     </div>
   </div>
@@ -289,7 +289,7 @@ if (G.key) boot()
 // ══════════════════════════════════════════════════════════
 function boot() {
   const v = (document.getElementById('key-inp')?.value.trim()) || G.key
-  if (!v.startsWith('AIza')) { alert('API key không hợp lệ. Cần bắt đầu bằng AIza...'); return }
+  if (!v.startsWith('gsk_')) { alert('API key không hợp lệ. Cần bắt đầu bằng gsk_...'); return }
   G.key = v
   localStorage.setItem('vnstk_key', v)
   sc('s-app')
@@ -428,52 +428,59 @@ const TA = {
 }
 
 // ══════════════════════════════════════════════════════════
-//  GEMINI AI — Chỉ gọi khi user YÊU CẦU (tiết kiệm quota)
+//  GROQ AI — Miễn phí, không lo hết quota
+//  14.400 request/ngày, không cần web search
+//  Dữ liệu kỹ thuật đã tính từ TCBS — Groq chỉ phân tích
 // ══════════════════════════════════════════════════════════
-const MODELS = ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-2.0-flash-exp']
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_MODELS = [
+  'llama-3.3-70b-versatile',   // Tốt nhất, 6000 req/ngày
+  'llama-3.1-70b-versatile',   // Fallback
+  'mixtral-8x7b-32768',        // Fallback
+  'llama-3.1-8b-instant',      // Nhanh nhất, 14400 req/ngày
+]
 let _activeModel = null, _lastCall = 0
 
-async function callGemini(prompt, sys, withSearch=true) {
-  // Delay nếu gọi quá nhanh (tránh rate limit)
+async function callGemini(prompt, sys) {
+  // Delay nhỏ tránh spam
   const elapsed = Date.now() - _lastCall
-  if (elapsed < 2000) await new Promise(r => setTimeout(r, 2000 - elapsed))
+  if (elapsed < 500) await new Promise(r => setTimeout(r, 500 - elapsed))
 
   const models = _activeModel
-    ? [_activeModel, ...MODELS.filter(m=>m!==_activeModel)]
-    : MODELS
+    ? [_activeModel, ...GROQ_MODELS.filter(m=>m!==_activeModel)]
+    : GROQ_MODELS
 
   const errs = []
   for (const model of models) {
-    const attempts = withSearch
-      ? [{ tools:[{google_search:{}}] }, { tools:[] }]
-      : [{ tools:[] }]
-
-    for (const att of attempts) {
-      try {
-        const body = {
-          systemInstruction: { parts:[{text:sys}] },
-          contents: [{ role:'user', parts:[{text:prompt}] }],
-          generationConfig: { maxOutputTokens:2000, temperature:0.15 }
-        }
-        if (att.tools.length) body.tools = att.tools
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${G.key}`
-        const r = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
-        const d = await r.json()
-
-        if (r.status === 429) throw new Error('Hết quota. Thử lại sau vài phút hoặc tạo API key mới.')
-        if (r.status === 404) { errs.push(`${model}: không hỗ trợ`); break } // skip model
-        if (!r.ok) { errs.push(`${model}: ${d.error?.message||r.status}`); continue }
-
-        _activeModel = model
-        _lastCall = Date.now()
-        return d.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('') || ''
-      } catch(e) {
-        if (e.message.includes('quota') || e.message.includes('Hết quota')) throw e
-        errs.push(`${model}: ${e.message}`)
-      }
+    try {
+      const r = await fetch(GROQ_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${G.key}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system',  content: sys    },
+            { role: 'user',    content: prompt }
+          ],
+          max_tokens: 2000,
+          temperature: 0.15
+        })
+      })
+      const d = await r.json()
+      if (r.status === 429) throw new Error('Hết rate limit. Thử lại sau 1 phút.')
+      if (!r.ok) { errs.push(`${model}: ${d.error?.message||r.status}`); continue }
+      _activeModel = model
+      _lastCall = Date.now()
+      return d.choices?.[0]?.message?.content || ''
+    } catch(e) {
+      if (e.message.includes('rate limit') || e.message.includes('Hết rate limit')) throw e
+      errs.push(`${model}: ${e.message}`)
     }
   }
-  throw new Error(errs[0] || 'Không kết nối Gemini API')
+  throw new Error(errs[0] || 'Không kết nối Groq API. Kiểm tra API key.')
 }
 
 function parseJSON(txt) {
@@ -773,11 +780,11 @@ CƠ BẢN:
 - EPS: ${d.eps?fmtP(Math.round(d.eps)):' N/A'}đ | Vốn hóa: ${d.marketCap?(d.marketCap/1e12).toFixed(1)+' nghìn tỷ':'N/A'}
 - Ngành: ${d.industryName||'N/A'} | Sàn: ${d.exchange||'N/A'}`:``}
 
-YÊU CẦU SEARCH (bắt buộc):
-1. Tìm tin tức mới nhất về "${name}" hoặc "${G.ticker}" trong tuần này
-2. Tin tức ngành ${d?.industryName||''} tại Việt Nam
-3. Yếu tố quốc tế: lãi suất Fed, tỷ giá USD/VND, thị trường thế giới
-4. Diễn biến VN-Index và dòng tiền thị trường hiện tại
+PHÂN TÍCH YÊU CẦU:
+1. Dựa trên dữ liệu kỹ thuật và cơ bản ở trên, đưa ra nhận định rõ ràng
+2. Áp dụng kiến thức về ngành ${d?.industryName||''} tại Việt Nam
+3. Xem xét các yếu tố vĩ mô phổ biến: lãi suất, tỷ giá, thị trường thế giới
+4. Đưa ra khuyến nghị cụ thể với mức giá mục tiêu và cắt lỗ
 
 Trả về JSON với cấu trúc CHÍNH XÁC:
 {"verdict":"MUA","confidence":72,"targetPrice":96000,"stopLoss":82000,"riskScore":4,
@@ -894,7 +901,7 @@ function renderAnalysis() {
       }).join('')}
     </div>`:''}
 
-    <p class="disclaimer"><i class="ti ti-info-circle" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>Phân tích do AI tổng hợp từ dữ liệu công khai. Dữ liệu giá từ TCBS. Chỉ mang tính tham khảo, không phải tư vấn tài chính.</p>`
+    <p class="disclaimer"><i class="ti ti-info-circle" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>Dữ liệu giá từ TCBS (thời gian thực). Phân tích từ Groq AI dựa trên dữ liệu kỹ thuật và kiến thức thị trường. Chỉ mang tính tham khảo, không phải tư vấn tài chính.</p>`
 }
 
 // ══════════════════════════════════════════════════════════
@@ -908,9 +915,9 @@ async function loadBrief() {
   const now = new Date().toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})
   try {
     const txt = await callGemini(
-      `${now} giờ VN. Search tin tài chính toàn cầu mới nhất. JSON THUẦN TÚY:
-{"wallStreet":{"sp500":"+0.5%","nasdaq":"+0.3%","dow":"-0.1%","summary":"1 câu tóm tắt"},"asia":{"nikkei":"+0.2%","hangseng":"-0.5%","shanghai":"+0.1%","summary":"1 câu"},"oil":{"brent":"$75"},"gold":"$2350","usdvnd":"25,480","vnImpact":"Tác động lên VN-Index hôm nay 2-3 câu cụ thể","watchSectors":["Ngân hàng"],"events":["Sự kiện quan trọng"]}`,
-      `Trả về JSON THUẦN TÚY không markdown.`, true
+      `Bây giờ là ${now} giờ Việt Nam. Dựa trên kiến thức của bạn về thị trường tài chính, hãy cung cấp tổng quan thị trường. Trả về JSON THUẦN TÚY:
+{"wallStreet":{"sp500":"+0.5%","nasdaq":"+0.3%","dow":"-0.1%","summary":"1 câu nhận định xu hướng"},"asia":{"nikkei":"+0.2%","hangseng":"-0.5%","shanghai":"+0.1%","summary":"1 câu nhận định"},"oil":{"brent":"$75"},"gold":"$2350","usdvnd":"25,480","vnImpact":"Nhận định tác động lên VN-Index 2-3 câu","watchSectors":["Ngân hàng","Bất động sản"],"events":["Yếu tố cần chú ý 1","Yếu tố 2"]}`,
+      `Bạn là chuyên gia phân tích tài chính. Trả về JSON THUẦN TÚY không markdown không backtick.`
     )
     const d = parseJSON(txt)
     body.style.marginTop = '10px'
