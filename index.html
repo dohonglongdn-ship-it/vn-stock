@@ -290,6 +290,48 @@ const VN_STOCKS = {
 function getStockInfo(ticker) {
   return VN_STOCKS[ticker.toUpperCase()] || null
 }
+// ══════════════════════════════════════════════════════════
+//  DATA LAYER — Yahoo Finance qua Cloudflare Worker
+//  Giá thực, không dùng AI cho dữ liệu thô
+// ══════════════════════════════════════════════════════════
+const WORKER = 'https://cool-resonance-b12e.dohonglong-dn.workers.dev'
+
+async function fetchYahoo(ticker) {
+  try {
+    const r = await fetch(`${WORKER}/${ticker}`, {signal: AbortSignal.timeout(10000)})
+    if (!r.ok) return null
+    const d = await r.json()
+    if (d.error) return null
+    const res = d.chart?.result?.[0]
+    if (!res?.timestamp?.length) return null
+
+    const ts = res.timestamp
+    const q  = res.indicators.quote[0]
+    const m  = res.meta
+
+    const bars = ts.map((t, i) => ({
+      tradingDate: new Date(t * 1000).toISOString(),
+      open:   q.open[i]   ?? null,
+      high:   q.high[i]   ?? null,
+      low:    q.low[i]    ?? null,
+      close:  q.close[i]  ?? null,
+      volume: q.volume[i] ?? 0,
+    })).filter(b => b.close != null && b.close > 0)
+
+    return {
+      bars,
+      price:     m.regularMarketPrice,
+      change:    m.regularMarketChange,
+      changePct: m.regularMarketChangePercent,
+      high52w:   m.fiftyTwoWeekHigh,
+      low52w:    m.fiftyTwoWeekLow,
+      marketCap: m.marketCap,
+      pe:        m.trailingPE,
+      eps:       m.epsTrailingTwelveMonths,
+    }
+  } catch { return null }
+}
+
 // ── Groq AI ──────────────────────────────────────────────
 const GROQ_URL='https://api.groq.com/openai/v1/chat/completions'
 const MODELS=['llama-3.3-70b-versatile','llama-3.1-70b-versatile','mixtral-8x7b-32768','llama-3.1-8b-instant']
@@ -398,14 +440,14 @@ function toggleWl(){
 function updateWlBtn(){const in_=G.wl.includes(G.ticker);$('wl-icon').className=`ti ${in_?'ti-star-filled':'ti-star'}`;$('wl-txt').textContent=in_?'Đang theo dõi':'Theo dõi'}
 async function loadWlData(){
   for(const t of G.wl){
-    if(G.wlData[t]?.price)continue // skip nếu đã có
     try{
       const db2=getStockInfo(t)
-      const hint2=db2?`Đây là "${db2.n}".`:'mã cổ phiếu Việt Nam'
-      const txt=await groq(`Mã ${t} — ${hint2} Giá và % thay đổi. JSON:{"price":87500,"changePct":1.45}`,`Trả về JSON thuần túy không markdown.`)
-      const d=pj(txt);G.wlData[t]={...(G.wlData[t]||{}),price:d.price,chg:d.changePct,
-        name:db2?.n||d.companyName||t,sector:db2?.s||d.sector||'',
-        spark:[d.price*0.96,d.price*0.97,d.price*0.99,d.price*0.98,d.price*1.01,d.price*1.02,d.price]}
+      const yf2=await fetchYahoo(t)
+      const cur=G.wlData[t]||{}
+      G.wlData[t]={...cur,
+        name:db2?.n||cur.name||t,sector:db2?.s||cur.sector||'',
+        price:yf2?.price||cur.price||null,chg:yf2?.changePct||cur.chg||null,
+        spark:yf2?.bars?.length>1?yf2.bars.slice(-7).map(b=>b.close):cur.spark||null}
     }catch{}
     renderWl()
     await new Promise(r=>setTimeout(r,1000))
@@ -442,61 +484,69 @@ async function loadStock(ticker){
   $('stk-err').style.display='none'
   $('stk-msg').textContent=`Đang lấy dữ liệu cổ phiếu ${ticker}...`
 
-  const sys=`Bạn là chuyên gia chứng khoán Việt Nam. Trả về JSON THUẦN TÚY, không markdown, không backtick.`
-  const prompt=`QUAN TRỌNG: Đây là mã cổ phiếu "${ticker}" niêm yết trên sàn chứng khoán VIỆT NAM (HOSE/HNX/UPCOM), KHÔNG PHẢI chỉ số hay sản phẩm tài chính quốc tế. ${extraNote}
-Cung cấp thông tin chính xác về cổ phiếu này tại Việt Nam.
-Trả về JSON chính xác:
-{
-  "companyName": "Tên công ty đầy đủ",
-  "shortName": "Tên ngắn",
-  "sector": "Ngành",
-  "exchange": "HOSE hoặc HNX hoặc UPCOM",
-  "price": 87500,
-  "changePct": 1.45,
-  "pe": 12.4,
-  "pb": 2.1,
-  "roe": 20.1,
-  "eps": 7056,
-  "marketCapTrillion": 332.5,
-  "high52w": 95000,
-  "low52w": 72000,
-  "priceHistory": [
-    {"date": "T1/25", "close": 82000},
-    {"date": "T2/25", "close": 84000},
-    {"date": "T3/25", "close": 85500},
-    {"date": "T4/25", "close": 86000},
-    {"date": "T5/25", "close": 87500}
-  ],
-  "rsi": 58,
-  "macdSignal": "Bullish",
-  "trend": "Tăng",
-  "support": 84000,
-  "resistance": 92000,
-  "volumeAvg": "4.2 triệu"
-}`
+  // Bước 1: Lấy giá thực từ Yahoo Finance qua Cloudflare Worker
+  $('stk-msg').textContent='Đang lấy giá thực từ thị trường...'
+  const yahooData = await fetchYahoo(ticker)
+
+  // Bước 2: Groq chỉ cung cấp chỉ số kỹ thuật (không cần đoán giá)
+  $('stk-msg').textContent='Đang phân tích chỉ số kỹ thuật...'
+  const sys=`Bạn là chuyên gia chứng khoán Việt Nam. Trả về JSON THUẦN TÚY, không markdown.`
+  const priceCtx = yahooData
+    ? `Giá: ${(yahooData.price||0).toLocaleString('vi-VN')} VND, 52w: ${(yahooData.high52w||0).toLocaleString('vi-VN')} - ${(yahooData.low52w||0).toLocaleString('vi-VN')}`
+    : ''
+  const prompt=`Mã ${ticker} — ${companyHint} ${priceCtx}
+Cung cấp chỉ số kỹ thuật và định giá cơ bản. JSON:
+{"pe":12.4,"pb":2.1,"roe":20.1,"eps":7056,"volumeAvg":"4.2 triệu","rsi":58,"macdSignal":"Bullish","trend":"Tăng","support":84000,"resistance":92000}`
 
   try{
     const txt=await groq(prompt,sys)
-    const d=pj(txt)
-    // Override tên công ty bằng database cục bộ (đáng tin hơn AI)
-    if(dbInfo){d.companyName=dbInfo.n;d.sector=dbInfo.s;d.exchange=dbInfo.e}
+    const groqData=pj(txt)
+
+    const d={
+      companyName: dbInfo?.n||ticker,
+      shortName:   dbInfo?.n||ticker,
+      sector:      dbInfo?.s||'',
+      exchange:    dbInfo?.e||'',
+      price:       yahooData?.price       || 0,
+      changePct:   yahooData?.changePct   || 0,
+      high52w:     yahooData?.high52w     || null,
+      low52w:      yahooData?.low52w      || null,
+      marketCap:   yahooData?.marketCap   || null,
+      pe:          yahooData?.pe          || groqData.pe,
+      eps:         yahooData?.eps         || groqData.eps,
+      pb:          groqData.pb,
+      roe:         groqData.roe,
+      marketCapTrillion: yahooData?.marketCap ? (yahooData.marketCap/1e12).toFixed(1) : null,
+      volumeAvg:   groqData.volumeAvg,
+      rsi:         groqData.rsi,
+      macdSignal:  groqData.macdSignal,
+      trend:       groqData.trend,
+      support:     groqData.support,
+      resistance:  groqData.resistance,
+      priceHistory: yahooData?.bars?.length>1
+        ? yahooData.bars.slice(-20).map(b=>({
+            date: new Date(b.tradingDate).toLocaleDateString('vi-VN',{month:'numeric',year:'2-digit'}).replace('/','/'),
+            close: b.close
+          }))
+        : [],
+      dataSource: yahooData ? 'Yahoo Finance' : 'Groq AI'
+    }
+
     G.stockData=d
     $('stk-loading').style.display='none'
-
-    // Header
     $('stk-price').textContent=fmtP(d.price)
     const ce=$('stk-chg')
     ce.textContent=`${(d.changePct||0)>=0?'▲':'▼'} (${fmtPct(d.changePct)})`
     ce.style.color=(d.changePct||0)>=0?UP:DN
-    $('stk-name').textContent=d.companyName||d.shortName||''
+    $('stk-name').textContent=d.companyName
     $('stk-meta').textContent=[d.exchange,d.sector,d.volumeAvg?`KL TB: ${d.volumeAvg}`:null].filter(Boolean).join(' · ')
+    $('approx-note').innerHTML=d.dataSource==='Yahoo Finance'
+      ? '<i class="ti ti-circle-check" style="font-size:11px;color:var(--up)"></i>&nbsp;Giá thực từ Yahoo Finance · Kỹ thuật từ Groq AI'
+      : '<i class="ti ti-info-circle" style="font-size:11px"></i>&nbsp;Dữ liệu giá ước tính từ Groq AI (không real-time)'
 
-    // Watchlist cache
     if(!G.wlData[ticker])G.wlData[ticker]={}
-    G.wlData[ticker].name=d.shortName||d.companyName
-    G.wlData[ticker].sector=d.sector
-    G.wlData[ticker].price=d.price
-    G.wlData[ticker].chg=d.changePct
+    Object.assign(G.wlData[ticker],{name:d.companyName,sector:d.sector,price:d.price,chg:d.changePct})
+    if(yahooData?.bars?.length>1) G.wlData[ticker].spark=yahooData.bars.slice(-7).map(b=>b.close)
 
     renderChart(d)
     renderMets(d)
@@ -507,189 +557,3 @@ Trả về JSON chính xác:
     $('stk-err').textContent=`Lỗi: ${e.message}`
     $('stk-err').style.display='block'
   }
-}
-
-function renderChart(d){
-  if(G.chart){G.chart.destroy();G.chart=null}
-  if(!d.priceHistory?.length)return
-  const labels=d.priceHistory.map(p=>p.date)
-  const closes=d.priceHistory.map(p=>p.close)
-  G.chart=new Chart($('chart'),{
-    type:'line',
-    data:{labels,datasets:[{
-      label:'Giá',data:closes,borderColor:'#1a73e8',borderWidth:2,
-      fill:true,backgroundColor:'rgba(26,115,232,0.06)',tension:.3,pointRadius:3,pointBackgroundColor:'#1a73e8'
-    }]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{
-        x:{ticks:{font:{size:10},color:NEU},grid:{color:'rgba(136,135,128,.1)'}},
-        y:{position:'right',ticks:{font:{size:10},color:NEU,callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v},grid:{color:'rgba(136,135,128,.1)'}}
-      }
-    }
-  })
-}
-
-function renderMets(d){
-  $('stk-mets').innerHTML=[
-    {l:'P/E',v:d.pe?.toFixed(1)??'—'},
-    {l:'P/B',v:d.pb?.toFixed(2)??'—'},
-    {l:'ROE',v:d.roe?d.roe.toFixed(1)+'%':'—'},
-    {l:'EPS',v:d.eps?fmtP(Math.round(d.eps)):'—'},
-    {l:'52w Cao',v:fmtP(d.high52w)},
-    {l:'52w Thấp',v:fmtP(d.low52w)},
-    {l:'Vốn hóa',v:d.marketCapTrillion?d.marketCapTrillion.toFixed(1)+' nghìn tỷ':'—'},
-    {l:'KL TB',v:d.volumeAvg||'—'},
-  ].map(({l,v})=>`<div class="met"><div class="met-l">${l}</div><div class="met-v">${v}</div></div>`).join('')
-}
-
-function renderTA(d){
-  const rsiC=d.rsi>70?DN:d.rsi<30?UP:NEU
-  const rsiL=d.rsi>70?'Quá mua':d.rsi<30?'Quá bán':'Trung tính'
-  const macdC=d.macdSignal==='Bullish'?UP:DN
-  const trendC=d.trend?.includes('Tăng')?UP:d.trend?.includes('Giảm')?DN:NEU
-  $('ta-body').innerHTML=[
-    {l:'RSI (14)',v:`${d.rsi??'—'} — ${rsiL}`,c:rsiC,w:d.rsi??50},
-    {l:'MACD Signal',v:d.macdSignal||'—',c:macdC,w:d.macdSignal==='Bullish'?70:30},
-    {l:'Xu hướng',v:d.trend||'—',c:trendC,w:d.trend?.includes('Tăng')?72:30},
-    {l:'Hỗ trợ',v:fmtP(d.support),c:UP,w:40},
-    {l:'Kháng cự',v:fmtP(d.resistance),c:DN,w:70},
-  ].map(({l,v,c,w})=>`<div class="sig-row">
-    <span class="sig-lbl">${l}</span>
-    <div class="sig-track"><div class="sig-fill" style="width:${w}%;background:${c}"></div></div>
-    <span class="sig-val" style="color:${c}">${v}</span>
-  </div>`).join('')
-}
-
-// ── Analysis ──────────────────────────────────────────────
-function goAnalysis(){if(!G.ticker||!G.stockData)return;showV('analysis');if(!G.an)runAnalysis()}
-
-async function runAnalysis(){
-  $('an-body').innerHTML=''
-  $('an-err').style.display='none'
-  $('an-loading').style.display='block'
-  $('an-refresh').disabled=true
-  $('an-msg').textContent='Đang phân tích toàn diện...'
-
-  const d=G.stockData
-  const sys=`Bạn là chuyên gia phân tích chứng khoán Việt Nam chuyên nghiệp. Trả về JSON THUẦN TÚY không markdown.`
-  const prompt=`Phân tích chuyên sâu cổ phiếu ${G.ticker} (${d.companyName}).
-Dữ liệu: Giá ${fmtP(d.price)} VND (${fmtPct(d.changePct)}), RSI ${d.rsi}, MACD ${d.macdSignal}, Xu hướng ${d.trend}
-Cơ bản: P/E ${d.pe}, ROE ${d.roe}%, Vốn hóa ${d.marketCapTrillion} nghìn tỷ
-Ngành: ${d.sector} | Sàn: ${d.exchange}
-Hỗ trợ: ${fmtP(d.support)} | Kháng cự: ${fmtP(d.resistance)}
-
-Phân tích toàn diện dựa trên kiến thức về thị trường VN và tình hình ngành. JSON:
-{"verdict":"MUA","confidence":72,"targetPrice":96000,"stopLoss":82000,"riskScore":4,
-"shortTerm":{"outlook":"Tích cực","summary":"Phân tích 1-5 phiên cụ thể","support":84000,"resistance":92000},
-"mediumTerm":{"outlook":"Tích cực","summary":"Phân tích 1-3 tháng","targetPrice":95000},
-"longTerm":{"outlook":"Tích cực","summary":"Phân tích 6-12 tháng","thesis":"Luận điểm đầu tư"},
-"risks":[{"text":"Rủi ro cụ thể","level":"high"}],
-"macro":"Yếu tố vĩ mô tác động đến ${G.ticker}",
-"sectorOutlook":"Triển vọng ngành ${d.sector} 3-6 tháng",
-"keyFactors":["Yếu tố quan trọng 1","Yếu tố 2","Yếu tố 3"]}`
-
-  try{
-    const txt=await groq(prompt,sys)
-    G.an=pj(txt)
-    renderAnalysis()
-  }catch(e){
-    $('an-err').textContent=`Lỗi: ${e.message}`
-    $('an-err').style.display='block'
-  }
-  $('an-loading').style.display='none'
-  $('an-refresh').disabled=false
-}
-
-function renderAnalysis(){
-  const a=G.an,d=G.stockData
-  const vmap={MUA:{c:UP,bg:'#E1F5EE',ic:'ti-trending-up'},BÁN:{c:DN,bg:'#FAECE7',ic:'ti-trending-down'},GIỮ:{c:NEU,bg:'#F1EFE8',ic:'ti-minus'}}
-  const vd=vmap[a.verdict]||vmap.GIỮ
-
-  const tfHTML=[
-    {k:'shortTerm',l:'Ngắn hạn',sub:'1–5 phiên',ic:'ti-clock'},
-    {k:'mediumTerm',l:'Trung hạn',sub:'1–3 tháng',ic:'ti-calendar'},
-    {k:'longTerm',l:'Dài hạn',sub:'6–12 tháng',ic:'ti-calendar-stats'},
-  ].map(({k,l,sub,ic})=>{
-    const t=a[k];if(!t)return''
-    const ol=(t.outlook||'').toLowerCase()
-    const oc=ol.includes('tích cực')||ol.includes('tăng')?UP:ol.includes('tiêu cực')||ol.includes('giảm')?DN:NEU
-    return`<div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
-        <span style="font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px"><i class="ti ${ic}" style="font-size:13px"></i>${l}</span>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:10px;color:var(--t3)">${sub}</span>
-          <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;background:${oc}22;color:${oc}">${t.outlook}</span>
-        </div>
-      </div>
-      <p style="font-size:12px;color:var(--t2);margin:0;line-height:1.65">${t.summary}</p>
-      ${t.support?`<div style="font-size:10px;color:var(--t3);margin-top:5px">Hỗ trợ: <strong>${fmtP(t.support)}</strong> · Kháng cự: <strong>${fmtP(t.resistance)}</strong></div>`:''}
-      ${t.thesis?`<div style="font-size:10px;color:var(--t3);margin-top:4px;font-style:italic">"${t.thesis}"</div>`:''}
-    </div>`
-  }).join('')
-
-  $('an-body').innerHTML=`
-    ${_model?`<div style="font-size:10px;color:var(--t3);text-align:right;margin-bottom:5px">Groq ${_model}</div>`:''}
-    <div class="card" style="border-width:1.5px;border-color:${vd.c}">
-      <div class="verdict-wrap">
-        <div class="verdict-ring" style="background:${vd.bg}"><i class="ti ${vd.ic}" style="color:${vd.c}"></i></div>
-        <div style="flex:1">
-          <div style="font-size:10px;color:var(--t2);margin-bottom:3px">Khuyến nghị tổng hợp</div>
-          <div style="font-size:18px;font-weight:700;margin-bottom:5px">${a.verdict} — Tin cậy ${a.confidence}%</div>
-          <div class="conf-track"><div class="conf-fill" style="width:${a.confidence}%;background:${vd.c}"></div></div>
-        </div>
-        ${a.riskScore!=null?`<div style="text-align:center;flex-shrink:0">
-          <div style="font-size:20px;font-weight:700;color:${a.riskScore>6?DN:a.riskScore>3?'#EF9F27':UP}">${a.riskScore}/10</div>
-          <div style="font-size:9px;color:var(--t3);font-weight:600">RISK</div>
-        </div>`:''}
-      </div>
-    </div>
-    <div class="tgt-grid">
-      <div class="met"><div class="met-l">Giá hiện tại</div><div class="met-v">${fmtP(d?.price)}</div></div>
-      <div class="met"><div class="met-l">Mục tiêu</div><div class="met-v" style="color:${UP}">${fmtP(a.targetPrice)}</div><div class="met-sub">${a.targetPrice&&d?.price?'+'+((a.targetPrice-d.price)/d.price*100).toFixed(1)+'%':''}</div></div>
-      <div class="met"><div class="met-l">Cắt lỗ</div><div class="met-v" style="color:${DN}">${fmtP(a.stopLoss)}</div><div class="met-sub">${a.stopLoss&&d?.price?((a.stopLoss-d.price)/d.price*100).toFixed(1)+'%':''}</div></div>
-    </div>
-    ${tfHTML}
-    ${a.keyFactors?.length?`<div class="card">
-      <div style="font-size:12px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:5px"><i class="ti ti-list-check" style="font-size:13px"></i>Yếu tố chính</div>
-      ${a.keyFactors.map(f=>`<div style="display:flex;gap:8px;margin-bottom:5px"><span style="color:var(--blue);font-size:13px">·</span><span style="font-size:12px;color:var(--t2)">${f}</span></div>`).join('')}
-    </div>`:''}
-    ${a.macro?`<div class="card"><div style="font-size:12px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:5px"><i class="ti ti-world" style="font-size:13px"></i>Vĩ mô & thị trường</div><p style="font-size:12px;color:var(--t2);margin:0;line-height:1.6">${a.macro}</p></div>`:''}
-    ${a.sectorOutlook?`<div class="card"><div style="font-size:12px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:5px"><i class="ti ti-building-factory" style="font-size:13px"></i>Triển vọng ngành</div><p style="font-size:12px;color:var(--t2);margin:0;line-height:1.6">${a.sectorOutlook}</p></div>`:''}
-    ${a.risks?.length?`<div class="card">
-      <div style="font-size:12px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:5px"><i class="ti ti-alert-triangle" style="font-size:13px;color:#BA7517"></i>Rủi ro cần theo dõi</div>
-      ${a.risks.map((r,i)=>{const rc=r.level==='high'?DN:r.level==='medium'?'#EF9F27':NEU;return`<div class="risk-row"><span class="risk-dot" style="background:${rc}"></span><span style="font-size:12px;color:var(--t2);line-height:1.5">${r.text||r}</span></div>`}).join('')}
-    </div>`:''}
-    <p class="disclaimer"><i class="ti ti-info-circle" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>Phân tích từ Groq AI dựa trên kiến thức thị trường đến đầu 2025. Giá và số liệu mang tính tham khảo, không phải real-time. Không phải tư vấn tài chính.</p>`
-}
-
-// ── Brief ─────────────────────────────────────────────────
-async function loadBrief(){
-  const btn=$('brief-btn'),body=$('brief-body')
-  btn.textContent='Đang tải...';btn.disabled=true;body.innerHTML=''
-  try{
-    const now=new Date().toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})
-    const txt=await groq(
-      `Bây giờ là ${now} giờ VN. Cung cấp tổng quan thị trường tài chính. JSON thuần túy:
-{"wallStreet":{"sp500":"+0.5%","nasdaq":"+0.3%","dow":"-0.1%","summary":"1 câu nhận định"},"asia":{"nikkei":"+0.2%","hangseng":"-0.5%","shanghai":"+0.1%","summary":"1 câu"},"oil":{"brent":"$75"},"gold":"$2350","usdvnd":"25,480","vnImpact":"Nhận định VN-Index và thị trường chứng khoán Việt Nam 2-3 câu","watchSectors":["Ngân hàng","Bất động sản"],"events":["Yếu tố cần chú ý 1","Yếu tố 2"]}`,
-      `Bạn là chuyên gia tài chính. Trả về JSON thuần túy không markdown.`
-    )
-    const d=pj(txt)
-    body.style.marginTop='10px'
-    body.innerHTML=`
-      <div class="brief-g2">
-        ${[['S&P 500',d.wallStreet?.sp500],['Nasdaq',d.wallStreet?.nasdaq],['Nikkei',d.asia?.nikkei],['Hang Seng',d.asia?.hangseng]].map(([l,v])=>`<div class="bi"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">${l}</div><div style="font-size:13px;font-weight:600;color:${String(v).startsWith('+')?UP:String(v).startsWith('-')?DN:'var(--t)'}">${v||'—'}</div></div>`).join('')}
-      </div>
-      <div class="brief-g3">
-        ${[['Dầu Brent',d.oil?.brent],['Vàng',d.gold],['USD/VND',d.usdvnd]].map(([l,v])=>`<div class="bi-c"><div style="font-size:9px;color:var(--t3);margin-bottom:2px">${l}</div><div style="font-size:12px;font-weight:600">${v||'—'}</div></div>`).join('')}
-      </div>
-      <p style="font-size:12px;color:var(--t2);margin:0 0 6px;line-height:1.6">${d.vnImpact||''}</p>
-      ${d.watchSectors?.length?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px">${d.watchSectors.map(s=>`<span class="stag">${s}</span>`).join('')}</div>`:''}
-      ${d.events?.length?`<div style="font-size:11px;color:var(--t2)">${d.events.map(e=>`<div style="margin-bottom:2px">· ${e}</div>`).join('')}</div>`:''}`
-  }catch(e){
-    body.innerHTML=`<div style="font-size:12px;color:var(--dn);margin-top:8px">${e.message}</div>`
-  }
-  btn.textContent='Cập nhật ↗';btn.disabled=false
-}
-</script>
-</body>
-</html>
