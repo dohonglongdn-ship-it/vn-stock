@@ -263,6 +263,8 @@ code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font
 <script>
 'use strict'
 
+const $ = id => document.getElementById(id)
+
 // ══════════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════════
@@ -315,7 +317,6 @@ function showV(id) {
   document.querySelectorAll('.bni').forEach(b => b.classList.remove('on'))
   const b = document.getElementById('bn-'+id); if (b) b.classList.add('on')
 }
-const $ = id => document.getElementById(id)
 
 // ══════════════════════════════════════════════════════════
 //  HELPERS
