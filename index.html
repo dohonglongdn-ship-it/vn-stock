@@ -154,7 +154,7 @@ code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font
   <label style="font-size:12px;font-weight:500;color:var(--t2);margin-bottom:6px;display:block">Groq API Key</label>
   <input class="inp" id="key-inp" type="password" placeholder="gsk_..." autocomplete="off" onkeydown="if(event.key==='Enter')boot()"/>
   <button class="btn-primary" onclick="boot()"><i class="ti ti-rocket" style="font-size:13px;vertical-align:-1px;margin-right:5px"></i>Bắt đầu</button>
-  <p class="setup-note"><i class="ti ti-shield-check" style="font-size:11px;vertical-align:-1px;margin-right:3px"></i>Key lưu trên trình duyệt, chỉ gửi đến Groq. Dữ liệu giá từ TCBS. Groq miễn phí, không lo hết quota.</p>
+  <p class="setup-note"><i class="ti ti-shield-check" style="font-size:11px;vertical-align:-1px;margin-right:3px"></i>Key lưu trên trình duyệt, chỉ gửi đến Groq. Dữ liệu giá từ Yahoo Finance — miễn phí, không cần API key. Groq AI phân tích miễn phí, không lo hết quota.</p>
 </div></div>
 </div>
 
@@ -171,7 +171,7 @@ code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font
       <button type="submit" aria-label="Tìm"><i class="ti ti-search"></i></button>
     </form>
     <div class="nav-end">
-      <span id="src-badge" class="badge badge-g" style="margin:0;font-size:9px">TCBS + Groq</span>
+      <span id="src-badge" class="badge badge-g" style="margin:0;font-size:9px">Yahoo + Groq</span>
       <button class="icon-btn" onclick="resetKey()" title="Cài đặt"><i class="ti ti-settings"></i></button>
     </div>
   </div>
@@ -213,7 +213,7 @@ code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font
         </button>
       </div>
       <div class="tab-row" id="period-tabs"></div>
-      <div id="stk-loading" style="display:none" class="loading-wrap"><i class="ti ti-refresh spin" style="font-size:22px;margin-bottom:8px;display:block"></i>Đang tải dữ liệu từ TCBS...</div>
+      <div id="stk-loading" style="display:none" class="loading-wrap"><i class="ti ti-refresh spin" style="font-size:22px;margin-bottom:8px;display:block"></i>Đang tải dữ liệu từ Yahoo Finance...</div>
       <div id="stk-err" class="err-box" style="display:none"></div>
       <div id="stk-body" style="display:none">
         <div class="card">
@@ -333,47 +333,60 @@ function sparkSVG(data, chg) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  TCBS DATA LAYER — Dữ liệu giá (không tốn quota AI)
-//  Dùng CORS proxy vì TCBS chặn cross-origin từ GitHub Pages
+//  DATA LAYER — Yahoo Finance (CORS ok, không cần proxy)
+//  Hỗ trợ HOSE (.VN) và HNX (.HN)
+//  Miễn phí, không cần API key
 // ══════════════════════════════════════════════════════════
-const TCBS = 'https://apipubaws.tcbs.com.vn'
+const YF = 'https://query1.finance.yahoo.com/v8/finance/chart'
+const RANGE = { 1:'1mo', 3:'3mo', 6:'6mo', 12:'1y' }
+const SUFFIXES = ['.VN', '.HN', '']   // HOSE → HNX → không suffix
 
-// Thử proxy lần lượt cho đến khi thành công
-async function proxyFetch(url) {
-  const proxies = [
-    u => u,  // Thử trực tiếp trước
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
-    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  ]
-  let lastErr = null
-  for (const proxy of proxies) {
+async function yfFetch(ticker, range='3mo') {
+  for (const sfx of SUFFIXES) {
     try {
-      const r = await fetch(proxy(url), { signal: AbortSignal.timeout(8000) })
+      const url = `${YF}/${ticker}${sfx}?interval=1d&range=${range}&includePrePost=false`
+      const r = await fetch(url, { signal: AbortSignal.timeout(10000) })
       if (!r.ok) continue
-      const txt = await r.text()
-      // allorigins bọc trong {contents: "..."}
-      try {
-        const wrapper = JSON.parse(txt)
-        if (wrapper.contents) return JSON.parse(wrapper.contents)
-        return wrapper
-      } catch { return JSON.parse(txt) }
-    } catch(e) { lastErr = e }
+      const d = await r.json()
+      const res = d.chart?.result?.[0]
+      if (!res?.timestamp?.length) continue
+      return { result: res, suffix: sfx }
+    } catch {}
   }
-  throw lastErr || new Error('Không kết nối được TCBS')
+  throw new Error(`Không tìm thấy dữ liệu cho "${ticker}". Kiểm tra lại mã cổ phiếu.`)
 }
 
 async function fetchBars(ticker, months) {
-  const to   = Math.floor(Date.now() / 1000)
-  const from = Math.floor(to - months * 30 * 24 * 3600)
-  const d = await proxyFetch(`${TCBS}/stock-insight/v1/stock/bars-long-term?ticker=${ticker}&type=stock&resolution=D&from=${from}&to=${to}`)
-  return (d.data || [])
-    .sort((a, b) => new Date(a.tradingDate) - new Date(b.tradingDate))
-    .filter(b => b.close > 0)
+  const { result } = await yfFetch(ticker, RANGE[months] || '3mo')
+  const ts = result.timestamp
+  const q  = result.indicators.quote[0]
+  return ts.map((t, i) => ({
+    tradingDate: new Date(t * 1000).toISOString(),
+    open:   q.open[i]   ?? null,
+    high:   q.high[i]   ?? null,
+    low:    q.low[i]    ?? null,
+    close:  q.close[i]  ?? null,
+    volume: q.volume[i] ?? 0,
+  })).filter(b => b.close != null && b.close > 0)
 }
 
 async function fetchInfo(ticker) {
-  return proxyFetch(`${TCBS}/tcanalysis/v1/ticker/${ticker}/overview`)
+  try {
+    const { result, suffix } = await yfFetch(ticker, '1mo')
+    const m = result.meta
+    // Giá trị từ Yahoo Finance (VND cho VN stocks)
+    return {
+      companyName:  m.longName  || m.shortName || ticker,
+      shortName:    m.shortName || ticker,
+      exchange:     suffix==='.VN'?'HOSE':suffix==='.HN'?'HNX':'',
+      industryName: m.industry  || '',
+      pe:    m.trailingPE               || null,
+      pb:    null,
+      roe:   null,
+      eps:   m.epsTrailingTwelveMonths  || null,
+      marketCap: m.marketCap            || null,
+    }
+  } catch { return null }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -453,7 +466,7 @@ const TA = {
 // ══════════════════════════════════════════════════════════
 //  GROQ AI — Miễn phí, không lo hết quota
 //  14.400 request/ngày, không cần web search
-//  Dữ liệu kỹ thuật đã tính từ TCBS — Groq chỉ phân tích
+//  Dữ liệu từ Yahoo Finance — Groq phân tích
 // ══════════════════════════════════════════════════════════
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const GROQ_MODELS = [
@@ -924,7 +937,7 @@ function renderAnalysis() {
       }).join('')}
     </div>`:''}
 
-    <p class="disclaimer"><i class="ti ti-info-circle" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>Dữ liệu giá từ TCBS (thời gian thực). Phân tích từ Groq AI dựa trên dữ liệu kỹ thuật và kiến thức thị trường. Chỉ mang tính tham khảo, không phải tư vấn tài chính.</p>`
+    <p class="disclaimer"><i class="ti ti-info-circle" style="font-size:10px;vertical-align:-1px;margin-right:3px"></i>Dữ liệu giá từ Yahoo Finance. Phân tích từ Groq AI dựa trên dữ liệu kỹ thuật và kiến thức thị trường. Chỉ mang tính tham khảo, không phải tư vấn tài chính.</p>`
 }
 
 // ══════════════════════════════════════════════════════════
