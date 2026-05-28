@@ -212,6 +212,84 @@ function $(id){return document.getElementById(id)}
 const G={key:localStorage.getItem('vnstk_key')||'',ticker:'',stockData:null,an:null,wl:[],wlData:{},chart:null}
 try{G.wl=JSON.parse(localStorage.getItem('vnstk_wl')||'["VCB","HPG","VNM"]')}catch{}
 
+
+// ══════════════════════════════════════════════════════════
+//  DATABASE CỔ PHIẾU VIỆT NAM — tên chính xác, không dùng AI
+//  Nguồn: Danh sách niêm yết HOSE/HNX/UPCOM
+// ══════════════════════════════════════════════════════════
+const VN_STOCKS = {
+  // Ngân hàng
+  VCB:{n:'Ngân hàng TMCP Ngoại thương Việt Nam',s:'Ngân hàng',e:'HOSE'},
+  BID:{n:'Ngân hàng TMCP Đầu tư và Phát triển VN (BIDV)',s:'Ngân hàng',e:'HOSE'},
+  CTG:{n:'Ngân hàng TMCP Công Thương Việt Nam (VietinBank)',s:'Ngân hàng',e:'HOSE'},
+  MBB:{n:'Ngân hàng TMCP Quân đội (MB Bank)',s:'Ngân hàng',e:'HOSE'},
+  TCB:{n:'Ngân hàng TMCP Kỹ Thương Việt Nam (Techcombank)',s:'Ngân hàng',e:'HOSE'},
+  ACB:{n:'Ngân hàng TMCP Á Châu (ACB)',s:'Ngân hàng',e:'HOSE'},
+  VPB:{n:'Ngân hàng TMCP Việt Nam Thịnh Vượng (VPBank)',s:'Ngân hàng',e:'HOSE'},
+  HDB:{n:'Ngân hàng TMCP Phát triển TP.HCM (HDBank)',s:'Ngân hàng',e:'HOSE'},
+  STB:{n:'Ngân hàng TMCP Sài Gòn Thương Tín (Sacombank)',s:'Ngân hàng',e:'HOSE'},
+  EIB:{n:'Ngân hàng TMCP Xuất Nhập khẩu Việt Nam (Eximbank)',s:'Ngân hàng',e:'HOSE'},
+  SHB:{n:'Ngân hàng TMCP Sài Gòn - Hà Nội (SHB)',s:'Ngân hàng',e:'HNX'},
+  LPB:{n:'Ngân hàng TMCP Lộc Phát Việt Nam (LPBank)',s:'Ngân hàng',e:'HOSE'},
+  OCB:{n:'Ngân hàng TMCP Phương Đông (OCB)',s:'Ngân hàng',e:'HOSE'},
+  // Chứng khoán
+  SSI:{n:'Công ty Cổ phần Chứng khoán SSI',s:'Chứng khoán',e:'HOSE'},
+  VND:{n:'Công ty Cổ phần Chứng khoán VNDirect',s:'Chứng khoán',e:'HOSE'},
+  HCM:{n:'Công ty Cổ phần Chứng khoán HCM (HSC)',s:'Chứng khoán',e:'HOSE'},
+  VIX:{n:'Công ty Cổ phần Chứng khoán VIX',s:'Chứng khoán',e:'HOSE'},
+  MBS:{n:'Công ty Cổ phần Chứng khoán MB (MBS)',s:'Chứng khoán',e:'HNX'},
+  BSI:{n:'Công ty Cổ phần Chứng khoán BIDV (BSI)',s:'Chứng khoán',e:'HNX'},
+  // Thép - Khai khoáng
+  HPG:{n:'Công ty Cổ phần Tập đoàn Hòa Phát',s:'Thép',e:'HOSE'},
+  HSG:{n:'Công ty Cổ phần Tập đoàn Hoa Sen',s:'Thép',e:'HOSE'},
+  NKG:{n:'Công ty Cổ phần Thép Nam Kim',s:'Thép',e:'HOSE'},
+  // Thực phẩm - Tiêu dùng
+  VNM:{n:'Công ty Cổ phần Sữa Việt Nam (Vinamilk)',s:'Thực phẩm',e:'HOSE'},
+  MSN:{n:'Công ty Cổ phần Tập đoàn Masan',s:'Tiêu dùng',e:'HOSE'},
+  SAB:{n:'Tổng Công ty Cổ phần Bia - Rượu - NGK Sài Gòn (Sabeco)',s:'Đồ uống',e:'HOSE'},
+  BHN:{n:'Tổng Công ty Cổ phần Bia - Rượu - NGK Hà Nội (Habeco)',s:'Đồ uống',e:'HOSE'},
+  // Bất động sản
+  VIC:{n:'Tập đoàn Vingroup (Vingroup JSC)',s:'Bất động sản',e:'HOSE'},
+  VHM:{n:'Công ty Cổ phần Vinhomes',s:'Bất động sản',e:'HOSE'},
+  NVL:{n:'Công ty Cổ phần Tập đoàn Đầu tư Địa ốc No Va (Novaland)',s:'Bất động sản',e:'HOSE'},
+  PDR:{n:'Công ty Cổ phần Phát triển Bất động sản Phát Đạt',s:'Bất động sản',e:'HOSE'},
+  KDH:{n:'Công ty Cổ phần Đầu tư và Kinh doanh Nhà Khang Điền',s:'Bất động sản',e:'HOSE'},
+  DXG:{n:'Công ty Cổ phần Tập đoàn Đất Xanh',s:'Bất động sản',e:'HOSE'},
+  // Dầu khí
+  GAS:{n:'Tổng Công ty Khí Việt Nam (PV GAS)',s:'Dầu khí',e:'HOSE'},
+  PLX:{n:'Tập đoàn Xăng dầu Việt Nam (Petrolimex)',s:'Dầu khí',e:'HOSE'},
+  PVD:{n:'Tổng Công ty Cổ phần Khoan và Dịch vụ Khoan Dầu khí',s:'Dầu khí',e:'HOSE'},
+  PVS:{n:'Tổng Công ty Cổ phần Dịch vụ Kỹ thuật Dầu khí (PTSC)',s:'Dầu khí',e:'HNX'},
+  BSR:{n:'Công ty Cổ phần Lọc hóa dầu Bình Sơn',s:'Dầu khí',e:'UPCOM'},
+  // Viễn thông - Công nghệ
+  FPT:{n:'Công ty Cổ phần FPT',s:'Công nghệ',e:'HOSE'},
+  VGI:{n:'Tổng Công ty Cổ phần Đầu tư Quốc tế Viettel',s:'Viễn thông',e:'UPCOM'},
+  CMG:{n:'Công ty Cổ phần Tập đoàn Công nghệ CMC',s:'Công nghệ',e:'HOSE'},
+  // Bán lẻ
+  MWG:{n:'Công ty Cổ phần Đầu tư Thế Giới Di Động',s:'Bán lẻ',e:'HOSE'},
+  FRT:{n:'Công ty Cổ phần Bán lẻ Kỹ thuật số FPT (FPT Retail)',s:'Bán lẻ',e:'HOSE'},
+  PNJ:{n:'Công ty Cổ phần Vàng bạc Đá quý Phú Nhuận (PNJ)',s:'Bán lẻ',e:'HOSE'},
+  // Hàng không - Vận tải
+  HVN:{n:'Tổng Công ty Hàng không Việt Nam (Vietnam Airlines)',s:'Hàng không',e:'HOSE'},
+  VJC:{n:'Công ty Cổ phần Hàng không VietJet (VietJet Air)',s:'Hàng không',e:'HOSE'},
+  ACV:{n:'Tổng Công ty Cảng hàng không Việt Nam (ACV)',s:'Hàng không',e:'UPCOM'},
+  // Điện - Năng lượng
+  POW:{n:'Tổng Công ty Điện lực Dầu khí Việt Nam (PV Power)',s:'Điện',e:'HOSE'},
+  REE:{n:'Công ty Cổ phần Cơ Điện Lạnh (REE)',s:'Điện - Cơ điện',e:'HOSE'},
+  PC1:{n:'Công ty Cổ phần Tập đoàn PC1',s:'Điện',e:'HOSE'},
+  GEG:{n:'Công ty Cổ phần Điện Gia Lai',s:'Điện',e:'HOSE'},
+  // Xây dựng - Vật liệu
+  VGC:{n:'Tổng Công ty Viglacera (Viglacera)',s:'Vật liệu xây dựng',e:'HOSE'},
+  CTD:{n:'Công ty Cổ phần Xây dựng Coteccons',s:'Xây dựng',e:'HOSE'},
+  HBC:{n:'Công ty Cổ phần Tập đoàn Xây dựng Hòa Bình',s:'Xây dựng',e:'HOSE'},
+  // Bảo hiểm
+  BVH:{n:'Tập đoàn Bảo Việt (Bao Viet Holdings)',s:'Bảo hiểm',e:'HOSE'},
+  BMI:{n:'Tổng Công ty Cổ phần Bảo Minh',s:'Bảo hiểm',e:'HOSE'},
+}
+
+function getStockInfo(ticker) {
+  return VN_STOCKS[ticker.toUpperCase()] || null
+}
 // ── Groq AI ──────────────────────────────────────────────
 const GROQ_URL='https://api.groq.com/openai/v1/chat/completions'
 const MODELS=['llama-3.3-70b-versatile','llama-3.1-70b-versatile','mixtral-8x7b-32768','llama-3.1-8b-instant']
@@ -291,15 +369,24 @@ function addToWlDirect(e){
 }
 
 async function loadSingleWlData(t){
+  const db=getStockInfo(t)
   try{
+    const hint=db?`Đây là "${db.n}", ngành ${db.s}.`:`mã cổ phiếu Việt Nam`
     const txt=await groq(
-      `Cho tôi thông tin cổ phiếu ${t} trên sàn chứng khoán VIỆT NAM. JSON thuần túy:{"price":50000,"changePct":1.2,"companyName":"Tên công ty VN","sector":"Ngành"}`,
-      `Đây là mã cổ phiếu Việt Nam, không phải chỉ số quốc tế. Trả về JSON thuần túy không markdown.`
+      `Mã ${t} — ${hint}. Cho tôi giá hiện tại và % thay đổi. JSON thuần túy:{"price":50000,"changePct":1.2}`,
+      `Trả về JSON thuần túy không markdown.`
     )
     const d=pj(txt)
-    G.wlData[t]={price:d.price,chg:d.changePct,name:d.companyName,sector:d.sector,
-      spark:[d.price*0.97,d.price*0.98,d.price*0.99,d.price*1.0,d.price*1.01,d.price*1.02,d.price]}
-  }catch{}
+    G.wlData[t]={
+      price:d.price,chg:d.changePct,
+      name:db?.n||d.companyName||t,
+      sector:db?.s||d.sector||'',
+      spark:[d.price*0.97,d.price*0.98,d.price*0.99,d.price*1.0,d.price*1.01,d.price*1.02,d.price]
+    }
+  }catch{
+    // Nếu Groq lỗi, vẫn hiện tên từ database
+    if(db&&!G.wlData[t]?.name){G.wlData[t]={...(G.wlData[t]||{}),name:db.n,sector:db.s}}
+  }
   renderWl()
 }
 function toggleWl(){
@@ -313,8 +400,12 @@ async function loadWlData(){
   for(const t of G.wl){
     if(G.wlData[t]?.price)continue // skip nếu đã có
     try{
-      const txt=await groq(`Cho tôi thông tin cổ phiếu ${t} niêm yết trên sàn chứng khoán VIỆT NAM (HOSE/HNX/UPCOM). JSON thuần túy:{"price":87500,"changePct":1.45,"companyName":"Tên công ty Việt Nam","sector":"Ngành"}`,`Đây là mã cổ phiếu Việt Nam. Trả về JSON thuần túy không markdown.`)
-      const d=pj(txt);G.wlData[t]={...(G.wlData[t]||{}),price:d.price,chg:d.changePct,name:d.companyName,sector:d.sector,spark:[d.price*0.96,d.price*0.97,d.price*0.99,d.price*0.98,d.price*1.01,d.price*1.02,d.price]}
+      const db2=getStockInfo(t)
+      const hint2=db2?`Đây là "${db2.n}".`:'mã cổ phiếu Việt Nam'
+      const txt=await groq(`Mã ${t} — ${hint2} Giá và % thay đổi. JSON:{"price":87500,"changePct":1.45}`,`Trả về JSON thuần túy không markdown.`)
+      const d=pj(txt);G.wlData[t]={...(G.wlData[t]||{}),price:d.price,chg:d.changePct,
+        name:db2?.n||d.companyName||t,sector:db2?.s||d.sector||'',
+        spark:[d.price*0.96,d.price*0.97,d.price*0.99,d.price*0.98,d.price*1.01,d.price*1.02,d.price]}
     }catch{}
     renderWl()
     await new Promise(r=>setTimeout(r,1000))
@@ -352,17 +443,6 @@ async function loadStock(ticker){
   $('stk-msg').textContent=`Đang lấy dữ liệu cổ phiếu ${ticker}...`
 
   const sys=`Bạn là chuyên gia chứng khoán Việt Nam. Trả về JSON THUẦN TÚY, không markdown, không backtick.`
-  // Danh sách mã VN hay bị nhầm với chỉ số/term quốc tế
-  const vnNotes = {
-    'VIX': 'Công ty Cổ phần Chứng khoán VIX (không phải CBOE VIX index)',
-    'VND': 'Công ty Cổ phần Chứng khoán VNDirect (không phải tiền tệ VND)',
-    'SSI': 'Công ty Cổ phần Chứng khoán SSI',
-    'HDB': 'Ngân hàng TMCP Phát triển TP.HCM HDBank',
-    'TCB': 'Ngân hàng TMCP Kỹ Thương Techcombank',
-    'MBB': 'Ngân hàng TMCP Quân đội MB Bank',
-  }
-  const extraNote = vnNotes[ticker] ? `LƯU Ý QUAN TRỌNG: ${ticker} tại Việt Nam là ${vnNotes[ticker]}.` : ''
-
   const prompt=`QUAN TRỌNG: Đây là mã cổ phiếu "${ticker}" niêm yết trên sàn chứng khoán VIỆT NAM (HOSE/HNX/UPCOM), KHÔNG PHẢI chỉ số hay sản phẩm tài chính quốc tế. ${extraNote}
 Cung cấp thông tin chính xác về cổ phiếu này tại Việt Nam.
 Trả về JSON chính xác:
@@ -398,6 +478,8 @@ Trả về JSON chính xác:
   try{
     const txt=await groq(prompt,sys)
     const d=pj(txt)
+    // Override tên công ty bằng database cục bộ (đáng tin hơn AI)
+    if(dbInfo){d.companyName=dbInfo.n;d.sector=dbInfo.s;d.exchange=dbInfo.e}
     G.stockData=d
     $('stk-loading').style.display='none'
 
