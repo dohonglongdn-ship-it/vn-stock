@@ -66,10 +66,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .app-wrap{max-width:680px;margin:0 auto;padding-bottom:70px}
 .topbar{background:var(--bg);border-bottom:0.5px solid var(--bd);padding:8px 14px;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:100}
 .topbar-logo{font-size:15px;font-weight:700;display:flex;align-items:center;gap:5px;white-space:nowrap;color:var(--t)}
-.search-row{display:flex;gap:5px;flex:1;max-width:210px;margin-left:6px}
-.search-row input{flex:1;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--t);text-transform:uppercase;font-weight:500;transition:border-color .15s}
+.search-row{display:flex;gap:5px;flex:1;max-width:240px;margin-left:6px;position:relative;z-index:50}
+.search-row input{flex:1;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--t);text-transform:uppercase;font-weight:500;transition:border-color .15s;min-width:0}
 .search-row input:focus{outline:none;border-color:var(--blue)}
-.search-row button{padding:0 10px;border:0.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--t2);cursor:pointer}
+.search-row button{padding:0 10px;border:0.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--t2);cursor:pointer;flex-shrink:0}
 .topbar-end{margin-left:auto;display:flex;align-items:center;gap:6px}
 .icon-btn{background:none;border:none;cursor:pointer;font-size:19px;color:var(--t3);padding:3px}
 .page-body{padding:12px 14px}
@@ -147,8 +147,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font-family:monospace}
 a{color:var(--blue)}
 /* Autocomplete */
-.ac-wrap{position:relative;flex:1}
-.ac-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg);border:0.5px solid var(--bd2);border-radius:var(--r);box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:200;max-height:220px;overflow-y:auto;display:none}
+.ac-wrap{position:relative;flex:1;min-width:0}
+.ac-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:280px;background:var(--bg);border:0.5px solid var(--bd2);border-radius:var(--r);box-shadow:0 8px 24px rgba(0,0,0,0.15);z-index:9999;max-height:240px;overflow-y:auto;display:none}
 .ac-item{display:flex;align-items:center;gap:8px;padding:8px 11px;cursor:pointer;transition:background .1s}
 .ac-item:hover,.ac-item.focused{background:var(--bg2)}
 .ac-code{font-size:12px;font-weight:700;color:var(--blue);min-width:42px}
@@ -246,10 +246,10 @@ a{color:var(--blue)}
     <form class="search-row" onsubmit="onSearch(event)" style="position:relative">
       <div class="ac-wrap">
         <input id="q" placeholder="Mã / Tên công ty..." autocomplete="off"
-          oninput="onQueryInput(this.value)"
+          oninput="onQueryInput(this.value.toUpperCase());this.value=this.value.toUpperCase()"
           onkeydown="onQueryKey(event)"
-          onfocus="onQueryInput(this.value)"
-          onblur="setTimeout(()=>hideAC(),200)"/>
+          onfocus="if(this.value)onQueryInput(this.value)"
+          onblur="setTimeout(()=>hideAC(),250)"/>
         <div id="ac-dropdown" class="ac-dropdown"></div>
       </div>
       <button type="submit"><i class="ti ti-search" style="font-size:14px"></i></button>
@@ -315,9 +315,30 @@ a{color:var(--blue)}
       <div id="stock-loading" class="loading-box" style="display:none">
         <i class="ti ti-refresh spin" style="font-size:24px;margin-bottom:10px;display:block"></i>
         <div id="stock-loading-msg">Đang tải...</div>
-        <div style="font-size:10px;color:var(--t3);margin-top:4px">vnstock data + Groq AI</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:4px">vnstock data + Yahoo Finance + Groq AI</div>
       </div>
       <div id="stock-err" class="err-box" style="display:none"></div>
+      <!-- Nhập giá thủ công khi không lấy được real-time -->
+      <div id="manual-price-box" style="display:none">
+        <div class="card" style="border-color:#d97706;border-width:1.5px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+            <i class="ti ti-alert-triangle" style="font-size:14px;color:#d97706"></i>
+            <span style="font-size:12px;font-weight:600">Không lấy được giá real-time</span>
+            <span style="font-size:10px;color:var(--t3);margin-left:auto" id="manual-price-src"></span>
+          </div>
+          <p style="font-size:12px;color:var(--t2);margin-bottom:10px;line-height:1.5">Mã này không có trên Yahoo Finance (có thể là UPCOM). Nhập giá hiện tại để phân tích chính xác:</p>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="manual-price-inp" type="number" placeholder="VD: 14600"
+              style="flex:1;font-size:14px;padding:8px 12px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);font-weight:600"
+              onkeydown="if(event.key==='Enter')applyManualPrice()"/>
+            <span style="font-size:12px;color:var(--t2)">VND</span>
+            <button onclick="applyManualPrice()" style="padding:8px 16px;border:none;border-radius:var(--r);background:var(--blue);color:#fff;cursor:pointer;font-size:13px;font-weight:600">
+              Phân tích ↗
+            </button>
+          </div>
+          <div style="font-size:10px;color:var(--t3);margin-top:8px">💡 Xem giá tại: <a href="#" id="price-ref-link" target="_blank" style="color:var(--blue)">cafef.vn</a></div>
+        </div>
+      </div>
 
       <!-- Content -->
       <div id="stock-content" style="display:none">
@@ -539,6 +560,58 @@ const COMPANY_DB = {
   HAH:{n:'Hải An',f:'Công ty CP Vận tải và Xếp dỡ Hải An',s:'Logistics',e:'HOSE'},
   MSH:{n:'May Sông Hồng',f:'Công ty CP May Sông Hồng',s:'Dệt may',e:'HOSE'},
   TCH:{n:'Hoàng Huy',f:'Công ty CP Đầu tư Dịch vụ Tài chính Hoàng Huy',s:'Ô tô',e:'HOSE'},
+  // Dầu khí mở rộng
+  OIL:{n:'PV OIL',f:'Tổng Công ty Dầu Việt Nam (PV OIL)',s:'Dầu khí',e:'UPCOM'},
+  PGD:{n:'PGD',f:'Công ty CP Phân phối Khí thấp áp Dầu khí VN',s:'Dầu khí',e:'HOSE'},
+  PGS:{n:'PGS',f:'Công ty CP Kinh doanh Khí miền Nam',s:'Dầu khí',e:'UPCOM'},
+  CNG:{n:'CNG',f:'Công ty CP CNG Việt Nam',s:'Dầu khí',e:'HOSE'},
+  PVC:{n:'PVC',f:'Tổng Công ty Hóa chất và Dịch vụ Dầu khí',s:'Dầu khí',e:'HOSE'},
+  PXS:{n:'PXS',f:'Công ty CP Kết cấu Kim loại và Lắp máy Dầu khí',s:'Dầu khí',e:'HOSE'},
+  PSH:{n:'PSH',f:'Tổng Công ty CP Dịch vụ Tổng hợp Dầu khí',s:'Dầu khí',e:'HOSE'},
+  // Ngân hàng mở rộng
+  VBB:{n:'VietBank',f:'Ngân hàng TMCP Việt Nam Thương Tín',s:'Ngân hàng',e:'UPCOM'},
+  NAB:{n:'Nam A Bank',f:'Ngân hàng TMCP Nam Á',s:'Ngân hàng',e:'HOSE'},
+  BAB:{n:'BAC A BANK',f:'Ngân hàng TMCP Bắc Á',s:'Ngân hàng',e:'UPCOM'},
+  // Bất động sản mở rộng
+  IJC:{n:'IJC',f:'Công ty CP Phát triển Hạ tầng Kỹ thuật',s:'Bất động sản',e:'HOSE'},
+  CEO:{n:'CEO Group',f:'Tập đoàn C.E.O',s:'Bất động sản',e:'HOSE'},
+  SCR:{n:'Đất Phương Nam',f:'Công ty CP Địa ốc Sài Gòn Thương Tín',s:'Bất động sản',e:'HOSE'},
+  // Thực phẩm mở rộng
+  ANV:{n:'Nam Việt',f:'Công ty CP Nam Việt',s:'Thủy sản',e:'HOSE'},
+  VHC:{n:'Vĩnh Hoàn',f:'Công ty CP Vĩnh Hoàn',s:'Thủy sản',e:'HOSE'},
+  IDI:{n:'IDI',f:'Công ty CP Đầu tư và Phát triển Đa quốc gia IDI',s:'Thủy sản',e:'HOSE'},
+  MPC:{n:'Minh Phú',f:'Tập đoàn Thủy sản Minh Phú',s:'Thủy sản',e:'UPCOM'},
+  // Phân bón - Hóa chất
+  DPM:{n:'PVFCCo',f:'Tổng Công ty Phân bón và Hóa chất Dầu khí',s:'Phân bón',e:'HOSE'},
+  DCM:{n:'Đạm Cà Mau',f:'Công ty CP Phân bón Dầu khí Cà Mau',s:'Phân bón',e:'HOSE'},
+  BFC:{n:'Phân bón Bình Điền',f:'Công ty CP Phân bón Bình Điền',s:'Phân bón',e:'HOSE'},
+  // Cao su
+  PHR:{n:'Phước Hòa',f:'Công ty CP Cao su Phước Hòa',s:'Cao su',e:'HOSE'},
+  DPR:{n:'Đồng Phú',f:'Công ty CP Cao su Đồng Phú',s:'Cao su',e:'HOSE'},
+  TRC:{n:'Tây Ninh',f:'Công ty CP Cao su Tây Ninh',s:'Cao su',e:'HOSE'},
+  // Ngân hàng + Tài chính
+  HCT:{n:'Hapro',f:'Tổng Công ty Thương mại Hà Nội',s:'Bán lẻ',e:'UPCOM'},
+  VCI:{n:'Viet Capital',f:'Công ty CP Chứng khoán Bản Việt',s:'Chứng khoán',e:'HOSE'},
+  TVS:{n:'Thiên Việt',f:'Công ty CP Chứng khoán Thiên Việt',s:'Chứng khoán',e:'HNX'},
+  SBS:{n:'Saigon-Hanoi',f:'Công ty CP Chứng khoán Sài Gòn Hà Nội',s:'Chứng khoán',e:'HNX'},
+  // Vật liệu xây dựng
+  HT1:{n:'Xi măng Hà Tiên 1',f:'Công ty CP Xi măng Hà Tiên 1',s:'Vật liệu xây dựng',e:'HOSE'},
+  BCC:{n:'Xi măng Bỉm Sơn',f:'Công ty CP Xi măng Bỉm Sơn',s:'Vật liệu xây dựng',e:'HNX'},
+  HOM:{n:'Xi măng Hoàng Mai',f:'Công ty CP Xi măng Hoàng Mai',s:'Vật liệu xây dựng',e:'HNX'},
+  // Y tế - Dược
+  DHG:{n:'Dược Hậu Giang',f:'Công ty CP Dược Hậu Giang',s:'Dược phẩm',e:'HOSE'},
+  IMP:{n:'Imexpharm',f:'Công ty CP Dược phẩm Imexpharm',s:'Dược phẩm',e:'HOSE'},
+  DMC:{n:'Domesco',f:'Công ty CP Xuất nhập khẩu Y tế Domesco',s:'Dược phẩm',e:'HOSE'},
+  TRA:{n:'Traphaco',f:'Công ty CP Traphaco',s:'Dược phẩm',e:'HOSE'},
+  // Điện mở rộng
+  NT2:{n:'Nhiệt điện Nhơn Trạch 2',f:'Công ty CP Điện lực Dầu khí Nhơn Trạch 2',s:'Điện',e:'HOSE'},
+  VSH:{n:'Vĩnh Sơn - Sông Hinh',f:'Công ty CP Thủy điện Vĩnh Sơn - Sông Hinh',s:'Điện',e:'HOSE'},
+  SHP:{n:'Thủy điện Miền Nam',f:'Công ty CP Thủy điện Miền Nam',s:'Điện',e:'HOSE'},
+  TMP:{n:'Thủy điện Thác Mơ',f:'Công ty CP Thủy điện Thác Mơ',s:'Điện',e:'HOSE'},
+  GEG:{n:'Điện Gia Lai',f:'Công ty CP Điện Gia Lai',s:'Điện',e:'HOSE'},
+  // Công nghệ mở rộng
+  ELC:{n:'Elcom',f:'Công ty CP Điện tử và Truyền hình Cáp Việt Nam',s:'Công nghệ',e:'HOSE'},
+  SAM:{n:'SAM Holdings',f:'Công ty CP SAM Holdings',s:'Công nghệ',e:'HOSE'},
 }
 
 // ── State ───────────────────────────────────────────────────────────
@@ -664,9 +737,16 @@ async function fetchCSV(ticker) {
 }
 
 // ── Data: Real-time price via Cloudflare Worker → Yahoo Finance ──────
+// Mapping UPCOM tickers sang Yahoo Finance (một số có suffix khác)
+const YF_OVERRIDE = {
+  // UPCOM stocks thường không có trên Yahoo Finance VN
+  // Thêm vào đây nếu biết ticker Yahoo chính xác
+}
+
 async function fetchRealtime(ticker) {
+  const yfTicker = YF_OVERRIDE[ticker] || ticker
   try {
-    const r = await fetch(`${WORKER}/${ticker}`, {signal: AbortSignal.timeout(8000)})
+    const r = await fetch(`${WORKER}/${yfTicker}`, {signal: AbortSignal.timeout(8000)})
     if (!r.ok) return null
     const d = await r.json()
     if (d.error || !d.chart?.result?.[0]) return null
@@ -846,8 +926,22 @@ Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
     // Header
     el('h-price').textContent = fP(price)
     const ce = el('h-chg')
-    ce.textContent = `${chgPct>=0?'▲':'▼'} ${fPct(chgPct)}`
-    ce.style.color = chgPct>=0?C_UP:C_DN
+    if (!rt && csvBars) {
+      ce.textContent = `⚠ Giá 06/2023`
+      ce.style.color = '#d97706'
+      // Show manual price input
+      const mpBox = el('manual-price-box')
+      mpBox.style.display = 'block'
+      el('manual-price-src').textContent = 'Dữ liệu từ CSV 06/2023'
+      el('price-ref-link').href = `https://cafef.vn/co-phieu/${ticker.toLowerCase()}-ctck.chn`
+      el('price-ref-link').textContent = `Xem giá ${ticker} trên Cafef`
+      // Store CSV bars for TA even without real-time price
+      G.stockData._hasManualPrice = false
+    } else {
+      el('manual-price-box').style.display = 'none'
+      ce.textContent = `${chgPct>=0?'▲':'▼'} ${fPct(chgPct)}`
+      ce.style.color = chgPct>=0?C_UP:C_DN
+    }
     el('h-name').textContent = info?.f || ticker
     el('h-meta').innerHTML = [
       info?.e, info?.s,
@@ -856,10 +950,16 @@ Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
     ].filter(Boolean).join(' · ')
 
     // Data source
-    el('data-source-label').innerHTML = `<span class="src-label">
-      <i class="ti ti-${csvBars?'database':'globe'}" style="font-size:10px"></i>
-      ${G.stockData.dataSource}
-    </span>`
+    const srcHtml = csvBars && !rt
+      ? `<span class="src-label" style="background:#fff3cd;color:#856404;border:0.5px solid #ffc107">
+          <i class="ti ti-alert-triangle" style="font-size:10px"></i>
+          Giá từ CSV 06/2023 — chưa có giá thực hôm nay
+        </span>`
+      : `<span class="src-label">
+          <i class="ti ti-${rt?'globe':'database'}" style="font-size:10px"></i>
+          ${G.stockData.dataSource}
+        </span>`
+    el('data-source-label').innerHTML = srcHtml
 
     // Update wl cache
     G.wlCache[ticker] = {
@@ -882,8 +982,14 @@ Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
 
   } catch(e) {
     el('stock-loading').style.display = 'none'
-    el('stock-err').textContent = 'Lỗi: ' + e.message
-    el('stock-err').style.display = 'block'
+    // Nếu CSV có data nhưng không có giá real-time → show nhập giá thủ công
+    if (e.message.includes('real-time') || (!rt && !csvBars)) {
+      el('stock-err').textContent = 'Lỗi: ' + e.message
+      el('stock-err').style.display = 'block'
+    } else {
+      el('stock-err').textContent = 'Lỗi: ' + e.message
+      el('stock-err').style.display = 'block'
+    }
   }
 }
 
@@ -1841,6 +1947,44 @@ async function runScreener() {
     </table></div>
     <div style="font-size:10px;color:var(--t3);margin-top:6px">Nhấn mã để xem chi tiết. Dữ liệu từ vnstock CSV.</div>
   </div>`
+}
+
+// ── Manual Price Input ────────────────────────────────────────────────
+function applyManualPrice() {
+  const inp = el('manual-price-inp')
+  const price = parseFloat(inp.value.replace(/,/g,''))
+  if (!price || price <= 0) { alert('Nhập giá hợp lệ (VD: 14600)'); return }
+
+  // Cập nhật giá trong stockData
+  if (!G.stockData) return
+  G.stockData.price = price
+  G.stockData.chgPct = null
+  G.stockData._hasManualPrice = true
+
+  // Cập nhật header
+  el('h-price').textContent = fP(price)
+  const ce = el('h-chg')
+  ce.textContent = '✎ Giá nhập thủ công'
+  ce.style.color = '#d97706'
+
+  // Cập nhật watchlist
+  if (G.wlCache[G.ticker]) {
+    G.wlCache[G.ticker].price = price
+    G.wlCache[G.ticker].chg = null
+    localStorage.setItem('vnstk_wlc', JSON.stringify(G.wlCache))
+    renderWlList()
+  }
+
+  // Ẩn box nhập giá
+  el('manual-price-box').style.display = 'none'
+
+  // Hiện source label
+  el('data-source-label').innerHTML = `<span class="src-label" style="background:#fff3cd;color:#856404">
+    <i class="ti ti-edit" style="font-size:10px"></i>Giá nhập thủ công + vnstock CSV
+  </span>`
+
+  // Scroll xuống để xem nội dung
+  el('stock-content').scrollIntoView({behavior:'smooth', block:'start'})
 }
 
 // ── Brief ─────────────────────────────────────────────────────────────
