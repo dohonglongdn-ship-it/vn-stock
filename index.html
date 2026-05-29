@@ -840,16 +840,18 @@ function onSearch(e) {
 }
 
 // ── Groq AI ──────────────────────────────────────────────────────────
-async function groq(prompt, sys, maxTok=2000) {
+async function groq(prompt, sys, maxTok=2000, jsonMode=false) {
   const wait = 600 - (Date.now() - G.lastGroqCall)
   if (wait > 0) await new Promise(r=>setTimeout(r, wait))
   const models = G.groqModel ? [G.groqModel, ...GROQ_MODELS.filter(m=>m!==G.groqModel)] : GROQ_MODELS
   for (const model of models) {
     try {
+      const body = {model, messages:[{role:'system',content:sys},{role:'user',content:prompt}], max_tokens:maxTok, temperature:0.1}
+      if (jsonMode) body.response_format = {type:'json_object'}
       const r = await fetch(GROQ_URL, {
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':`Bearer ${VNSTK_KEY}`},
-        body: JSON.stringify({model, messages:[{role:'system',content:sys},{role:'user',content:prompt}], max_tokens:maxTok, temperature:0.1})
+        body: JSON.stringify(body)
       })
       const d = await r.json()
       if (r.status===429) throw new Error('Rate limit — thử lại sau 1 phút.')
@@ -1139,8 +1141,8 @@ async function loadStock(ticker) {
         `Mã ${ticker} — ${fHint}. Giá hiện tại ${fP(price)} VND.
 JSON: {"pe":${rt?.pe?.toFixed(1)||'null'},"pb":1.5,"roe":18.5,"eps":${rt?.eps?.toFixed(0)||'null'}}
 Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
-        'Bạn là chuyên gia tài chính VN. JSON THUẦN TÚY không markdown.',
-        200
+        'Return only JSON. No text.',
+        200, true
       )
       const fd = parseJ(ftxt)
       fundamental = {
@@ -1706,15 +1708,15 @@ async function runAnalysis() {
   if (!marketCtx || (Date.now()-G.lastMarketCtxTime>1800000)) {
     try {
       const mTxt = await groq(
-        `Ngày ${new Date().toLocaleDateString('vi-VN')}. Thông tin thị trường hiện tại. JSON:
+        `Current date: ${new Date().toLocaleDateString('vi-VN')}. Return market data JSON:
 {"vnindex":"1245 (+0.3%)","hnx":"225","vn30":"1380","sp500":"+0.2%","nasdaq":"+0.1%","nikkei":"-0.3%",
 "dxy":"104.2","brent":"$74","gold":"$2340","usdvnd":"25.480",
 "vnSentiment":"Tích cực","globalSentiment":"Thận trọng",
 "hotSectors":["Ngân hàng","Bất động sản"],
 "keyRisks":["Rủi ro 1","Rủi ro 2"],
 "macro":"Bối cảnh kinh tế VN và quốc tế ảnh hưởng thị trường chứng khoán"}`,
-        'Chỉ trả về JSON object. Không text trước hoặc sau.',
-        400
+        'Return only JSON object. No text.',
+        400, true
       )
       marketCtx = parseJ(mTxt)
       G.lastMarketCtx = marketCtx
@@ -1785,7 +1787,7 @@ Trả về JSON:
 }`
 
   try {
-    const rawTxt = await groq(prompt, sys, 2500)
+    const rawTxt = await groq(prompt, sys, 2500, true)
     try { G.analysis = parseJ(rawTxt) }
     catch(_) { throw new Error('AI trả về định dạng không hợp lệ. Thử lại.') }
     renderAnalysis()
@@ -2056,7 +2058,7 @@ async function analyzePortfolio(){
   const prompt = 'Phan tich danh muc: ' + portSummary + '. Tong gia tri: ' + fP(Math.round(totalVal)) + ' VND. Chi tra ve JSON object: {"overallRisk":"...","diversification":"...","strengths":["..."],"weaknesses":["..."],"rebalance":[{"ticker":"...","action":"...","reason":"..."}],"outlook":"...","topPick":"..."}'
 
   try{
-    const txt=await groq(prompt,'You are a Vietnamese portfolio analyst. Return ONLY a valid JSON object. No explanations, no markdown, no text before or after the JSON.',1500)
+    const txt=await groq(prompt,'You are a Vietnamese portfolio analyst. Return ONLY a valid JSON object.',1500,true)
     let a
     try { a=parseJ(txt) }
     catch(_){
