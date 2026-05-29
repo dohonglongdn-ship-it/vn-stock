@@ -862,7 +862,15 @@ async function groq(prompt, sys, maxTok=2000) {
   throw new Error('Không kết nối Groq. Kiểm tra API key.')
 }
 
-function parseJ(txt) { return JSON.parse(txt.replace(/```json|```/g,'').trim()) }
+function parseJ(txt) {
+  // Xóa markdown code blocks
+  let s = txt.replace(/```json|```/g,'').trim()
+  // Nếu AI trả về text trước JSON, tìm vị trí { đầu tiên
+  const start = s.indexOf('{')
+  const end   = s.lastIndexOf('}')
+  if (start >= 0 && end > start) s = s.slice(start, end+1)
+  return JSON.parse(s)
+}
 
 // ── Data: GitHub CSV (vnstock_market_data) ───────────────────────────
 async function fetchCSV(ticker) {
@@ -1705,7 +1713,7 @@ async function runAnalysis() {
 "hotSectors":["Ngân hàng","Bất động sản"],
 "keyRisks":["Rủi ro 1","Rủi ro 2"],
 "macro":"Bối cảnh kinh tế VN và quốc tế ảnh hưởng thị trường chứng khoán"}`,
-        'Chuyên gia tài chính. JSON thuần túy.',
+        'Chỉ trả về JSON object. Không text trước hoặc sau.',
         400
       )
       marketCtx = parseJ(mTxt)
@@ -1717,8 +1725,7 @@ async function runAnalysis() {
   el('an-loading-msg').textContent='Groq AI đang phân tích toàn diện...'
 
   const d=G.stockData, ta=d?.ta, info=d?.info
-  const sys=`Bạn là chuyên gia phân tích chứng khoán Việt Nam chuyên nghiệp với 20 năm kinh nghiệm.
-Phân tích dựa trên dữ liệu kỹ thuật + tình hình thị trường thực tế. JSON THUẦN TÚY.`
+  const sys=`Bạn là chuyên gia phân tích chứng khoán Việt Nam. Chỉ trả về JSON object, không có text nào khác trước hoặc sau JSON. Không giải thích. Không markdown. Chỉ { }.`
 
   const prompt=`PHÂN TÍCH TOÀN DIỆN: ${G.ticker} (${info?.f||G.ticker})
 Sàn: ${info?.e} | Ngành: ${info?.s}
@@ -2053,7 +2060,7 @@ async function analyzePortfolio(){
     + '"outlook":"Nhan dinh 3-6 thang","topPick":"Ma tiem nang nhat"}'
 
   try{
-    const txt=await groq(prompt,'Bạn là chuyên gia quản lý danh mục đầu tư VN. JSON THUẦN TÚY.',1500)
+    const txt=await groq(prompt,'Chỉ trả về JSON object. Không text trước hoặc sau. Không markdown.',1500)
     const a=parseJ(txt)
     const riskC={'Thấp':C_UP,'Trung bình':'#d97706','Cao':C_DN}[a.overallRisk]||'#d97706'
     el('port-ai-result').innerHTML=`
