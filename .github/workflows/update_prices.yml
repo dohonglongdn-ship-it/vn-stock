@@ -3,25 +3,27 @@ name: Update Stock Prices Daily
 on:
   schedule:
     - cron: '0 9 * * 1-5'   # 16h giờ VN (9h UTC), thứ 2-6
-  workflow_dispatch:           # Cho phép chạy thủ công
+  workflow_dispatch:
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-          
+
       - name: Install vnstock
         run: pip install vnstock --quiet
-        
+
       - name: Fetch prices
+        env:
+          VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
         run: python fetch_prices.py
-        
+
       - name: Commit & push
         run: |
           git config --global user.name 'StockBot'
