@@ -2046,18 +2046,12 @@ async function analyzePortfolio(){
   })
   const totalVal=items.reduce((s,x)=>s+x.value,0)
 
-  const portLines = items.map(x=>{
-    const line = '- '+x.ticker+' ('+x.name+', '+x.sector+'): '
-      +x.qty+' cp x '+fP(x.currentPrice)+' = '+fP(Math.round(x.value))
-      +'d | Von: '+fP(x.costPrice)+' | PnL: '+(x.pnlPct!=null?x.pnlPct.toFixed(2)+'%':'chua co')
-    return line
-  }).join('\n')
-  const totalValFmt = fP(Math.round(totalVal))
-  const prompt = 'PHAN TICH DANH MUC:\n' + portLines + '\nTong: ' + totalValFmt + ' VND\n'
-    + 'JSON: {"overallRisk":"Trung binh","diversification":"Tot",'
-    + '"strengths":["Diem manh 1"],"weaknesses":["Rui ro 1"],'
-    + '"rebalance":[{"ticker":"VCB","action":"Tang","reason":"Ly do"}],'
-    + '"outlook":"Nhan dinh 3-6 thang","topPick":"Ma tiem nang nhat"}'
+    // Build prompt bằng string concat (tránh nested template literals)
+  const portSummary = items.map(function(x){
+    return x.ticker + ' (' + x.name + '): ' + x.qty + ' cp, gia hien tai ' + fP(x.currentPrice) + ', von ' + fP(x.costPrice) + ', PnL ' + (x.pnlPct!=null ? x.pnlPct.toFixed(2)+'%' : 'chua co')
+  }).join('; ')
+
+  const prompt = 'Phan tich danh muc: ' + portSummary + '. Tong gia tri: ' + fP(Math.round(totalVal)) + ' VND. Chi tra ve JSON object: {"overallRisk":"...","diversification":"...","strengths":["..."],"weaknesses":["..."],"rebalance":[{"ticker":"...","action":"...","reason":"..."}],"outlook":"...","topPick":"..."}'
 
   try{
     const txt=await groq(prompt,'Chỉ trả về JSON object. Không text trước hoặc sau. Không markdown.',1500)
