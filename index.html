@@ -171,6 +171,28 @@ a{color:var(--blue)}
 .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
 .filter-chip{font-size:11px;padding:4px 10px;border-radius:99px;border:0.5px solid var(--bd2);color:var(--t2);cursor:pointer;background:transparent;font-weight:500;transition:all .12s}
 .filter-chip.on{background:var(--blue);color:#fff;border-color:transparent}
+/* Portfolio */
+.port-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-top:0.5px solid var(--bd)}
+.port-row:first-child{border-top:none}
+.port-ticker{font-size:13px;font-weight:700;color:var(--blue);min-width:46px}
+.port-name{font-size:10px;color:var(--t3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.port-val{font-size:12px;font-weight:600;text-align:right;min-width:80px}
+.port-pnl{font-size:11px;font-weight:600;text-align:right;min-width:70px}
+.alloc-bar{height:6px;border-radius:99px;margin-top:3px}
+.port-chart-wrap{height:220px;position:relative}
+/* Backtest */
+.bt-stat{background:var(--bg2);border-radius:var(--r);padding:10px 12px;text-align:center}
+.bt-stat-v{font-size:18px;font-weight:700}
+.bt-stat-l{font-size:10px;color:var(--t2);margin-top:2px}
+.bt-chart-wrap{height:200px;position:relative}
+.strategy-btn{font-size:11px;padding:5px 12px;border-radius:var(--r);border:0.5px solid var(--bd2);color:var(--t2);background:transparent;cursor:pointer;font-weight:500;transition:all .12s}
+.strategy-btn.on{background:#1e1e3f;color:#93c5fd;border-color:transparent}
+/* AI Enhanced */
+.ai-market-box{background:linear-gradient(135deg,#1e1e3f,#0f172a);border-radius:var(--rl);padding:14px;margin-bottom:10px;color:#e2e8f0}
+.ai-market-title{font-size:11px;font-weight:600;color:#93c5fd;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.ai-idx{display:inline-flex;flex-direction:column;align-items:center;background:rgba(255,255,255,0.07);border-radius:6px;padding:5px 10px;margin:2px}
+.ai-idx-v{font-size:12px;font-weight:700}
+.ai-idx-l{font-size:9px;opacity:.6;margin-top:1px}
 /* Time range */
 .trange{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
 .tr-btn{font-size:10px;padding:3px 10px;border-radius:99px;border:0.5px solid var(--bd2);color:var(--t2);background:transparent;cursor:pointer;font-weight:600;transition:all .12s}
@@ -437,6 +459,66 @@ a{color:var(--blue)}
       <div id="cmp-stats"></div>
     </div>
 
+    <!-- ── Portfolio ── -->
+    <div id="v-portfolio" class="screen">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:14px;font-weight:600"><i class="ti ti-briefcase" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>Danh mục đầu tư</span>
+        <button class="pill" onclick="analyzePortfolio()" id="port-ai-btn" style="margin-left:auto">
+          <i class="ti ti-brain" style="font-size:11px;margin-right:2px"></i>AI phân tích
+        </button>
+      </div>
+      <!-- Thêm cổ phiếu -->
+      <div class="card" style="padding:8px 10px;margin-bottom:8px">
+        <form onsubmit="addPortfolioItem(event)" style="display:flex;gap:5px;flex-wrap:wrap">
+          <input id="port-ticker" placeholder="Mã CK" style="width:80px;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);text-transform:uppercase" autocomplete="off"/>
+          <input id="port-qty" type="number" placeholder="Số lượng" style="width:100px;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)"/>
+          <input id="port-cost" type="number" placeholder="Giá vốn (đ)" style="flex:1;min-width:110px;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)"/>
+          <button type="submit" style="font-size:12px;padding:6px 14px;border:none;border-radius:var(--r);background:var(--blue);color:#fff;cursor:pointer;font-weight:600">+ Thêm</button>
+        </form>
+      </div>
+      <div id="port-loading" class="loading-box" style="display:none">
+        <i class="ti ti-refresh spin" style="font-size:20px;margin-bottom:6px;display:block"></i>Đang tải giá...
+      </div>
+      <div id="port-content"></div>
+      <div id="port-ai-result"></div>
+    </div>
+
+    <!-- ── Backtest ── -->
+    <div id="v-backtest" class="screen">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:14px;font-weight:600"><i class="ti ti-history" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>Backtest chiến lược</span>
+      </div>
+      <!-- Config -->
+      <div class="card" style="margin-bottom:8px">
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--t2);margin-bottom:5px;font-weight:500">Cổ phiếu</div>
+          <div style="display:flex;gap:5px">
+            <input id="bt-ticker" placeholder="Mã CK (VCB...)" style="flex:1;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);text-transform:uppercase" autocomplete="off"/>
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--t2);margin-bottom:5px;font-weight:500">Chiến lược</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            <button class="strategy-btn on" id="st-ma" onclick="setStrategy('ma')">MA Cross</button>
+            <button class="strategy-btn" id="st-rsi" onclick="setStrategy('rsi')">RSI 30/70</button>
+            <button class="strategy-btn" id="st-macd" onclick="setStrategy('macd')">MACD Cross</button>
+          </div>
+          <div id="strategy-desc" style="font-size:11px;color:var(--t3);margin-top:6px">Mua khi MA20 cắt lên MA50 · Bán khi MA20 cắt xuống MA50</div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--t2);margin-bottom:5px;font-weight:500">Vốn ban đầu</div>
+          <input id="bt-capital" type="number" value="100000000" style="width:100%;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)"/>
+        </div>
+        <button onclick="runBacktest()" class="btn-main" style="width:100%;padding:9px">
+          <i class="ti ti-play" style="font-size:12px;vertical-align:-1px;margin-right:4px"></i>Chạy Backtest
+        </button>
+      </div>
+      <div id="bt-loading" class="loading-box" style="display:none">
+        <i class="ti ti-refresh spin" style="font-size:20px;margin-bottom:6px;display:block"></i>Đang chạy backtest...
+      </div>
+      <div id="bt-results"></div>
+    </div>
+
     <!-- ── Screener ── -->
     <div id="v-screener" class="screen">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
@@ -477,19 +559,22 @@ a{color:var(--blue)}
   <!-- Bottom Nav -->
   <nav class="bottom-nav">
     <button class="nav-btn active" id="nb-dash" onclick="showV('dash')">
-      <i class="ti ti-home" style="font-size:20px"></i>Tổng quan
+      <i class="ti ti-home" style="font-size:19px"></i>Tổng quan
     </button>
     <button class="nav-btn" id="nb-stock" onclick="G.ticker&&showV('stock')">
-      <i class="ti ti-chart-bar" style="font-size:20px"></i>Cổ phiếu
+      <i class="ti ti-chart-bar" style="font-size:19px"></i>Cổ phiếu
     </button>
-    <button class="nav-btn" id="nb-compare" onclick="showV('compare')">
-      <i class="ti ti-chart-dots" style="font-size:20px"></i>So sánh
+    <button class="nav-btn" id="nb-portfolio" onclick="showV('portfolio');renderPortfolio()">
+      <i class="ti ti-briefcase" style="font-size:19px"></i>Danh mục
+    </button>
+    <button class="nav-btn" id="nb-backtest" onclick="showV('backtest')">
+      <i class="ti ti-history" style="font-size:19px"></i>Backtest
     </button>
     <button class="nav-btn" id="nb-screener" onclick="showV('screener')">
-      <i class="ti ti-filter" style="font-size:20px"></i>Bộ lọc
+      <i class="ti ti-filter" style="font-size:19px"></i>Bộ lọc
     </button>
     <button class="nav-btn" id="nb-analysis" onclick="goAnalysis()">
-      <i class="ti ti-brain" style="font-size:20px"></i>AI
+      <i class="ti ti-brain" style="font-size:19px"></i>AI
     </button>
   </nav>
 </div>
@@ -630,6 +715,8 @@ const G = {
   chartType: 'line',   // 'line' | 'candle'
   timeRange: '3M',     // '3M' | '6M' | '1Y' | '3Y' | 'Max'
   groqModel: null,
+  lastMarketCtx: null,
+  lastMarketCtxTime: 0,
   lastGroqCall: 0,
 }
 
@@ -1604,41 +1691,70 @@ async function runAnalysis() {
   el('an-err').style.display='none'
   el('an-loading').style.display='block'
   el('an-refresh-btn').disabled=true
+  el('an-loading-msg').textContent='Đang lấy thông tin thị trường...'
+
+  // Bước 1: Lấy thông tin thị trường toàn cầu + VN
+  let marketCtx = G.lastMarketCtx || null
+  if (!marketCtx || (Date.now()-G.lastMarketCtxTime>1800000)) {
+    try {
+      const mTxt = await groq(
+        `Ngày ${new Date().toLocaleDateString('vi-VN')}. Thông tin thị trường hiện tại. JSON:
+{"vnindex":"1245 (+0.3%)","hnx":"225","vn30":"1380","sp500":"+0.2%","nasdaq":"+0.1%","nikkei":"-0.3%",
+"dxy":"104.2","brent":"$74","gold":"$2340","usdvnd":"25.480",
+"vnSentiment":"Tích cực","globalSentiment":"Thận trọng",
+"hotSectors":["Ngân hàng","Bất động sản"],
+"keyRisks":["Rủi ro 1","Rủi ro 2"],
+"macro":"Bối cảnh kinh tế VN và quốc tế ảnh hưởng thị trường chứng khoán"}`,
+        'Chuyên gia tài chính. JSON thuần túy.',
+        400
+      )
+      marketCtx = parseJ(mTxt)
+      G.lastMarketCtx = marketCtx
+      G.lastMarketCtxTime = Date.now()
+    } catch { marketCtx = {} }
+  }
+
   el('an-loading-msg').textContent='Groq AI đang phân tích toàn diện...'
 
   const d=G.stockData, ta=d?.ta, info=d?.info
-  const sys=`Bạn là chuyên gia phân tích chứng khoán Việt Nam chuyên nghiệp với 20 năm kinh nghiệm. 
-Phân tích sắc bén, cụ thể, có số liệu. Trả về JSON THUẦN TÚY không markdown không backtick.`
+  const sys=`Bạn là chuyên gia phân tích chứng khoán Việt Nam chuyên nghiệp với 20 năm kinh nghiệm.
+Phân tích dựa trên dữ liệu kỹ thuật + tình hình thị trường thực tế. JSON THUẦN TÚY.`
 
-  const prompt=`PHÂN TÍCH CHUYÊN SÂU: ${G.ticker} (${info?.f||G.ticker})
+  const prompt=`PHÂN TÍCH TOÀN DIỆN: ${G.ticker} (${info?.f||G.ticker})
 Sàn: ${info?.e} | Ngành: ${info?.s}
-Nguồn dữ liệu: ${d.dataSource}
 
-GIÁ & HIỆU SUẤT:
-- Giá: ${fP(d.price)} VND (${fPct(d.chgPct)})
-- 52W: ${fP(d.high52w)} - ${fP(d.low52w)}
-- Vốn hóa: ${d.mktCapT||'N/A'} nghìn tỷ
+═══ BỐI CẢNH THỊ TRƯỜNG HIỆN TẠI ═══
+VN-Index: ${marketCtx?.vnindex||'N/A'} | VN30: ${marketCtx?.vn30||'N/A'} | HNX: ${marketCtx?.hnx||'N/A'}
+S&P500: ${marketCtx?.sp500||'N/A'} | Nasdaq: ${marketCtx?.nasdaq||'N/A'} | Nikkei: ${marketCtx?.nikkei||'N/A'}
+USD/VND: ${marketCtx?.usdvnd||'N/A'} | Dầu Brent: ${marketCtx?.brent||'N/A'} | Vàng: ${marketCtx?.gold||'N/A'} | DXY: ${marketCtx?.dxy||'N/A'}
+Tâm lý TT VN: ${marketCtx?.vnSentiment||'N/A'} | Toàn cầu: ${marketCtx?.globalSentiment||'N/A'}
+Ngành đang hot: ${marketCtx?.hotSectors?.join(', ')||'N/A'}
+Rủi ro vĩ mô: ${marketCtx?.keyRisks?.join('; ')||'N/A'}
+Macro: ${marketCtx?.macro||'N/A'}
 
-CHỈ SỐ CƠ BẢN:
-- P/E: ${d.pe?.toFixed(1)||'N/A'} | P/B: ${d.pb?.toFixed(2)||'N/A'} | ROE: ${d.roe?.toFixed(1)||'N/A'}% | EPS: ${d.eps?fP(Math.round(d.eps)):'N/A'}đ
+═══ DỮ LIỆU CỔ PHIẾU ═══
+Giá: ${fP(d.price)} VND (${fPct(d.chgPct)}) | 52W: ${fP(d.high52w)} - ${fP(d.low52w)}
+Vốn hóa: ${d.mktCapT||'N/A'} nghìn tỷ
+P/E: ${d.pe?.toFixed(1)||'N/A'} | P/B: ${d.pb?.toFixed(2)||'N/A'} | ROE: ${d.roe?.toFixed(1)||'N/A'}% | EPS: ${d.eps?fP(Math.round(d.eps)):'N/A'}đ
 
-CHỈ SỐ KỸ THUẬT (tính từ dữ liệu thực):
-- RSI(14): ${ta?.rsi?.toFixed(1)||'N/A'} ${ta?.rsi>70?'— Quá mua':ta?.rsi<30?'— Quá bán':'— Trung tính'}
-- MACD: ${ta?.macd?.toFixed(0)||'N/A'} / Signal: ${ta?.macdSig?.toFixed(0)||'N/A'} → ${ta?.macdBull?'Bullish':'Bearish'}
-- Giá vs MA20: ${ta?.aboveMA20?'Trên (tích cực)':'Dưới (tiêu cực)'}
-- Giá vs MA50: ${ta?.aboveMA50?'Trên (tích cực)':'Dưới (tiêu cực)'}
-- Bollinger: Trên ${fP(Math.round(ta?.bbU||0))} / Dưới ${fP(Math.round(ta?.bbL||0))}
-- Khối lượng: ${ta?.volRatio?.toFixed(1)||'N/A'}x trung bình
-- Volatility: ${ta?.annVol?.toFixed(1)||'N/A'}%/năm | Max Drawdown: ${ta?.mdd?.toFixed(1)||'N/A'}%
-- Hỗ trợ: ${fP(ta?.support)} | Kháng cự: ${fP(ta?.resistance)}
+═══ CHỈ SỐ KỸ THUẬT ═══
+RSI(14): ${ta?.rsi?.toFixed(1)||'N/A'} ${ta?.rsi>70?'(Quá mua)':ta?.rsi<30?'(Quá bán)':'(Trung tính)'}
+MACD: ${ta?.macd?.toFixed(0)||'N/A'} / Signal: ${ta?.macdSig?.toFixed(0)||'N/A'} → ${ta?.macdBull?'Bullish':'Bearish'}
+MA20: ${ta?.aboveMA20?'Trên':'Dưới'} | MA50: ${ta?.aboveMA50?'Trên':'Dưới'}
+Bollinger: ${fP(Math.round(ta?.bbU||0))} / ${fP(Math.round(ta?.bbL||0))}
+Khối lượng: ${ta?.volRatio?.toFixed(1)||'N/A'}x | Volatility: ${ta?.annVol?.toFixed(1)||'N/A'}%/năm
+Hỗ trợ: ${fP(ta?.support)} | Kháng cự: ${fP(ta?.resistance)} | Max DD: ${ta?.mdd?.toFixed(1)||'N/A'}%
 
+Dựa trên BỐI CẢNH THỊ TRƯỜNG THỰC + dữ liệu kỹ thuật, hãy đưa ra tư vấn đầu tư cụ thể.
 Trả về JSON:
 {
-  "verdict": "MUA",
-  "confidence": 72,
+  "verdict": "MUA MẠNH",
+  "confidence": 78,
   "targetPrice": 96000,
   "stopLoss": 82000,
   "riskScore": 4,
+  "marketAlignment": "Xu hướng thị trường hỗ trợ/không hỗ trợ vì...",
+  "entryStrategy": "Mua ngay / Mua khi giá về xxx / Chờ breakout xxx",
   "shortTerm": {
     "outlook": "Tích cực",
     "summary": "Phân tích kỹ thuật ngắn hạn 1-5 phiên chi tiết dựa trên RSI, MACD, volume",
@@ -1765,6 +1881,374 @@ function renderAnalysis() {
 window.addEventListener('resize', () => {
   if (G.chartType === 'candle' && G.stockData) renderCandlestick()
 })
+
+
+// ════════════════════════════════════════════════════════════════════
+// PORTFOLIO
+// ════════════════════════════════════════════════════════════════════
+const PORT_COLORS = ['#2563eb','#0e9f6e','#d84040','#d97706','#7c3aed','#0891b2','#db2777','#65a30d','#ea580c','#7c3aed']
+const PORT = { items: [] }
+
+;(function initPort(){
+  try { PORT.items = JSON.parse(localStorage.getItem('vnstk_port')||'[]') } catch {}
+})()
+
+function savePort(){ localStorage.setItem('vnstk_port', JSON.stringify(PORT.items)) }
+
+function addPortfolioItem(e){
+  e.preventDefault()
+  const t=el('port-ticker').value.trim().toUpperCase()
+  const qty=parseFloat(el('port-qty').value)||0
+  const cost=parseFloat(el('port-cost').value)||0
+  if(!t||!qty){alert('Nhập đủ Mã CK và Số lượng');return}
+  const existing=PORT.items.findIndex(x=>x.ticker===t)
+  if(existing>=0){ PORT.items[existing]={ticker:t,qty,cost} }
+  else { PORT.items.push({ticker:t,qty,cost}) }
+  savePort()
+  el('port-ticker').value=''
+  el('port-qty').value=''
+  el('port-cost').value=''
+  renderPortfolio()
+}
+
+async function renderPortfolio(){
+  if(!PORT.items.length){
+    el('port-content').innerHTML='<div class="card" style="text-align:center;color:var(--t2);padding:24px">Thêm cổ phiếu vào danh mục để bắt đầu.</div>'
+    return
+  }
+  el('port-loading').style.display='block'
+  el('port-content').innerHTML=''
+
+  // Lấy giá cho từng mã
+  const prices={}
+  await Promise.all(PORT.items.map(async item=>{
+    // Ưu tiên prices.json
+    const pj=G.pricesJson?.[item.ticker]
+    if(pj){ prices[item.ticker]=pj.price; return }
+    // Fallback: Yahoo Finance
+    try{
+      const r=await fetch(`${WORKER}/${item.ticker}`,{signal:AbortSignal.timeout(5000)})
+      if(!r.ok)return
+      const d=await r.json()
+      if(d.source==='yahoo'&&d.chart?.result?.[0]){
+        prices[item.ticker]=d.chart.result[0].meta.regularMarketPrice
+      }
+    }catch{}
+  }))
+
+  el('port-loading').style.display='none'
+
+  // Tính tổng
+  let totalValue=0, totalCost=0
+  const rows=PORT.items.map((item,i)=>{
+    const price=prices[item.ticker]||0
+    const value=price*item.qty
+    const cost=item.cost*item.qty
+    const pnl=cost>0?value-cost:0
+    const pnlPct=cost>0?(value-cost)/cost*100:null
+    const info=db(item.ticker)||G.pricesJson?.[item.ticker]
+    totalValue+=value; totalCost+=cost
+    return {ticker:item.ticker,qty:item.qty,price,value,cost,pnl,pnlPct,
+            name:(G.wlCache[item.ticker]?.name||db(item.ticker)?.n||item.ticker),
+            color:PORT_COLORS[i%PORT_COLORS.length]}
+  })
+
+  const totalPnl=totalValue-totalCost
+  const totalPnlPct=totalCost>0?totalPnl/totalCost*100:null
+
+  // Render summary
+  const fmt=v=>v>=1e9?(v/1e9).toFixed(2)+' tỷ':v>=1e6?(v/1e6).toFixed(1)+' triệu':fP(v)
+
+  el('port-content').innerHTML=`
+    <!-- Tổng quan -->
+    <div class="met-grid" style="margin-bottom:8px">
+      <div class="met"><div class="met-l">Tổng giá trị</div>
+        <div class="met-v">${fmt(totalValue)}</div></div>
+      <div class="met"><div class="met-l">Tổng vốn</div>
+        <div class="met-v">${fmt(totalCost)}</div></div>
+      <div class="met"><div class="met-l">Lãi / Lỗ</div>
+        <div class="met-v" style="color:${totalPnl>=0?C_UP:C_DN}">${totalPnl>=0?'+':''}${fmt(totalPnl)}</div>
+        ${totalPnlPct!=null?`<div class="met-s" style="color:${totalPnl>=0?C_UP:C_DN}">${totalPnlPct>=0?'+':''}${totalPnlPct.toFixed(2)}%</div>`:''}
+      </div>
+      <div class="met"><div class="met-l">Số mã</div>
+        <div class="met-v">${PORT.items.length}</div></div>
+    </div>
+
+    <!-- Chart phân bổ -->
+    <div class="card" style="margin-bottom:8px">
+      <div class="card-title"><i class="ti ti-chart-pie" style="font-size:13px"></i>Phân bổ danh mục</div>
+      <div class="port-chart-wrap"><canvas id="port-chart"></canvas></div>
+    </div>
+
+    <!-- Danh sách -->
+    <div class="card">
+      <div class="card-title"><i class="ti ti-list" style="font-size:13px"></i>Chi tiết từng mã</div>
+      ${rows.map(r=>`
+        <div class="port-row">
+          <button class="port-ticker" onclick="loadStock('${r.ticker}')" style="color:${r.color}">${r.ticker}</button>
+          <div style="flex:1;min-width:0">
+            <div class="port-name">${r.name} · ${r.qty.toLocaleString()} cp</div>
+            <div class="alloc-bar" style="background:${r.color};width:${totalValue>0?Math.round(r.value/totalValue*100):0}%;max-width:100%"></div>
+            <div style="font-size:9px;color:var(--t3)">${totalValue>0?(r.value/totalValue*100).toFixed(1):0}%</div>
+          </div>
+          <div>
+            <div class="port-val">${fmt(r.value)}</div>
+            <div style="font-size:10px;color:var(--t3)">${fP(r.price)}/cp</div>
+          </div>
+          <div>
+            ${r.pnlPct!=null?`<div class="port-pnl" style="color:${r.pnl>=0?C_UP:C_DN}">${r.pnl>=0?'+':''}${r.pnlPct.toFixed(2)}%</div>`:''}
+            <div style="font-size:10px;color:${r.pnl>=0?C_UP:C_DN}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</div>
+          </div>
+          <button onclick="PORT.items=PORT.items.filter(x=>x.ticker!=='${r.ticker}');savePort();renderPortfolio()"
+            style="color:var(--t3);background:none;border:none;cursor:pointer;padding:0 3px;opacity:.4">
+            <i class="ti ti-x" style="font-size:12px"></i></button>
+        </div>`).join('')}
+    </div>`
+
+  // Vẽ pie chart
+  setTimeout(()=>{
+    const ctx=el('port-chart')
+    if(!ctx)return
+    if(ctx._chart){ctx._chart.destroy()}
+    ctx._chart=new Chart(ctx,{
+      type:'doughnut',
+      data:{labels:rows.map(r=>r.ticker),
+            datasets:[{data:rows.map(r=>r.value),backgroundColor:rows.map(r=>r.color),borderWidth:2,borderColor:'var(--bg)'}]},
+      options:{responsive:true,maintainAspectRatio:false,
+               plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:10}},
+                        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${(ctx.parsed/totalValue*100).toFixed(1)}%`}}}}
+    })
+  },100)
+}
+
+async function analyzePortfolio(){
+  if(!PORT.items.length){alert('Thêm cổ phiếu vào danh mục trước');return}
+  el('port-ai-result').innerHTML='<div class="loading-box"><i class="ti ti-brain spin" style="font-size:20px;margin-bottom:6px;display:block"></i>AI đang phân tích danh mục...</div>'
+  el('port-ai-btn').disabled=true
+
+  // Thu thập data danh mục
+  const items=PORT.items.map(item=>{
+    const pj=G.pricesJson?.[item.ticker]
+    const price=pj?.price||0
+    const value=price*item.qty
+    const pnl=item.cost>0?(price-item.cost)/item.cost*100:null
+    const info=db(item.ticker)
+    return {ticker:item.ticker,qty:item.qty,costPrice:item.cost,
+            currentPrice:price,value,pnlPct:pnl,
+            name:info?.n||item.ticker,sector:info?.s||'',exchange:info?.e||''}
+  })
+  const totalVal=items.reduce((s,x)=>s+x.value,0)
+
+  const portLines = items.map(x=>{
+    const line = '- '+x.ticker+' ('+x.name+', '+x.sector+'): '
+      +x.qty+' cp x '+fP(x.currentPrice)+' = '+fP(Math.round(x.value))
+      +'d | Von: '+fP(x.costPrice)+' | PnL: '+(x.pnlPct!=null?x.pnlPct.toFixed(2)+'%':'chua co')
+    return line
+  }).join('\n')
+  const totalValFmt = fP(Math.round(totalVal))
+  const prompt = 'PHAN TICH DANH MUC:\n' + portLines + '\nTong: ' + totalValFmt + ' VND\n'
+    + 'JSON: {"overallRisk":"Trung binh","diversification":"Tot",'
+    + '"strengths":["Diem manh 1"],"weaknesses":["Rui ro 1"],'
+    + '"rebalance":[{"ticker":"VCB","action":"Tang","reason":"Ly do"}],'
+    + '"outlook":"Nhan dinh 3-6 thang","topPick":"Ma tiem nang nhat"}'
+
+  try{
+    const txt=await groq(prompt,'Bạn là chuyên gia quản lý danh mục đầu tư VN. JSON THUẦN TÚY.',1500)
+    const a=parseJ(txt)
+    const riskC={'Thấp':C_UP,'Trung bình':'#d97706','Cao':C_DN}[a.overallRisk]||'#d97706'
+    el('port-ai-result').innerHTML=`
+      <div class="card" style="margin-top:8px">
+        <div class="card-title"><i class="ti ti-brain" style="font-size:13px;color:var(--blue)"></i>AI Phân tích danh mục</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div class="met" style="flex:1"><div class="met-l">Rủi ro tổng thể</div>
+            <div class="met-v" style="color:${riskC}">${a.overallRisk}</div></div>
+          <div class="met" style="flex:1"><div class="met-l">Đa dạng hóa</div>
+            <div class="met-v">${a.diversification}</div></div>
+        </div>
+        ${a.strengths?.length?`<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:${C_UP};margin-bottom:4px">✅ Điểm mạnh</div>${a.strengths.map(s=>`<div style="font-size:11px;color:var(--t2);margin-bottom:3px">· ${s}</div>`).join('')}</div>`:''}
+        ${a.weaknesses?.length?`<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:${C_DN};margin-bottom:4px">⚠ Rủi ro</div>${a.weaknesses.map(s=>`<div style="font-size:11px;color:var(--t2);margin-bottom:3px">· ${s}</div>`).join('')}</div>`:''}
+        ${a.rebalance?.length?`<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#d97706;margin-bottom:4px">🔄 Đề xuất tái cơ cấu</div>${a.rebalance.map(r=>`<div style="font-size:11px;color:var(--t2);margin-bottom:3px"><b>${r.ticker}</b>: ${r.action} — ${r.reason}</div>`).join('')}</div>`:''}
+        <p style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:6px">${a.outlook||''}</p>
+        ${a.topPick?`<div style="background:var(--bg2);border-radius:7px;padding:8px 10px"><div style="font-size:10px;color:var(--t3);margin-bottom:2px">⭐ Mã tiềm năng nhất</div><div style="font-size:12px;font-weight:500">${a.topPick}</div></div>`:''}
+      </div>`
+  }catch(e){
+    el('port-ai-result').innerHTML=`<div class="err-box">Lỗi: ${e.message}</div>`
+  }
+  el('port-ai-btn').disabled=false
+}
+
+// ════════════════════════════════════════════════════════════════════
+// BACKTEST
+// ════════════════════════════════════════════════════════════════════
+let BT_STRATEGY='ma'
+const STRATEGY_DESC={
+  ma:'Mua khi MA20 cắt lên MA50 · Bán khi MA20 cắt xuống MA50',
+  rsi:'Mua khi RSI < 30 (quá bán) · Bán khi RSI > 70 (quá mua)',
+  macd:'Mua khi MACD cắt lên Signal · Bán khi MACD cắt xuống Signal'
+}
+
+function setStrategy(s){
+  BT_STRATEGY=s
+  document.querySelectorAll('.strategy-btn').forEach(b=>b.classList.remove('on'))
+  el('st-'+s)?.classList.add('on')
+  el('strategy-desc').textContent=STRATEGY_DESC[s]
+}
+
+async function runBacktest(){
+  const ticker=el('bt-ticker').value.trim().toUpperCase()
+  if(!ticker){alert('Nhập mã cổ phiếu');return}
+  const capital=parseFloat(el('bt-capital').value)||100e6
+
+  el('bt-loading').style.display='block'
+  el('bt-results').innerHTML=''
+
+  try{
+    // Load CSV data (lịch sử đầy đủ)
+    let bars = await fetchCSV(ticker)
+    // Merge với prices.json history nếu có
+    if(G.pricesJson?.[ticker]?.history?.length){
+      const jh=G.pricesJson[ticker].history
+      if(bars){const cut=jh[0]?.date;bars=[...bars.filter(b=>b.date<cut),...jh]}
+      else bars=jh
+    }
+    if(!bars||bars.length<60) throw new Error('Không đủ dữ liệu lịch sử (cần ít nhất 60 phiên)')
+
+    const closes=bars.map(b=>b.close)
+    const n=closes.length
+
+    // Tính indicators
+    const ma20=TA.sma(closes,20)
+    const ma50=TA.sma(closes,50)
+    const rsiArr=TA.rsi(closes,14)
+    const {line:macdLine,signal:macdSig}=TA.macd(closes)
+
+    // Sinh tín hiệu
+    const signals=[]
+    for(let i=51;i<n;i++){
+      let sig=null
+      if(BT_STRATEGY==='ma'){
+        if(ma20[i]&&ma50[i]&&ma20[i-1]&&ma50[i-1]){
+          if(ma20[i-1]<=ma50[i-1]&&ma20[i]>ma50[i]) sig='buy'
+          else if(ma20[i-1]>=ma50[i-1]&&ma20[i]<ma50[i]) sig='sell'
+        }
+      } else if(BT_STRATEGY==='rsi'){
+        if(rsiArr[i]&&rsiArr[i-1]){
+          if(rsiArr[i-1]>=30&&rsiArr[i]<30) sig='buy'
+          else if(rsiArr[i-1]<=70&&rsiArr[i]>70) sig='sell'
+        }
+      } else if(BT_STRATEGY==='macd'){
+        if(macdLine[i]&&macdSig[i]&&macdLine[i-1]&&macdSig[i-1]){
+          if(macdLine[i-1]<=macdSig[i-1]&&macdLine[i]>macdSig[i]) sig='buy'
+          else if(macdLine[i-1]>=macdSig[i-1]&&macdLine[i]<macdSig[i]) sig='sell'
+        }
+      }
+      if(sig) signals.push({i,date:bars[i].date,type:sig,price:closes[i]})
+    }
+
+    // Mô phỏng giao dịch
+    let cash=capital, shares=0, position=false
+    let trades=[], peakVal=capital, maxDD=0
+    const equity=[capital]
+
+    for(let i=51;i<n;i++){
+      const price=closes[i]
+      const sig=signals.find(s=>s.i===i)
+      if(sig?.type==='buy'&&!position){
+        shares=Math.floor(cash/price/100)*100
+        if(shares>0){
+          cash-=shares*price
+          position=true
+          trades.push({date:bars[i].date,type:'Mua',price,shares,capital:cash+shares*price})
+        }
+      } else if(sig?.type==='sell'&&position){
+        cash+=shares*price
+        trades.push({date:bars[i].date,type:'Bán',price,shares,pnl:cash-capital,capital:cash})
+        shares=0; position=false
+      }
+      const val=cash+shares*price
+      equity.push(val)
+      if(val>peakVal)peakVal=val
+      const dd=(peakVal-val)/peakVal*100
+      if(dd>maxDD)maxDD=dd
+    }
+    // Đóng vị thế cuối
+    if(position) cash+=shares*closes[n-1]
+    const finalVal=cash
+    const totalReturn=(finalVal-capital)/capital*100
+    const bnh=(closes[n-1]-closes[51])/closes[51]*100 // Buy & Hold
+
+    const winTrades=trades.filter((t,i)=>t.type==='Bán'&&t.pnl>0)
+    const sellTrades=trades.filter(t=>t.type==='Bán')
+    const winRate=sellTrades.length>0?winTrades.length/sellTrades.length*100:0
+
+    // Sharpe ratio (simplified)
+    const returns=equity.slice(1).map((v,i)=>(v-equity[i])/equity[i])
+    const avgR=returns.reduce((s,v)=>s+v,0)/returns.length
+    const stdR=Math.sqrt(returns.reduce((s,v)=>s+(v-avgR)**2,0)/returns.length)
+    const sharpe=stdR>0?(avgR/stdR)*Math.sqrt(252):0
+
+    el('bt-loading').style.display='none'
+    const stColors={'ma':'#2563eb','rsi':'#7c3aed','macd':'#0e9f6e'}
+    const stNames={'ma':'MA Cross','rsi':'RSI 30/70','macd':'MACD Cross'}
+
+    el('bt-results').innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:8px">
+        <div class="bt-stat"><div class="bt-stat-v" style="color:${totalReturn>=0?C_UP:C_DN}">${totalReturn>=0?'+':''}${totalReturn.toFixed(2)}%</div><div class="bt-stat-l">Tổng lợi nhuận</div></div>
+        <div class="bt-stat"><div class="bt-stat-v" style="color:${bnh>=0?C_UP:C_DN}">${bnh>=0?'+':''}${bnh.toFixed(2)}%</div><div class="bt-stat-l">Buy & Hold</div></div>
+        <div class="bt-stat"><div class="bt-stat-v">${winRate.toFixed(0)}%</div><div class="bt-stat-l">Tỷ lệ thắng</div></div>
+        <div class="bt-stat"><div class="bt-stat-v" style="color:${C_DN}">-${maxDD.toFixed(1)}%</div><div class="bt-stat-l">Max Drawdown</div></div>
+        <div class="bt-stat"><div class="bt-stat-v">${sharpe.toFixed(2)}</div><div class="bt-stat-l">Sharpe Ratio</div></div>
+        <div class="bt-stat"><div class="bt-stat-v">${sellTrades.length}</div><div class="bt-stat-l">Số lần giao dịch</div></div>
+      </div>
+      <div class="card" style="margin-bottom:8px">
+        <div class="card-title"><i class="ti ti-chart-line" style="font-size:13px"></i>Equity Curve — ${ticker} · ${stNames[BT_STRATEGY]}</div>
+        <div class="bt-chart-wrap"><canvas id="bt-chart"></canvas></div>
+      </div>
+      ${trades.length?`<div class="card">
+        <div class="card-title"><i class="ti ti-list" style="font-size:13px"></i>Lịch sử giao dịch (${trades.length})</div>
+        <div style="overflow-x:auto;max-height:200px">
+        <table class="scr-table">
+          <thead><tr><th>Ngày</th><th>Loại</th><th>Giá</th><th>KL</th><th>P&L</th></tr></thead>
+          <tbody>${trades.slice(-20).map(t=>`<tr>
+            <td style="text-align:left">${t.date?.slice(0,10)}</td>
+            <td style="text-align:left"><span class="scr-badge" style="background:${t.type==='Mua'?'#dcfce7':'#fee2e2'};color:${t.type==='Mua'?'#166534':'#991b1b'}">${t.type}</span></td>
+            <td>${fP(t.price)}</td>
+            <td>${(t.shares/100).toFixed(0)} lô</td>
+            <td class="${t.pnl>=0?'perf-up':'perf-dn'}">${t.pnl!=null?(t.pnl>=0?'+':'')+fP(Math.round(t.pnl)):'—'}</td>
+          </tr>`).join('')}</tbody>
+        </table></div></div>`:''}`
+
+    // Vẽ equity chart
+    setTimeout(()=>{
+      const ctx=el('bt-chart')
+      if(!ctx)return
+      if(ctx._chart)ctx._chart.destroy()
+      const step=Math.max(1,Math.floor(equity.length/200))
+      const eqSlice=equity.filter((_,i)=>i%step===0)
+      const lbSlice=bars.slice(51).filter((_,i)=>i%step===0).map(b=>b.date?.slice(5))
+      // BnH curve
+      const bnhCurve=bars.slice(51).filter((_,i)=>i%step===0).map((b,i)=>{
+        return capital*(b.close/closes[51])
+      })
+      ctx._chart=new Chart(ctx,{
+        type:'line',
+        data:{labels:lbSlice,datasets:[
+          {label:stNames[BT_STRATEGY],data:eqSlice,borderColor:stColors[BT_STRATEGY],borderWidth:1.5,fill:false,tension:.2,pointRadius:0},
+          {label:'Buy & Hold',data:bnhCurve,borderColor:'#94a3b8',borderWidth:1,fill:false,tension:.2,pointRadius:0,borderDash:[4,2]},
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:true,position:'top',labels:{font:{size:10},boxWidth:10}}},
+          scales:{x:{ticks:{maxTicksLimit:8,font:{size:9},color:'#888'},grid:{color:'rgba(128,128,128,.06)'}},
+                  y:{position:'right',ticks:{font:{size:9},color:'#888',callback:v=>v>=1e9?(v/1e9).toFixed(1)+'tỷ':v>=1e6?(v/1e6).toFixed(0)+'tr':''},
+                     grid:{color:'rgba(128,128,128,.06)'}}}}
+      })
+    },100)
+
+  }catch(e){
+    el('bt-loading').style.display='none'
+    el('bt-results').innerHTML=`<div class="err-box">Lỗi: ${e.message}</div>`
+  }
+}
 
 // ── Autocomplete Search ──────────────────────────────────────────────
 let acFocus = -1
