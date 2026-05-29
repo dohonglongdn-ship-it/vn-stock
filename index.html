@@ -255,6 +255,7 @@ a{color:var(--blue)}
       <button type="submit"><i class="ti ti-search" style="font-size:14px"></i></button>
     </form>
     <div class="topbar-end">
+      <span id="prices-json-badge" style="font-size:9px;color:var(--t3);display:none"></span>
       <span id="status-badge" class="tag tag-g" style="margin:0;font-size:9px">●&nbsp;Groq AI</span>
       <button class="icon-btn" onclick="changeKey()" title="Đổi API key"><i class="ti ti-settings"></i></button>
     </div>
@@ -499,7 +500,8 @@ a{color:var(--blue)}
 'use strict'
 
 // ── Config ──────────────────────────────────────────────────────────
-const WORKER = 'https://cool-resonance-b12e.dohonglong-dn.workers.dev'
+const WORKER     = 'https://cool-resonance-b12e.dohonglong-dn.workers.dev'
+const PRICES_URL = 'https://raw.githubusercontent.com/dohonglongdn-ship-it/vn-stock/main/prices.json'
 const VNDATA = 'https://raw.githubusercontent.com/vnstock-official/vnstock_market_data/main/historical_price/all_time'
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const GROQ_MODELS = ['llama-3.3-70b-versatile','llama-3.1-70b-versatile','mixtral-8x7b-32768','llama-3.1-8b-instant']
@@ -621,6 +623,8 @@ const G = {
   analysis: null,
   wl: [],
   wlCache: {},      // { ticker: {price, chg, spark, name, sector} }
+  pricesJson: null, // Dữ liệu từ prices.json (GitHub Actions, cập nhật hàng ngày)
+  pricesJsonDate: null,
   chart: null,
   chartMode: 'price',
   chartType: 'line',   // 'line' | 'candle'
@@ -671,6 +675,61 @@ window.initApp = function() {
   try { G.wl = JSON.parse(localStorage.getItem('vnstk_wl') || '["VCB","HPG","VNM"]') } catch {}
   try { G.wlCache = JSON.parse(localStorage.getItem('vnstk_wlc') || '{}') } catch {}
   renderWlList()
+  loadPricesJson()
+}
+
+async function loadPricesJson() {
+  try {
+    const r = await fetch(PRICES_URL + '?t=' + Date.now(), {cache:'no-cache'})
+    if (!r.ok) return
+    const d = await r.json()
+    if (!d.prices || !d.updated) return
+    G.pricesJson = d.prices
+    G.pricesJsonDate = d.updated
+    console.log(`✅ prices.json loaded: ${d.count} mã, cập nhật ${d.updated}`)
+
+    // Cập nhật watchlist với giá từ prices.json
+    let updated = false
+    G.wl.forEach(t => {
+      const p = G.pricesJson[t]
+      if (!p) return
+      const hist = p.history || []
+      G.wlCache[t] = {
+        ...(G.wlCache[t]||{}),
+        price:  p.price,
+        chg:    p.changePct,
+        spark:  hist.slice(-10).map(b=>b.close),
+        name:   G.wlCache[t]?.name || db(t)?.n || t,
+        sector: G.wlCache[t]?.sector || db(t)?.s || '',
+      }
+      updated = true
+    })
+    if (updated) {
+      localStorage.setItem('vnstk_wlc', JSON.stringify(G.wlCache))
+      renderWlList()
+    }
+
+    // Nếu đang xem stock thì cũng cập nhật giá
+    if (G.ticker && G.pricesJson[G.ticker] && G.stockData) {
+      const p = G.pricesJson[G.ticker]
+      G.stockData.price = p.price
+      G.stockData.chgPct = p.changePct
+      el('h-price').textContent = fP(p.price)
+      const ce = el('h-chg')
+      ce.textContent = `${p.changePct>=0?'▲':'▼'} ${fPct(p.changePct)}`
+      ce.style.color = p.changePct>=0?C_UP:C_DN
+    }
+
+    // Hiển thị badge ngày cập nhật
+    const badge = el('prices-json-badge')
+    if (badge) badge.textContent = `📊 prices.json: ${d.updated} (${d.count} mã)`
+  } catch(e) {
+    console.warn('prices.json không có hoặc chưa được tạo:', e.message)
+  }
+}
+
+function getPriceFromJson(ticker) {
+  return G.pricesJson?.[ticker] || null
 }
 function changeKey() {
   if (!confirm('Đổi API key?')) return
@@ -737,6 +796,17 @@ async function fetchCSV(ticker) {
 }
 
 // ── Data: Real-time price via Cloudflare Worker → Yahoo Finance ──────
+// Fix đơn vị giá: một số nguồn (SSI, VNDirect, vnstock) trả về nghìn đồng
+// ACV=28 thực ra là 28.000 VND → cần ×1000
+function fixPrice(price, refPrice) {
+  if (!price || price <= 0) return price
+  // Nếu có refPrice từ CSV (đáng tin), dùng để detect đơn vị
+  if (refPrice && refPrice > 1000 && price < 500) return price * 1000
+  // Không có ref: nếu < 500 thì likely nghìn đồng (hầu hết CP VN > 500 đồng)
+  if (!refPrice && price < 500) return price * 1000
+  return price
+}
+
 // Mapping UPCOM tickers sang Yahoo Finance (một số có suffix khác)
 const YF_OVERRIDE = {
   // UPCOM stocks thường không có trên Yahoo Finance VN
@@ -744,25 +814,69 @@ const YF_OVERRIDE = {
 }
 
 async function fetchRealtime(ticker) {
-  const yfTicker = YF_OVERRIDE[ticker] || ticker
   try {
-    const r = await fetch(`${WORKER}/${yfTicker}`, {signal: AbortSignal.timeout(8000)})
+    const r = await fetch(`${WORKER}/${ticker}`, {signal: AbortSignal.timeout(10000)})
     if (!r.ok) return null
     const d = await r.json()
-    if (d.error || !d.chart?.result?.[0]) return null
-    const m = d.chart.result[0].meta
-    return {
-      price:     m.regularMarketPrice,
-      changePct: m.regularMarketChangePercent,
-      high52w:   m.fiftyTwoWeekHigh,
-      low52w:    m.fiftyTwoWeekLow,
-      pe:        m.trailingPE,
-      eps:       m.epsTrailingTwelveMonths,
-      mktCap:    m.marketCap,
+    if (d.error) return null
+
+    // Yahoo Finance
+    if (d.source==='yahoo' && d.chart?.result?.[0]) {
+      const res=d.chart.result[0], ts=res.timestamp, q=res.indicators.quote[0], m=res.meta
+      const bars=ts.map((t,i)=>({date:new Date(t*1000).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}),close:q.close[i]??null,volume:q.volume[i]??0})).filter(b=>b.close>0)
+      return {bars,price:m.regularMarketPrice,changePct:m.regularMarketChangePercent,high52w:m.fiftyTwoWeekHigh,low52w:m.fiftyTwoWeekLow,marketCap:m.marketCap,pe:m.trailingPE,eps:m.epsTrailingTwelveMonths,src:'Yahoo Finance'}
     }
-  } catch { return null }
+    // SSI Chart (TradingView format)
+    if (d.source==='ssi_chart' && d.t?.length) {
+      const raw=d.c[d.c.length-1]
+      const p=fixPrice(raw,null)
+      const mult=p/raw
+      const bars=d.t.map((t,i)=>({date:new Date(t*1000).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}),close:(d.c[i]||0)*mult,volume:d.v[i]??0})).filter(b=>b.close>0)
+      const last=bars[bars.length-1]?.close, prev=bars[bars.length-2]?.close
+      return {bars,price:last,changePct:prev?(last-prev)/prev*100:null,high52w:null,low52w:null,src:'SSI'}
+    }
+    // SSI paging
+    if (d.source==='ssi' && d.data?.length) {
+      const rows=[...d.data].sort((a,b)=>new Date(a.tradingDate||a.d)-new Date(b.tradingDate||b.d))
+      const rawClose=r=>r.closePrice||r.c||r.close||0
+      const rawLast=rawClose(rows[rows.length-1])
+      const mult=rawLast>0?fixPrice(rawLast,null)/rawLast:1
+      const bars=rows.map(r=>({date:new Date(r.tradingDate||r.d).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}),close:rawClose(r)*mult,volume:r.totalVolume||r.v||0})).filter(b=>b.close>0)
+      const last=bars[bars.length-1]?.close, prev=bars[bars.length-2]?.close
+      return {bars,price:last,changePct:prev?(last-prev)/prev*100:null,high52w:null,low52w:null,src:'SSI'}
+    }
+    // VNDirect
+    if (d.source==='vndirect' && d.data?.length) {
+      const rows=[...d.data].sort((a,b)=>new Date(a.date)-new Date(b.date))
+      const rawLast=rows[rows.length-1]?.close||rows[rows.length-1]?.adClose||0
+      const mult=rawLast>0?fixPrice(rawLast,null)/rawLast:1
+      const bars=rows.map(r=>({date:new Date(r.date).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}),close:(r.close||r.adClose||0)*mult,volume:r.nmVolume||0})).filter(b=>b.close>0)
+      const last=rows[rows.length-1]
+      const rawP=last?.close||last?.adClose||0
+      return {bars,price:rawP*mult,changePct:last?.pctChange?last.pctChange*100:null,high52w:null,low52w:null,src:'VNDirect'}
+    }
+    // Cafef
+    if (d.source==='cafef' && d.data?.length) {
+      const rows=[...d.data].sort((a,b)=>new Date(a.Ngay)-new Date(b.Ngay))
+      const rawLast=rows[rows.length-1]?.GiaDongCua||rows[rows.length-1]?.GiaKhopLenh||0
+      const mult=rawLast>0?fixPrice(rawLast,null)/rawLast:1
+      const bars=rows.map(r=>({date:(r.Ngay||'').slice(0,10),close:(r.GiaDongCua||r.GiaKhopLenh||0)*mult,volume:r.KhoiLuongKhopLenh||0})).filter(b=>b.close>0)
+      const last=bars[bars.length-1]?.close, prev=bars[bars.length-2]?.close
+      return {bars,price:last,changePct:prev?(last-prev)/prev*100:null,high52w:null,low52w:null,src:'Cafef'}
+    }
+    return null
+  } catch(e){console.warn('RT err:',e.message);return null}
 }
 
+async function fetchCompanyInfo(ticker) {
+  try {
+    const r=await fetch(`${WORKER}/info/${ticker}`,{signal:AbortSignal.timeout(6000)})
+    if(!r.ok) return null
+    const d=await r.json()
+    if(d.error||!d.companyName) return null
+    return {n:d.shortName||d.companyName,f:d.companyName,s:d.industryName||d.icbName||'',e:d.floor||d.exchange||''}
+  } catch{return null}
+}
 // ── Technical Analysis (pure JS, no API) ────────────────────────────
 const TA = {
   sma(arr, n) {
@@ -863,22 +977,39 @@ async function loadStock(ticker) {
   try {
     el('stock-loading-msg').textContent = 'Đang tải dữ liệu lịch sử...'
 
-    // Parallel: CSV history + real-time price
+    // 1. Kiểm tra prices.json trước (GitHub Actions, hàng ngày, có UPCOM)
+    const jsonData = getPriceFromJson(ticker)
+
+    // 2. Parallel: CSV history (lịch sử dài) + real-time Yahoo (intraday)
     const [csvBars, rt] = await Promise.all([
       fetchCSV(ticker),
       fetchRealtime(ticker)
     ])
 
-    if (!csvBars && !rt) throw new Error(`Không tìm thấy dữ liệu cho "${ticker}". Kiểm tra lại mã.`)
+    if (!csvBars && !rt && !jsonData)
+      throw new Error(`Không tìm thấy dữ liệu cho "${ticker}". Kiểm tra lại mã.`)
 
     el('stock-loading-msg').textContent = 'Đang tính chỉ số kỹ thuật...'
 
-    // Use CSV bars (historical) + append today's price if available
+    // Ghép bars: CSV (lịch sử dài) + prices.json history (90 ngày gần nhất, chính xác hơn)
     let bars = csvBars || []
 
-    // If we have realtime but no CSV
-    if (!csvBars && rt) {
+    if (jsonData?.history?.length) {
+      const jsonBars = jsonData.history.map(b=>({
+        date:b.date, open:b.open, high:b.high, low:b.low, close:b.close, volume:b.volume
+      }))
+      if (bars.length > 0) {
+        // Ghép: dùng CSV làm nền, thay 90 ngày cuối bằng data từ prices.json (chính xác hơn)
+        const cutDate = jsonBars[0]?.date
+        const csvOld = bars.filter(b=>b.date < cutDate)
+        bars = [...csvOld, ...jsonBars]
+      } else {
+        bars = jsonBars
+      }
+    } else if (!csvBars && rt) {
       bars = [{date:'Hôm nay', close:rt.price, open:rt.price, high:rt.price, low:rt.price, volume:0}]
+    } else if (!csvBars && !rt) {
+      bars = [{date:'Hôm nay', close:price, open:price, high:price, low:price, volume:0}]
     }
 
     const ta = bars.length >= 14 ? TA.calc(bars) : null
@@ -886,11 +1017,22 @@ async function loadStock(ticker) {
     const prevBar = bars[bars.length-2]
 
     // Price: prefer real-time, fallback to CSV last
-    const price    = rt?.price    || lastBar?.close || 0
-    const chgPct   = rt?.changePct != null ? rt.changePct : (prevBar ? (lastBar.close-prevBar.close)/prevBar.close*100 : 0)
-    const high52w  = rt?.high52w  || (csvBars ? Math.max(...csvBars.slice(-252).map(b=>b.high||b.close)) : null)
+    const csvLastPrice = lastBar?.close || 0
+
+    // Sanity check: Yahoo trả mã nước ngoài cùng tên → loại nếu chênh >10x so với CSV/json
+    const refPrice   = jsonData?.price || fixPrice(csvLastPrice, null) || 0
+    const rtPriceRaw = rt?.price || 0
+    const rtSuspect  = refPrice > 0 && rtPriceRaw > 0 &&
+                       (rtPriceRaw < refPrice/10 || rtPriceRaw > refPrice*10)
+    const rtClean    = rtSuspect ? null : rt
+
+    // Ưu tiên: Yahoo Finance (intraday) > prices.json (EOD hàng ngày) > CSV 06/2023
+    const price = rtClean?.price || jsonData?.price || fixPrice(csvLastPrice, null) || 0
+    const priceSource = rtClean ? 'yahoo' : jsonData ? 'json' : 'csv'
+    const chgPct   = rtClean?.changePct != null ? rtClean?.changePct : jsonData?.changePct != null ? jsonData?.changePct : (prevBar ? (lastBar.close-prevBar.close)/prevBar.close*100 : 0)
+    const high52w  = rtClean?.high52w  || (csvBars ? Math.max(...csvBars.slice(-252).map(b=>b.high||b.close)) : null)
     const low52w   = rt?.low52w   || (csvBars ? Math.min(...csvBars.slice(-252).map(b=>b.low||b.close)) : null)
-    const mktCapT  = rt?.mktCap   ? (rt.mktCap/1e12).toFixed(1) : null
+    const mktCapT  = rtClean?.mktCap   ? (rt.mktCap/1e12).toFixed(1) : null
     const avgVol   = csvBars ? Math.round(csvBars.slice(-20).reduce((s,b)=>s+b.volume,0)/20/1e6*10)/10 : null
 
     // Groq: only for PE, ROE, PB if not from Yahoo
@@ -926,7 +1068,7 @@ Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
     // Header
     el('h-price').textContent = fP(price)
     const ce = el('h-chg')
-    if (!rt && csvBars) {
+    if (priceSource === 'csv') {
       ce.textContent = `⚠ Giá 06/2023`
       ce.style.color = '#d97706'
       // Show manual price input
@@ -950,16 +1092,12 @@ Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
     ].filter(Boolean).join(' · ')
 
     // Data source
-    const srcHtml = csvBars && !rt
-      ? `<span class="src-label" style="background:#fff3cd;color:#856404;border:0.5px solid #ffc107">
-          <i class="ti ti-alert-triangle" style="font-size:10px"></i>
-          Giá từ CSV 06/2023 — chưa có giá thực hôm nay
-        </span>`
-      : `<span class="src-label">
-          <i class="ti ti-${rt?'globe':'database'}" style="font-size:10px"></i>
-          ${G.stockData.dataSource}
-        </span>`
-    el('data-source-label').innerHTML = srcHtml
+    const srcMap = {
+      yahoo: `<span class="src-label"><i class="ti ti-circle-check" style="font-size:10px;color:var(--up)"></i>Yahoo Finance (real-time)</span>`,
+      json:  `<span class="src-label" style="background:#e0f2fe;color:#0369a1"><i class="ti ti-database" style="font-size:10px"></i>vnstock hàng ngày (${jsonData?.updated||''})</span>`,
+      csv:   `<span class="src-label" style="background:#fff3cd;color:#856404"><i class="ti ti-alert-triangle" style="font-size:10px"></i>CSV 06/2023 — cần chạy GitHub Actions</span>`,
+    }
+    el('data-source-label').innerHTML = srcMap[priceSource] || srcMap.csv
 
     // Update wl cache
     G.wlCache[ticker] = {
