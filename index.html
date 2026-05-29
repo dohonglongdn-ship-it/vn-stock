@@ -10,6 +10,7 @@
 <!-- Boot tách riêng - load trước body -->
 <script>
 var VNSTK_KEY = localStorage.getItem('vnstk_key') || ''
+var GH_TOKEN  = localStorage.getItem('gh_token') || ''
 function boot() {
   var inp = document.getElementById('key-inp')
   var v = (inp && inp.value.trim()) || VNSTK_KEY
@@ -19,6 +20,12 @@ function boot() {
   }
   VNSTK_KEY = v
   localStorage.setItem('vnstk_key', v)
+  var ghInp = document.getElementById('gh-token-inp')
+  var ghTok = (ghInp && ghInp.value.trim()) || localStorage.getItem('gh_token') || ''
+  if (ghTok && ghTok.startsWith('ghp_')) {
+    localStorage.setItem('gh_token', ghTok)
+    GH_TOKEN = ghTok
+  }
   document.getElementById('s-setup').classList.remove('active')
   document.getElementById('s-app').classList.add('active')
   if (window.initApp) window.initApp()
@@ -246,6 +253,10 @@ a{color:var(--blue)}
   </div>
   <label class="field-label" for="key-inp">Groq API Key</label>
   <input class="text-inp" id="key-inp" type="password" placeholder="gsk_..." autocomplete="off" onkeydown="handleKeyEnter(event)"/>
+  <label class="field-label" for="gh-token-inp" style="margin-top:6px">
+    GitHub Token <span style="font-size:10px;color:var(--t3);font-weight:400">(để đồng bộ watchlist/danh mục)</span>
+  </label>
+  <input class="text-inp" id="gh-token-inp" type="password" placeholder="ghp_... (tùy chọn)" autocomplete="off"/>
   <button class="btn-main" onclick="boot()">
     <i class="ti ti-rocket" style="font-size:13px;vertical-align:-2px;margin-right:5px"></i>Bắt đầu
   </button>
@@ -277,6 +288,7 @@ a{color:var(--blue)}
       <button type="submit"><i class="ti ti-search" style="font-size:14px"></i></button>
     </form>
     <div class="topbar-end">
+      <span id="sync-badge" style="font-size:9px;color:var(--t3);display:none;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
       <span id="prices-json-badge" style="font-size:9px;color:var(--t3);display:none"></span>
       <span id="status-badge" class="tag tag-g" style="margin:0;font-size:9px">●&nbsp;Groq AI</span>
       <button class="icon-btn" onclick="changeKey()" title="Đổi API key"><i class="ti ti-settings"></i></button>
@@ -299,11 +311,17 @@ a{color:var(--blue)}
       </div>
 
       <!-- Watchlist -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;gap:5px">
         <span style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.07em">Danh mục theo dõi</span>
-        <button class="pill" onclick="refreshWl()" style="font-size:10px;padding:3px 9px">
-          <i class="ti ti-refresh" style="font-size:10px;margin-right:2px"></i>Cập nhật giá
-        </button>
+        <div style="display:flex;gap:4px">
+          ${GH_TOKEN ? '' : ''}
+          <button class="pill" onclick="syncSave().then(()=>syncLoad()).then(()=>renderWlList())" id="btn-sync" style="font-size:10px;padding:3px 9px;display:${GH_TOKEN?'inline':'none'}">
+            <i class="ti ti-cloud-upload" style="font-size:10px;margin-right:2px"></i>Sync
+          </button>
+          <button class="pill" onclick="refreshWl()" style="font-size:10px;padding:3px 9px">
+            <i class="ti ti-refresh" style="font-size:10px;margin-right:2px"></i>Cập nhật giá
+          </button>
+        </div>
       </div>
       <!-- Add ticker -->
       <div class="card" style="padding:8px 10px;margin-bottom:8px">
@@ -757,12 +775,125 @@ function showV(id) {
   }
 }
 
+// ── GitHub Sync ──────────────────────────────────────────────────────
+// Tự động trích xuất owner/repo từ PRICES_URL
+const GH_REPO = (() => {
+  const m = PRICES_URL.match(/github\.com\/([^/]+)\/([^/]+)\//)
+  return m ? { owner: m[1], repo: m[2] } : null
+})()
+const GH_FILE = 'user_data.json'
+let   GH_SHA  = null   // SHA của file hiện tại (cần để update)
+let   SYNC_PENDING = false
+
+function ghHeaders() {
+  return {
+    'Authorization': `Bearer ${GH_TOKEN}`,
+    'Accept': 'application/vnd.github+json',
+    'Content-Type': 'application/json',
+  }
+}
+
+// Đọc user_data.json từ GitHub
+async function syncLoad() {
+  if (!GH_TOKEN || !GH_REPO) return false
+  try {
+    const r = await fetch(
+      `https://api.github.com/repos/${GH_REPO.owner}/${GH_REPO.repo}/contents/${GH_FILE}`,
+      { headers: ghHeaders(), cache: 'no-cache' }
+    )
+    if (r.status === 404) return false  // File chưa tồn tại
+    if (!r.ok) return false
+    const d = await r.json()
+    GH_SHA = d.sha
+    const txt = atob(d.content.split('\n').join(''))
+    const data = JSON.parse(txt)
+
+    // Merge: GitHub data ghi đè localStorage
+    if (data.watchlist?.length) {
+      G.wl = data.watchlist
+      localStorage.setItem('vnstk_wl', JSON.stringify(G.wl))
+    }
+    if (data.portfolio?.length) {
+      PORT.items = data.portfolio
+      savePort()
+    }
+    console.log(`✅ Sync loaded from GitHub (${data.updated||'?'})`)
+    updateSyncBadge('✅ Đồng bộ: ' + (data.updated||'?'))
+    return true
+  } catch(e) {
+    console.warn('syncLoad error:', e.message)
+    return false
+  }
+}
+
+// Ghi user_data.json lên GitHub
+async function syncSave() {
+  if (!GH_TOKEN || !GH_REPO) return false
+  if (SYNC_PENDING) return false
+  SYNC_PENDING = true
+  try {
+    const data = {
+      watchlist: G.wl,
+      portfolio: PORT.items,
+      updated: new Date().toLocaleDateString('vi-VN'),
+    }
+    const content64 = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))))
+    const body = {
+      message: '💾 Cập nhật watchlist/danh mục',
+      content: content64,
+    }
+    if (GH_SHA) body.sha = GH_SHA  // Bắt buộc nếu file đã tồn tại
+
+    const r = await fetch(
+      `https://api.github.com/repos/${GH_REPO.owner}/${GH_REPO.repo}/contents/${GH_FILE}`,
+      { method: 'PUT', headers: ghHeaders(), body: JSON.stringify(body) }
+    )
+    if (!r.ok) {
+      const err = await r.json()
+      throw new Error(err.message)
+    }
+    const result = await r.json()
+    GH_SHA = result.content?.sha
+    updateSyncBadge('✅ Đã lưu lên GitHub')
+    console.log('✅ Sync saved to GitHub')
+    return true
+  } catch(e) {
+    console.warn('syncSave error:', e.message)
+    updateSyncBadge('⚠ Lưu thất bại: ' + e.message)
+    return false
+  } finally {
+    SYNC_PENDING = false
+  }
+}
+
+function updateSyncBadge(msg) {
+  const b = el('sync-badge')
+  if (b) { b.textContent = msg; b.style.display = 'inline' }
+}
+
+// Auto-save sau 2s khi có thay đổi
+let syncTimer = null
+function triggerSync() {
+  if (!GH_TOKEN) return
+  clearTimeout(syncTimer)
+  syncTimer = setTimeout(() => syncSave(), 2000)
+  updateSyncBadge('⏳ Đang lưu...')
+}
+
 // ── App init ─────────────────────────────────────────────────────────
-window.initApp = function() {
+window.initApp = async function() {
   try { G.wl = JSON.parse(localStorage.getItem('vnstk_wl') || '["VCB","HPG","VNM"]') } catch {}
   try { G.wlCache = JSON.parse(localStorage.getItem('vnstk_wlc') || '{}') } catch {}
+  try { PORT.items = JSON.parse(localStorage.getItem('vnstk_port') || '[]') } catch {}
   renderWlList()
-  loadPricesJson()
+  // Load đồng thời: prices.json + GitHub sync
+  const [_, synced] = await Promise.all([loadPricesJson(), syncLoad()])
+  if (synced) { renderWlList() }
+  // Hiện nút sync trong topbar nếu có token
+  if (GH_TOKEN) {
+    const b = el('sync-badge')
+    if (b) b.style.display = 'inline'
+  }
 }
 
 async function loadPricesJson() {
@@ -819,9 +950,15 @@ function getPriceFromJson(ticker) {
   return G.pricesJson?.[ticker] || null
 }
 function changeKey() {
-  if (!confirm('Đổi API key?')) return
-  localStorage.removeItem('vnstk_key'); VNSTK_KEY=''; 
+  if (!confirm('Đổi API keys?')) return
+  localStorage.removeItem('vnstk_key'); VNSTK_KEY=''
+  // Giữ gh_token để không phải nhập lại
   el('s-app').classList.remove('active'); el('s-setup').classList.add('active')
+  // Pre-fill GitHub token
+  setTimeout(()=>{
+    const ghInp=el('gh-token-inp')
+    if(ghInp && GH_TOKEN) ghInp.value=GH_TOKEN
+  },100)
 }
 
 // Auto-boot if key exists
@@ -1597,7 +1734,10 @@ function renderTA() {
 }
 
 // ── Watchlist ─────────────────────────────────────────────────────────
-function saveWl() { localStorage.setItem('vnstk_wl', JSON.stringify(G.wl)) }
+function saveWl() {
+  localStorage.setItem('vnstk_wl', JSON.stringify(G.wl))
+  triggerSync()
+}
 
 function toggleWl() {
   if (!G.ticker) return
@@ -1904,7 +2044,10 @@ const PORT = { items: [] }
   try { PORT.items = JSON.parse(localStorage.getItem('vnstk_port')||'[]') } catch {}
 })()
 
-function savePort(){ localStorage.setItem('vnstk_port', JSON.stringify(PORT.items)) }
+function savePort(){
+  localStorage.setItem('vnstk_port', JSON.stringify(PORT.items))
+  triggerSync()
+}
 
 function addPortfolioItem(e){
   e.preventDefault()
