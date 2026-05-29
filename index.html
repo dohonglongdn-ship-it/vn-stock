@@ -1785,7 +1785,9 @@ Trả về JSON:
 }`
 
   try {
-    G.analysis = parseJ(await groq(prompt, sys, 2500))
+    const rawTxt = await groq(prompt, sys, 2500)
+    try { G.analysis = parseJ(rawTxt) }
+    catch(_) { throw new Error('AI trả về định dạng không hợp lệ. Thử lại.') }
     renderAnalysis()
   } catch(e) {
     el('an-err').textContent='Lỗi: '+e.message
@@ -2054,8 +2056,14 @@ async function analyzePortfolio(){
   const prompt = 'Phan tich danh muc: ' + portSummary + '. Tong gia tri: ' + fP(Math.round(totalVal)) + ' VND. Chi tra ve JSON object: {"overallRisk":"...","diversification":"...","strengths":["..."],"weaknesses":["..."],"rebalance":[{"ticker":"...","action":"...","reason":"..."}],"outlook":"...","topPick":"..."}'
 
   try{
-    const txt=await groq(prompt,'Chỉ trả về JSON object. Không text trước hoặc sau. Không markdown.',1500)
-    const a=parseJ(txt)
+    const txt=await groq(prompt,'You are a Vietnamese portfolio analyst. Return ONLY a valid JSON object. No explanations, no markdown, no text before or after the JSON.',1500)
+    let a
+    try { a=parseJ(txt) }
+    catch(_){
+      // Fallback: AI trả về text thuần → show như outlook
+      a={overallRisk:'N/A',diversification:'N/A',strengths:[],weaknesses:[],rebalance:[],
+         outlook:txt.slice(0,500),topPick:''}
+    }
     const riskC={'Thấp':C_UP,'Trung bình':'#d97706','Cao':C_DN}[a.overallRisk]||'#d97706'
     el('port-ai-result').innerHTML=`
       <div class="card" style="margin-top:8px">
