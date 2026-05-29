@@ -146,6 +146,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .disclaimer{font-size:10px;color:var(--t3);line-height:1.5;margin-top:10px;padding-top:8px;border-top:0.5px solid var(--bd)}
 code{font-size:10px;background:var(--bg2);padding:1px 5px;border-radius:3px;font-family:monospace}
 a{color:var(--blue)}
+/* Autocomplete */
+.ac-wrap{position:relative;flex:1}
+.ac-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg);border:0.5px solid var(--bd2);border-radius:var(--r);box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:200;max-height:220px;overflow-y:auto;display:none}
+.ac-item{display:flex;align-items:center;gap:8px;padding:8px 11px;cursor:pointer;transition:background .1s}
+.ac-item:hover,.ac-item.focused{background:var(--bg2)}
+.ac-code{font-size:12px;font-weight:700;color:var(--blue);min-width:42px}
+.ac-name{font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac-sector{font-size:10px;color:var(--t3);flex-shrink:0}
+/* Compare */
+.cmp-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;margin:2px 3px 2px 0;cursor:default}
+.cmp-del{background:none;border:none;cursor:pointer;opacity:.5;padding:0;font-size:11px;color:inherit}
+.cmp-del:hover{opacity:1}
+.cmp-chart-wrap{height:260px;position:relative}
+/* Screener */
+.scr-table{width:100%;border-collapse:collapse}
+.scr-table th{font-size:9px;font-weight:600;color:var(--t3);text-align:right;padding:5px 8px;text-transform:uppercase;letter-spacing:.05em;border-bottom:0.5px solid var(--bd);white-space:nowrap}
+.scr-table th:first-child,.scr-table th:nth-child(2){text-align:left}
+.scr-table td{font-size:11px;padding:6px 8px;text-align:right;border-top:0.5px solid var(--bd)}
+.scr-table td:first-child{font-weight:700;color:var(--blue);cursor:pointer;text-align:left}
+.scr-table td:nth-child(2){color:var(--t2);text-align:left;font-size:10px}
+.scr-table tr:hover td{background:var(--bg2)}
+.scr-badge{font-size:9px;padding:1px 6px;border-radius:99px;font-weight:600}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.filter-chip{font-size:11px;padding:4px 10px;border-radius:99px;border:0.5px solid var(--bd2);color:var(--t2);cursor:pointer;background:transparent;font-weight:500;transition:all .12s}
+.filter-chip.on{background:var(--blue);color:#fff;border-color:transparent}
 /* Time range */
 .trange{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
 .tr-btn{font-size:10px;padding:3px 10px;border-radius:99px;border:0.5px solid var(--bd2);color:var(--t2);background:transparent;cursor:pointer;font-weight:600;transition:all .12s}
@@ -218,8 +243,15 @@ a{color:var(--blue)}
     <span class="topbar-logo">
       <i class="ti ti-chart-candle" style="font-size:16px;color:var(--blue)"></i>VN Stock
     </span>
-    <form class="search-row" onsubmit="onSearch(event)">
-      <input id="q" placeholder="Mã CK (VCB...)" autocomplete="off"/>
+    <form class="search-row" onsubmit="onSearch(event)" style="position:relative">
+      <div class="ac-wrap">
+        <input id="q" placeholder="Mã / Tên công ty..." autocomplete="off"
+          oninput="onQueryInput(this.value)"
+          onkeydown="onQueryKey(event)"
+          onfocus="onQueryInput(this.value)"
+          onblur="setTimeout(()=>hideAC(),200)"/>
+        <div id="ac-dropdown" class="ac-dropdown"></div>
+      </div>
       <button type="submit"><i class="ti ti-search" style="font-size:14px"></i></button>
     </form>
     <div class="topbar-end">
@@ -354,19 +386,88 @@ a{color:var(--blue)}
 
   </div>
 
+    <!-- ── Compare ── -->
+    <div id="v-compare" class="screen">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:14px;font-weight:600"><i class="ti ti-chart-dots" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>So sánh cổ phiếu</span>
+      </div>
+      <!-- Add ticker input -->
+      <div class="card" style="padding:8px 10px;margin-bottom:8px">
+        <form onsubmit="addCompareTicker(event)" style="display:flex;gap:6px">
+          <input id="cmp-inp" placeholder="Thêm mã để so sánh (HPG, VNM...)" style="flex:1;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);text-transform:uppercase" autocomplete="off"/>
+          <button type="submit" style="font-size:12px;padding:6px 14px;border:none;border-radius:var(--r);background:var(--blue);color:#fff;cursor:pointer;font-weight:600">+ Thêm</button>
+        </form>
+      </div>
+      <!-- Ticker tags -->
+      <div id="cmp-tags" style="margin-bottom:8px"></div>
+      <!-- Range -->
+      <div class="trange" id="cmp-range-row" style="margin-bottom:8px"></div>
+      <!-- Loading -->
+      <div id="cmp-loading" class="loading-box" style="display:none">
+        <i class="ti ti-refresh spin" style="font-size:20px;margin-bottom:8px;display:block"></i>Đang tải dữ liệu...
+      </div>
+      <!-- Chart -->
+      <div class="card" style="display:none" id="cmp-card">
+        <div class="cmp-chart-wrap"><canvas id="cmp-chart"></canvas></div>
+        <div style="font-size:10px;color:var(--t3);margin-top:6px">* Chuẩn hóa về 100% tại ngày đầu kỳ. Nguồn: vnstock CSV</div>
+      </div>
+      <!-- Stats table -->
+      <div id="cmp-stats"></div>
+    </div>
+
+    <!-- ── Screener ── -->
+    <div id="v-screener" class="screen">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:14px;font-weight:600"><i class="ti ti-filter" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>Bộ lọc cổ phiếu</span>
+        <button class="pill" id="scr-run-btn" onclick="runScreener()" style="margin-left:auto">
+          <i class="ti ti-refresh" style="font-size:11px;margin-right:2px"></i>Chạy lọc
+        </button>
+      </div>
+      <!-- Filters -->
+      <div class="card" style="margin-bottom:8px">
+        <div class="card-title" style="margin-bottom:8px"><i class="ti ti-sliders" style="font-size:13px"></i>Bộ lọc</div>
+        <div class="filter-row">
+          <span style="font-size:11px;color:var(--t2);font-weight:500">RSI:</span>
+          <button class="filter-chip" id="f-rsi-ob" onclick="toggleFilter('rsi-ob')">Quá mua &gt;70</button>
+          <button class="filter-chip on" id="f-rsi-os" onclick="toggleFilter('rsi-os')">Quá bán &lt;30</button>
+          <button class="filter-chip" id="f-rsi-neu" onclick="toggleFilter('rsi-neu')">Trung tính</button>
+        </div>
+        <div class="filter-row">
+          <span style="font-size:11px;color:var(--t2);font-weight:500">Xu hướng:</span>
+          <button class="filter-chip on" id="f-bull" onclick="toggleFilter('bull')">Tăng (trên MA20)</button>
+          <button class="filter-chip" id="f-bear" onclick="toggleFilter('bear')">Giảm (dưới MA20)</button>
+        </div>
+        <div class="filter-row">
+          <span style="font-size:11px;color:var(--t2);font-weight:500">MACD:</span>
+          <button class="filter-chip" id="f-macd-bull" onclick="toggleFilter('macd-bull')">Bullish cross</button>
+          <button class="filter-chip" id="f-macd-bear" onclick="toggleFilter('macd-bear')">Bearish cross</button>
+        </div>
+      </div>
+      <div id="scr-loading" class="loading-box" style="display:none">
+        <i class="ti ti-refresh spin" style="font-size:20px;margin-bottom:8px;display:block"></i>
+        <div id="scr-msg">Đang tải dữ liệu...</div>
+      </div>
+      <div id="scr-results"></div>
+    </div>
+
+  </div>
+
   <!-- Bottom Nav -->
   <nav class="bottom-nav">
     <button class="nav-btn active" id="nb-dash" onclick="showV('dash')">
-      <i class="ti ti-home" style="font-size:22px"></i>Tổng quan
+      <i class="ti ti-home" style="font-size:20px"></i>Tổng quan
     </button>
     <button class="nav-btn" id="nb-stock" onclick="G.ticker&&showV('stock')">
-      <i class="ti ti-chart-bar" style="font-size:22px"></i>Cổ phiếu
+      <i class="ti ti-chart-bar" style="font-size:20px"></i>Cổ phiếu
+    </button>
+    <button class="nav-btn" id="nb-compare" onclick="showV('compare')">
+      <i class="ti ti-chart-dots" style="font-size:20px"></i>So sánh
+    </button>
+    <button class="nav-btn" id="nb-screener" onclick="showV('screener')">
+      <i class="ti ti-filter" style="font-size:20px"></i>Bộ lọc
     </button>
     <button class="nav-btn" id="nb-analysis" onclick="goAnalysis()">
-      <i class="ti ti-brain" style="font-size:22px"></i>Phân tích
-    </button>
-    <button class="nav-btn" id="nb-brief" onclick="loadBrief();showV('dash')">
-      <i class="ti ti-satellite" style="font-size:22px"></i>Bản tin
+      <i class="ti ti-brain" style="font-size:20px"></i>AI
     </button>
   </nav>
 </div>
@@ -458,6 +559,7 @@ const G = {
 // ── Helpers ─────────────────────────────────────────────────────────
 const el = id => document.getElementById(id)
 const fP  = v => v != null ? Math.round(v).toLocaleString('vi-VN') : '—'
+const rsiColor = r => r>70?'var(--dn)':r<30?'var(--up)':'var(--t2)'
 const fPct= v => v != null ? `${v>=0?'+':''}${v.toFixed(2)}%` : '—'
 var C_UP='#0e9f6e', C_DN='#d84040', C_NEU='#888'
 const db  = t => COMPANY_DB[t?.toUpperCase()] || null
@@ -475,6 +577,20 @@ function showV(id) {
   el('v-'+id).classList.add('active')
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'))
   const nb=el('nb-'+id); if(nb) nb.classList.add('active')
+  // Init compare view
+  if (id==='compare') {
+    initCompareRange()
+    if (G.ticker && !CMP.tickers.includes(G.ticker)) {
+      CMP.tickers.push(G.ticker)
+      renderCmpTags()
+      loadCompareData()
+    }
+  }
+  // Init screener view
+  if (id==='screener' && !el('scr-results').innerHTML) {
+    // Auto-run screener on first visit
+    runScreener()
+  }
 }
 
 // ── App init ─────────────────────────────────────────────────────────
@@ -1405,6 +1521,327 @@ function renderAnalysis() {
 window.addEventListener('resize', () => {
   if (G.chartType === 'candle' && G.stockData) renderCandlestick()
 })
+
+// ── Autocomplete Search ──────────────────────────────────────────────
+let acFocus = -1
+
+function onQueryInput(val) {
+  const q = val.trim().toUpperCase()
+  const dd = el('ac-dropdown')
+  if (q.length < 1) { dd.style.display='none'; return }
+
+  const matches = Object.entries(COMPANY_DB).filter(([t, info]) =>
+    t.startsWith(q) ||
+    info.n.toUpperCase().includes(q) ||
+    info.f.toUpperCase().includes(q)
+  ).slice(0, 8)
+
+  if (!matches.length) { dd.style.display='none'; return }
+
+  acFocus = -1
+  dd.innerHTML = matches.map(([t, info], i) => `
+    <div class="ac-item" data-ticker="${t}" onmousedown="selectAC('${t}')">
+      <span class="ac-code">${t}</span>
+      <span class="ac-name">${info.n}</span>
+      <span class="ac-sector">${info.s}</span>
+    </div>`).join('')
+  dd.style.display = 'block'
+}
+
+function onQueryKey(e) {
+  const dd = el('ac-dropdown')
+  const items = dd.querySelectorAll('.ac-item')
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    acFocus = Math.min(acFocus + 1, items.length - 1)
+    items.forEach((it,i) => it.classList.toggle('focused', i === acFocus))
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    acFocus = Math.max(acFocus - 1, 0)
+    items.forEach((it,i) => it.classList.toggle('focused', i === acFocus))
+  } else if (e.key === 'Enter' && acFocus >= 0) {
+    e.preventDefault()
+    const t = items[acFocus]?.dataset.ticker
+    if (t) selectAC(t)
+  } else if (e.key === 'Escape') {
+    hideAC()
+  }
+}
+
+function selectAC(ticker) {
+  el('q').value = ''
+  hideAC()
+  loadStock(ticker)
+}
+
+function hideAC() {
+  el('ac-dropdown').style.display = 'none'
+  acFocus = -1
+}
+
+// ── Compare ───────────────────────────────────────────────────────────
+const CMP = {
+  tickers: [],
+  range: '1Y',
+  chart: null,
+  colors: ['#2563eb','#0e9f6e','#d84040','#d97706','#7c3aed','#0891b2'],
+}
+
+function initCompareRange() {
+  const ranges = [{k:'3M',l:'3T'},{k:'6M',l:'6T'},{k:'1Y',l:'1N'},{k:'3Y',l:'3N'},{k:'Max',l:'Max'}]
+  el('cmp-range-row').innerHTML = ranges.map(r=>
+    `<button class="tr-btn${CMP.range===r.k?' on':''}" onclick="setCmpRange('${r.k}')">${r.l}</button>`
+  ).join('')
+}
+
+function setCmpRange(range) {
+  CMP.range = range
+  document.querySelectorAll('#cmp-range-row .tr-btn').forEach(b => {
+    const map={'3M':'3T','6M':'6T','1Y':'1N','3Y':'3N','Max':'Max'}
+    b.classList.toggle('on', b.textContent === map[range])
+  })
+  renderCompareChart()
+}
+
+function addCompareTicker(e) {
+  e.preventDefault()
+  const inp = el('cmp-inp')
+  const t = inp.value.trim().toUpperCase()
+  if (!t) return
+  if (CMP.tickers.includes(t)) { inp.value=''; return }
+  if (CMP.tickers.length >= 5) { alert('Tối đa 5 mã'); return }
+  CMP.tickers.push(t)
+  inp.value = ''
+  renderCmpTags()
+  loadCompareData()
+}
+
+function removeCmpTicker(t) {
+  CMP.tickers = CMP.tickers.filter(x=>x!==t)
+  renderCmpTags()
+  renderCompareChart()
+}
+
+function renderCmpTags() {
+  el('cmp-tags').innerHTML = CMP.tickers.map((t,i) => {
+    const info = db(t)
+    return `<span class="cmp-tag" style="background:${CMP.colors[i]}20;color:${CMP.colors[i]};border:1px solid ${CMP.colors[i]}40">
+      <span style="width:8px;height:8px;border-radius:50%;background:${CMP.colors[i]};display:inline-block"></span>
+      ${t}${info?' · '+info.n:''}
+      <button class="cmp-del" onclick="removeCmpTicker('${t}')"><i class="ti ti-x" style="font-size:10px"></i></button>
+    </span>`
+  }).join('')
+}
+
+async function loadCompareData() {
+  if (!CMP.tickers.length) return
+  el('cmp-loading').style.display = 'block'
+  el('cmp-card').style.display = 'none'
+  el('cmp-stats').innerHTML = ''
+
+  // Load CSV cho tất cả tickers song song
+  const results = await Promise.all(CMP.tickers.map(t => fetchCSV(t).catch(()=>null)))
+  CMP.data = {}
+  CMP.tickers.forEach((t,i) => { if (results[i]) CMP.data[t] = results[i] })
+
+  el('cmp-loading').style.display = 'none'
+  renderCompareChart()
+  renderCmpStats()
+  el('cmp-card').style.display = 'block'
+}
+
+function getCmpBarsN() {
+  return {'3M':65,'6M':130,'1Y':252,'3Y':756,'Max':9999}[CMP.range]||252
+}
+
+function renderCompareChart() {
+  if (!CMP.data || !Object.keys(CMP.data).length) return
+  if (CMP.chart) { CMP.chart.destroy(); CMP.chart=null }
+
+  const n = getCmpBarsN()
+  const datasets = []
+
+  CMP.tickers.forEach((t, i) => {
+    const bars = CMP.data[t]
+    if (!bars) return
+    const sliced = bars.slice(-Math.min(n, bars.length))
+    if (sliced.length < 2) return
+    const base = sliced[0].close
+    // Normalize về % so với ngày đầu kỳ
+    const normalized = sliced.map(b => +((b.close - base)/base*100).toFixed(2))
+    datasets.push({
+      label: t,
+      data: normalized,
+      borderColor: CMP.colors[i],
+      borderWidth: 1.8,
+      fill: false,
+      tension: .2,
+      pointRadius: 0,
+    })
+  })
+
+  if (!datasets.length) return
+  // Labels: dùng dates của ticker đầu tiên
+  const firstT = CMP.tickers.find(t=>CMP.data[t])
+  const bars = CMP.data[firstT]
+  const n2 = getCmpBarsN()
+  const labels = bars.slice(-Math.min(n2, bars.length)).map(b=>b.date.slice(5))
+
+  CMP.chart = new Chart(el('cmp-chart'), {
+    type:'line', data:{labels, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true,position:'top',labels:{font:{size:11},boxWidth:10,usePointStyle:true}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y>=0?'+':''}${ctx.parsed.y.toFixed(2)}%`}}
+      },
+      scales:{
+        x:{ticks:{maxTicksLimit:8,font:{size:9},color:'#888'},grid:{color:'rgba(128,128,128,.08)'}},
+        y:{position:'right',ticks:{font:{size:9},color:'#888',callback:v=>`${v>=0?'+':''}${v}%`},grid:{color:'rgba(128,128,128,.08)'},
+          afterDataLimits: axis => { axis.min -= 2; axis.max += 2 }}
+      }
+    }
+  })
+}
+
+function renderCmpStats() {
+  if (!CMP.data) return
+  const n = getCmpBarsN()
+  const rows = CMP.tickers.map((t,i) => {
+    const bars = CMP.data[t]; if(!bars) return null
+    const sliced = bars.slice(-Math.min(n, bars.length))
+    if (sliced.length < 2) return null
+    const base = sliced[0].close
+    const last = sliced[sliced.length-1].close
+    const ret = (last-base)/base*100
+    const closes = sliced.map(b=>b.close)
+    const ta = TA.calc(sliced)
+    const info = db(t)
+    return {t, ret, last, rsi:ta.rsi, macdBull:ta.macdBull, aboveMA20:ta.aboveMA20, color:CMP.colors[i], name:info?.n||t}
+  }).filter(Boolean)
+
+  if (!rows.length) return
+  el('cmp-stats').innerHTML = `<div class="card">
+    <div class="card-title" style="margin-bottom:8px"><i class="ti ti-table" style="font-size:13px"></i>So sánh chỉ số</div>
+    <div style="overflow-x:auto">
+    <table class="scr-table">
+      <thead><tr>
+        <th>Mã</th><th>Công ty</th><th>Giá</th><th>Kỳ này</th><th>RSI</th><th>MACD</th><th>vs MA20</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r=>`<tr>
+          <td onclick="loadStock('${r.t}')" style="color:${r.color};font-weight:700">${r.t}</td>
+          <td style="color:var(--t2);text-align:left;font-size:10px">${r.name}</td>
+          <td>${fP(r.last)}</td>
+          <td class="${r.ret>=0?'perf-up':'perf-dn'}">${r.ret>=0?'▲':'▼'}${Math.abs(r.ret).toFixed(2)}%</td>
+          <td style="color:${rsiColor(r.rsi)}">${r.rsi?.toFixed(0)||'—'}</td>
+          <td><span class="scr-badge" style="background:${r.macdBull?'#dcfce7':'#fee2e2'};color:${r.macdBull?'#166534':'#991b1b'}">${r.macdBull?'Bull':'Bear'}</span></td>
+          <td><span class="scr-badge" style="background:${r.aboveMA20?'#dcfce7':'#fee2e2'};color:${r.aboveMA20?'#166534':'#991b1b'}">${r.aboveMA20?'Trên':'Dưới'}</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div></div>`
+}
+
+// ── Screener ──────────────────────────────────────────────────────────
+const SCREENER_TICKERS = [
+  'VCB','BID','CTG','MBB','TCB','ACB','VPB','HDB','STB','LPB',
+  'SSI','VND','HCM','VIX','MBS','VPS',
+  'HPG','HSG','NKG',
+  'VNM','MSN','SAB',
+  'VIC','VHM','NVL','PDR','KDH','DXG',
+  'GAS','PLX','PVD','PVS',
+  'FPT','CMG','MWG','FRT','PNJ',
+  'HVN','VJC','POW','REE','BVH'
+]
+
+const SCR_FILTERS = new Set(['rsi-os','bull'])
+
+function toggleFilter(f) {
+  if (SCR_FILTERS.has(f)) SCR_FILTERS.delete(f)
+  else SCR_FILTERS.add(f)
+  el('f-'+f)?.classList.toggle('on', SCR_FILTERS.has(f))
+}
+
+async function runScreener() {
+  el('scr-loading').style.display = 'block'
+  el('scr-results').innerHTML = ''
+  el('scr-run-btn').disabled = true
+
+  const results = []
+  const total = SCREENER_TICKERS.length
+  let done = 0
+
+  // Load in batches of 5
+  for (let i=0; i<SCREENER_TICKERS.length; i+=5) {
+    const batch = SCREENER_TICKERS.slice(i, i+5)
+    const batchResults = await Promise.all(batch.map(async t => {
+      try {
+        const bars = await fetchCSV(t)
+        if (!bars || bars.length < 30) return null
+        const ta = TA.calc(bars)
+        const info = db(t)
+        const last = bars[bars.length-1].close
+        const prev = bars[bars.length-2].close
+        const chg = (last-prev)/prev*100
+        // 1M return
+        const m1 = bars.length>21 ? (last-bars[bars.length-22].close)/bars[bars.length-22].close*100 : null
+        return {t, last, chg, m1, rsi:ta.rsi, macdBull:ta.macdBull, aboveMA20:ta.aboveMA20, aboveMA50:ta.aboveMA50, annVol:ta.annVol, name:info?.n||t, sector:info?.s||''}
+      } catch { return null }
+    }))
+    batchResults.forEach(r => { if(r) results.push(r) })
+    done += batch.length
+    el('scr-msg').textContent = `Đã xử lý ${Math.min(done,total)}/${total} mã...`
+    await new Promise(r=>setTimeout(r,100))
+  }
+
+  // Apply filters
+  const filtered = results.filter(r => {
+    if (SCR_FILTERS.has('rsi-os') && r.rsi > 30) return false
+    if (SCR_FILTERS.has('rsi-ob') && r.rsi < 70) return false
+    if (SCR_FILTERS.has('rsi-neu') && (r.rsi <= 30 || r.rsi >= 70)) return false
+    if (SCR_FILTERS.has('bull') && !r.aboveMA20) return false
+    if (SCR_FILTERS.has('bear') && r.aboveMA20) return false
+    if (SCR_FILTERS.has('macd-bull') && !r.macdBull) return false
+    if (SCR_FILTERS.has('macd-bear') && r.macdBull) return false
+    return true
+  }).sort((a,b)=>a.rsi-b.rsi)
+
+  el('scr-loading').style.display = 'none'
+  el('scr-run-btn').disabled = false
+
+  if (!filtered.length) {
+    el('scr-results').innerHTML = '<div class="card" style="text-align:center;color:var(--t2);font-size:13px;padding:24px">Không có mã nào khớp bộ lọc.</div>'
+    return
+  }
+
+  el('scr-results').innerHTML = `<div class="card">
+    <div class="card-title" style="margin-bottom:8px">
+      <i class="ti ti-list-check" style="font-size:13px"></i>
+      ${filtered.length} mã khớp / ${results.length} mã đã quét
+    </div>
+    <div style="overflow-x:auto">
+    <table class="scr-table">
+      <thead><tr>
+        <th>Mã</th><th>Tên</th><th>Giá</th><th>Hôm nay</th><th>1T</th><th>RSI</th><th>MACD</th><th>MA20</th><th>Vol/năm</th>
+      </tr></thead>
+      <tbody>
+        ${filtered.map(r=>`<tr>
+          <td onclick="loadStock('${r.t}')">${r.t}</td>
+          <td>${r.name}</td>
+          <td>${fP(r.last)}</td>
+          <td class="${r.chg>=0?'perf-up':'perf-dn'}">${r.chg>=0?'▲':'▼'}${Math.abs(r.chg).toFixed(2)}%</td>
+          <td class="${(r.m1||0)>=0?'perf-up':'perf-dn'}">${r.m1!=null?(r.m1>=0?'+':'')+r.m1.toFixed(1)+'%':'—'}</td>
+          <td style="color:${rsiColor(r.rsi)};font-weight:600">${r.rsi?.toFixed(0)||'—'}</td>
+          <td><span class="scr-badge" style="background:${r.macdBull?'#dcfce7':'#fee2e2'};color:${r.macdBull?'#166534':'#991b1b'}">${r.macdBull?'Bull':'Bear'}</span></td>
+          <td><span class="scr-badge" style="background:${r.aboveMA20?'#dcfce7':'#fee2e2'};color:${r.aboveMA20?'#166534':'#991b1b'}">${r.aboveMA20?'Trên':'Dưới'}</span></td>
+          <td style="color:${r.annVol>30?C_DN:r.annVol>15?'#d97706':C_UP}">${r.annVol?.toFixed(0)||'—'}%</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
+    <div style="font-size:10px;color:var(--t3);margin-top:6px">Nhấn mã để xem chi tiết. Dữ liệu từ vnstock CSV.</div>
+  </div>`
+}
 
 // ── Brief ─────────────────────────────────────────────────────────────
 async function loadBrief() {
