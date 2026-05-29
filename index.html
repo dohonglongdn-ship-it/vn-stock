@@ -2058,30 +2058,34 @@ async function analyzePortfolio(){
   const prompt = 'Phan tich danh muc: ' + portSummary + '. Tong gia tri: ' + fP(Math.round(totalVal)) + ' VND. Chi tra ve JSON object: {"overallRisk":"...","diversification":"...","strengths":["..."],"weaknesses":["..."],"rebalance":[{"ticker":"...","action":"...","reason":"..."}],"outlook":"...","topPick":"..."}'
 
   try{
-    const txt=await groq(prompt,'You are a Vietnamese portfolio analyst. Return ONLY a valid JSON object.',1500,true)
-    let a
-    try { a=parseJ(txt) }
-    catch(_){
-      // Fallback: AI trả về text thuần → show như outlook
-      a={overallRisk:'N/A',diversification:'N/A',strengths:[],weaknesses:[],rebalance:[],
-         outlook:txt.slice(0,500),topPick:''}
+    const rawTxt = await groq(prompt,
+      'You are a financial analyst. You MUST respond with ONLY a JSON object. Start your response with { and end with }. No other text.',
+      1500, true)
+    console.log('Portfolio AI raw:', rawTxt ? rawTxt.slice(0,100) : 'empty')
+
+    // Parse JSON với nhiều fallback
+    let a = null
+    if (rawTxt && rawTxt.trim()) {
+      // Thử parse trực tiếp
+      if (rawTxt.trim().startsWith('{')) {
+        try { a = JSON.parse(rawTxt.trim()) } catch(e1) {}
+      }
+      // Thử tìm JSON object trong text
+      if (!a) {
+        const i1 = rawTxt.indexOf('{'), i2 = rawTxt.lastIndexOf('}')
+        if (i1 >= 0 && i2 > i1) {
+          try { a = JSON.parse(rawTxt.slice(i1, i2+1)) } catch(e2) {}
+        }
+      }
+      // Fallback: hiển thị raw text
+      if (!a) {
+        a = { overallRisk:'Xem bên dưới', diversification:'—',
+              strengths:[], weaknesses:[], rebalance:[],
+              outlook: rawTxt.slice(0, 600), topPick:'' }
+      }
     }
-    const riskC={'Thấp':C_UP,'Trung bình':'#d97706','Cao':C_DN}[a.overallRisk]||'#d97706'
-    el('port-ai-result').innerHTML=`
-      <div class="card" style="margin-top:8px">
-        <div class="card-title"><i class="ti ti-brain" style="font-size:13px;color:var(--blue)"></i>AI Phân tích danh mục</div>
-        <div style="display:flex;gap:8px;margin-bottom:10px">
-          <div class="met" style="flex:1"><div class="met-l">Rủi ro tổng thể</div>
-            <div class="met-v" style="color:${riskC}">${a.overallRisk}</div></div>
-          <div class="met" style="flex:1"><div class="met-l">Đa dạng hóa</div>
-            <div class="met-v">${a.diversification}</div></div>
-        </div>
-        ${a.strengths?.length?`<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:${C_UP};margin-bottom:4px">✅ Điểm mạnh</div>${a.strengths.map(s=>`<div style="font-size:11px;color:var(--t2);margin-bottom:3px">· ${s}</div>`).join('')}</div>`:''}
-        ${a.weaknesses?.length?`<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:${C_DN};margin-bottom:4px">⚠ Rủi ro</div>${a.weaknesses.map(s=>`<div style="font-size:11px;color:var(--t2);margin-bottom:3px">· ${s}</div>`).join('')}</div>`:''}
-        ${a.rebalance?.length?`<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#d97706;margin-bottom:4px">🔄 Đề xuất tái cơ cấu</div>${a.rebalance.map(r=>`<div style="font-size:11px;color:var(--t2);margin-bottom:3px"><b>${r.ticker}</b>: ${r.action} — ${r.reason}</div>`).join('')}</div>`:''}
-        <p style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:6px">${a.outlook||''}</p>
-        ${a.topPick?`<div style="background:var(--bg2);border-radius:7px;padding:8px 10px"><div style="font-size:10px;color:var(--t3);margin-bottom:2px">⭐ Mã tiềm năng nhất</div><div style="font-size:12px;font-weight:500">${a.topPick}</div></div>`:''}
-      </div>`
+    if (!a) throw new Error('AI không trả về dữ liệu')
+
   }catch(e){
     el('port-ai-result').innerHTML=`<div class="err-box">Lỗi: ${e.message}</div>`
   }
