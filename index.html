@@ -1886,6 +1886,7 @@ function toggleWl() {
     }
   }
   saveWl(); renderWlList(); updateWlToggleBtn()
+  if (GH_TOKEN) triggerAiAnalysis()
 }
 
 function updateWlToggleBtn() {
@@ -1937,6 +1938,24 @@ async function loadOneWlPrice(t) {
     localStorage.setItem('vnstk_wlc', JSON.stringify(G.wlCache))
     renderWlList()
   } catch {}
+}
+
+async function triggerAiAnalysis() {
+  if (!GH_TOKEN || !GH_REPO) return
+  try {
+    const r = await fetch(
+      `https://api.github.com/repos/${GH_REPO.owner}/${GH_REPO.repo}/actions/workflows/daily_alerts.yml/dispatches`,
+      {
+        method: 'POST',
+        headers: {...ghHeaders(), 'Content-Type': 'application/json'},
+        body: JSON.stringify({ref: 'main'})
+      }
+    )
+    if (r.status === 204) {
+      showAlertToast('', '🤖 Đang phân tích AI... (~30s)')
+      setTimeout(loadAiAlerts, 35000) // Load lại sau 35s
+    }
+  } catch(e) { console.log('Trigger AI failed:', e) }
 }
 
 async function refreshWl() {
