@@ -964,7 +964,11 @@ function changeKey() {
 // Auto-boot if key exists
 if (VNSTK_KEY) {
   el('s-setup').classList.remove('active'); el('s-app').classList.add('active')
-  window.addEventListener('DOMContentLoaded', window.initApp)
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', function(){ if(window.initApp) window.initApp() })
+  } else {
+    setTimeout(function(){ if(window.initApp) window.initApp() }, 0)
+  }
 }
 
 // ── Search ───────────────────────────────────────────────────────────
@@ -1804,7 +1808,8 @@ async function refreshWl() {
 
 function renderWlList() {
   const el_wl = el('wl-list')
-  if (!G.wl.length) {
+  if (!el_wl) { console.warn('wl-list not found'); return }
+  if (!G.wl || !G.wl.length) {
     el_wl.innerHTML='<div style="font-size:13px;color:var(--t2)">Dùng ô trên để thêm mã theo dõi.</div>'
     return
   }
