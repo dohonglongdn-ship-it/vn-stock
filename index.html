@@ -732,6 +732,56 @@ const COMPANY_DB = {
   SAM:{n:'SAM Holdings',f:'Công ty CP SAM Holdings',s:'Công nghệ',e:'HOSE'},
 }
 
+// ── Early function registration (đảm bảo luôn có sẵn) ───────────────
+window.updateSyncUI = function() {
+  var s = document.getElementById('btn-sync')
+  var u = document.getElementById('btn-sync-setup')
+  var b = document.getElementById('sync-badge')
+  if (window.GH_TOKEN) {
+    if(s) s.style.display='inline-flex'
+    if(u) u.style.display='none'
+    if(b){b.style.display='inline';b.textContent='☁ GitHub sync'}
+  } else {
+    if(s) s.style.display='none'
+    if(u) u.style.display='inline-flex'
+    if(b) b.style.display='none'
+  }
+}
+
+window.loadBrief = async function() {
+  var btn=document.getElementById('brief-btn'), body=document.getElementById('brief-content')
+  if(btn){btn.textContent='Đang tải...';btn.disabled=true}
+  if(body) body.innerHTML=''
+  try {
+    var txt=await window.groq('Ngay hom nay. Thi truong chung khoan Viet Nam va the gioi. JSON: {"sp500":"+0.5%","nasdaq":"+0.3%","nikkei":"+0.2%","hangseng":"-0.5%","dxy":"104.5","brent":"$75","gold":"$2350","usdvnd":"25480","vnindex":"1240 (+0.3%)","hnxindex":"225","vnImpact":"Thi truong VN dang phan ung tich cuc.","watchSectors":["Ngan hang"],"keyEvents":["Su kien 1"]}',
+    'Return ONLY JSON object. No other text.', 600, true)
+    var d=window.parseJ(txt)
+    if(body){
+      body.style.marginTop='10px'
+      body.innerHTML='<div class="brief-2">'+
+        [['S&P 500',d.sp500],['Nasdaq',d.nasdaq],['Nikkei',d.nikkei],['Hang Seng',d.hangseng]].map(function(x){
+          var col=String(x[1]||'').startsWith('+')?'var(--up)':String(x[1]||'').startsWith('-')?'var(--dn)':'var(--t)'
+          return '<div class="brief-tile"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">'+x[0]+'</div>'+
+            '<div style="font-size:14px;font-weight:600;color:'+col+'">'+(x[1]||'—')+'</div></div>'
+        }).join('')+'</div>'+
+        '<div class="brief-3">'+[['Dau',d.brent],['Vang',d.gold],['USD/VND',d.usdvnd]].map(function(x){
+          return '<div class="brief-tile-c"><div style="font-size:9px;color:var(--t3)">'+x[0]+'</div><div style="font-size:12px;font-weight:600">'+(x[1]||'—')+'</div></div>'
+        }).join('')+'</div>'+
+        '<p style="font-size:12px;color:var(--t2);line-height:1.6;margin:8px 0">'+(d.vnImpact||'')+'</p>'
+    }
+  } catch(e){ if(body) body.innerHTML='<div style="font-size:12px;color:var(--dn);margin-top:8px">'+e.message+'</div>' }
+  if(btn){btn.textContent='Cập nhật ↗';btn.disabled=false}
+}
+
+window.manualSync = async function() {
+  var btn=document.getElementById('btn-sync')
+  if(btn) btn.disabled=true
+  await window.syncSave()
+  await window.syncLoad()
+  if(window.renderWlList) window.renderWlList()
+  if(btn) btn.disabled=false
+}
+
 // ── State ───────────────────────────────────────────────────────────
 const G = {
   ticker: null,
