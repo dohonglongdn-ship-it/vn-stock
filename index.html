@@ -1967,7 +1967,7 @@ function renderWlList() {
       <div class="wl-spark">${c?.spark?svgSpark(c.spark,chg||0):''}</div>
       <span class="wl-price" style="color:${chg!=null?(chg>=0?C_UP:C_DN):'var(--t)'}">${price?fP(price):'—'}</span>
       <span class="wl-chg" style="color:${chg!=null?(chg>=0?C_UP:C_DN):'var(--t2)'}">${chg!=null?fPct(chg):'—'}</span>
-      ${renderAiAlertBadge('${t}')}
+      ${renderAiAlertBadge(t)}
       <button class="wl-alert-btn ${G.wlAlerts&&G.wlAlerts[t]?'on':''}" onclick="openAlertModal('${t}')" title="Đặt cảnh báo giá">
         <i class="ti ti-bell${G.wlAlerts&&G.wlAlerts[t]?'':'-off'}" style="font-size:14px"></i>
       </button>
