@@ -2645,6 +2645,9 @@ async function renderPortfolio(){
 
   const totalPnl=totalValue-totalCost
   const totalPnlPct=totalCost>0?totalPnl/totalCost*100:null
+  const totalPnlReal=rows.reduce((s,r)=>s+(r.pnlReal||0),0)
+  const totalPnlRealPct=totalCost>0?totalPnlReal/totalCost*100:null
+  const totalFee=rows.reduce((s,r)=>s+(r.pnlReal!=null?(r.pnl-r.pnlReal):0),0)
 
   // Render summary
   const fmt=v=>v>=1e9?(v/1e9).toFixed(2)+' tỷ':v>=1e6?(v/1e6).toFixed(1)+' triệu':fP(v)
@@ -2662,6 +2665,18 @@ async function renderPortfolio(){
       </div>
       <div class="met"><div class="met-l">Số mã</div>
         <div class="met-v">${PORT.items.length}</div></div>
+    </div>
+    <!-- Lãi/lỗ thực sau phí+thuế -->
+    <div style="background:var(--bg2);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div style="font-size:11px;color:var(--t2)">
+        <i class="ti ti-receipt-tax" style="font-size:12px;margin-right:4px"></i>
+        Lãi/lỗ thực (sau phí ${G.brokerFee}% + thuế 0.1%)
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:14px;font-weight:600;color:${totalPnlReal>=0?C_UP:C_DN}">${totalPnlReal>=0?'+':''}${fmt(totalPnlReal)}</div>
+        ${totalPnlRealPct!=null?`<div style="font-size:11px;color:${totalPnlReal>=0?C_UP:C_DN}">${totalPnlRealPct>=0?'+':''}${totalPnlRealPct.toFixed(2)}%</div>`:''}
+        <div style="font-size:10px;color:var(--t3)">Phí+thuế: -${fmt(totalFee)}</div>
+      </div>
     </div>
 
     <!-- Cài đặt phí môi giới -->
