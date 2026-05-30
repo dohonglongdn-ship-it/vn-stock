@@ -1231,6 +1231,11 @@ async function groq(prompt, sys, maxTok=2000, jsonMode=false, history=[]) {
       const d = await r.json()
       if (r.status===429) throw new Error('Rate limit — thử lại sau 1 phút.')
       if (r.status===401) throw new Error('API key không hợp lệ. Kiểm tra lại.')
+      if (r.status === 429) {
+        const wait = d?.error?.message?.match(/try again in ([\d.]+)s/)?.[1]
+        await new Promise(res => setTimeout(res, wait ? parseFloat(wait)*1000+500 : 3000))
+        continue
+      }
       if (!r.ok) { console.warn(`Model ${model} failed: ${r.status}`, d); continue }
       G.groqModel = model; G.lastGroqCall = Date.now()
       return d.choices?.[0]?.message?.content || ''
