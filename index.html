@@ -2709,18 +2709,20 @@ async function renderPortfolio(){
             <div class="port-val">${fmt(r.value)}</div>
             <div style="font-size:10px;color:var(--t3)">${fP(r.price)}/cp</div>
           </div>
-          <div>
+          <div style="text-align:right;min-width:90px">
             ${r.pnlPct!=null?`<div class="port-pnl" style="color:${r.pnl>=0?C_UP:C_DN}">${r.pnl>=0?'+':''}${r.pnlPct.toFixed(2)}%</div>`:''}
             <div style="font-size:10px;color:${r.pnl>=0?C_UP:C_DN}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</div>
-            ${r.pnlReal!=null?`<div class="pnl-real">Thực: ${r.pnlReal>=0?'+':''}${fmt(r.pnlReal)}</div>`:''}
+            ${r.pnlReal!=null?`<div class="pnl-real" style="color:var(--t3)">Thực: ${r.pnlReal>=0?'+':''}${fmt(r.pnlReal)}</div>`:''}
           </div>
-          <button onclick="openFeeCalculator('${r.ticker}',${r.cost/r.qty||0},${r.qty})"
-            style="color:var(--blue);background:none;border:none;cursor:pointer;padding:0 3px;opacity:.6;font-size:13px" title="Tính lãi/lỗ">
-            <i class="ti ti-calculator"></i>
-          </button>
-          <button onclick="PORT.items=PORT.items.filter(x=>x.ticker!=='${r.ticker}');savePort();renderPortfolio()"
-            style="color:var(--t3);background:none;border:none;cursor:pointer;padding:0 3px;opacity:.4">
-            <i class="ti ti-x" style="font-size:12px"></i></button>
+          <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
+            <button onclick="openFeeCalculator('${r.ticker}',${r.cost/r.qty||0},${r.qty})"
+              style="color:var(--blue);background:none;border:none;cursor:pointer;padding:0;opacity:.6;font-size:13px;line-height:1" title="Tính lãi/lỗ">
+              <i class="ti ti-calculator"></i>
+            </button>
+            <button onclick="PORT.items=PORT.items.filter(x=>x.ticker!=='${r.ticker}');savePort();renderPortfolio()"
+              style="color:var(--t3);background:none;border:none;cursor:pointer;padding:0;opacity:.4;font-size:12px;line-height:1">
+              <i class="ti ti-x"></i></button>
+          </div>
         </div>`).join('')}
     </div>`
 
