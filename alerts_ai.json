@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-30T15:06:03.040684",
+  "updatedAt": "2026-05-30T15:10:21.758502",
   "session": "evening",
   "alerts": {
     "OIL": {
@@ -13,10 +13,10 @@
       ],
       "action": "GIỮ",
       "summary": "Xu hướng tăng, MACD âm",
-      "detail": "Giá hiện tại 15100.0 đang trên MA20 và MA50, RSI(14) trung lập, MACD âm. Rủi ro nếu giảm dưới MA20.",
+      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
       "entry": null,
       "stoploss": null,
-      "timeframe": "Trung hạn",
+      "timeframe": "Ngắn hạn",
       "ta": {
         "price": 15100.0,
         "ma20": 15060.0,
@@ -31,7 +31,7 @@
         "pct_from_high": -39.1
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:05:57.865619"
+      "updatedAt": "2026-05-30T15:10:17.246137"
     },
     "ACV": {
       "ticker": "ACV",
@@ -43,8 +43,8 @@
         "MACD âm"
       ],
       "action": "GIỮ",
-      "summary": "Xu hướng giảm vẫn tồn tại",
-      "detail": "Phân tích kỹ thuật cho thấy MACD âm và RSI trung lập, chỉ số này cho thấy xu hướng giảm vẫn đang tồn tại. Giá hiện tại đang dưới đường trung bình động MA20 và MA50. Tuy nhiên, mức RSI(14) vẫn ở vùng trung lập nên chưa tạo ra tín hiệu bán mạnh. Nhà đầu tư nên theo dõi chặt chẽ diễn biến thị trường trong những phiên giao dịch tới.",
+      "summary": "Xu hướng giảm, MACD âm",
+      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -62,7 +62,7 @@
         "pct_from_high": -29.3
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:05:59.072312"
+      "updatedAt": "2026-05-30T15:10:17.896908"
     },
     "PLX": {
       "ticker": "PLX",
@@ -74,11 +74,11 @@
         "MACD dương"
       ],
       "action": "THEO DÕI",
-      "summary": "Xu hướng tăng nhẹ",
-      "detail": "Cổ phiếu PLX có xu hướng tăng nhẹ với MACD dương và RSI(14) trung tính, tuy nhiên vẫn cần theo dõi kỹ do cổ phiếu vẫn cách đỉnh 52 tuần tới 41%. Dữ liệu kỹ thuật cho thấy tiềm năng tăng trưởng nhưng yêu cầu sự cẩn trọng với mức rủi ro vừa phải.",
+      "summary": "Xu hướng tăng, MACD dương",
+      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
       "entry": null,
       "stoploss": null,
-      "timeframe": "Trung hạn",
+      "timeframe": "Ngắn hạn",
       "ta": {
         "price": 41000.0,
         "ma20": 40238.0,
@@ -93,7 +93,7 @@
         "pct_from_high": -41.0
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:06:00.144100"
+      "updatedAt": "2026-05-30T15:10:18.546701"
     },
     "VIX": {
       "ticker": "VIX",
@@ -125,7 +125,7 @@
         "pct_from_high": -19.4
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:06:00.709609"
+      "updatedAt": "2026-05-30T15:10:19.185120"
     },
     "PVS": {
       "ticker": "PVS",
@@ -156,7 +156,7 @@
         "pct_from_high": -28.6
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:06:01.272382"
+      "updatedAt": "2026-05-30T15:10:19.838208"
     },
     "NVL": {
       "ticker": "NVL",
@@ -187,7 +187,7 @@
         "pct_from_high": -26.3
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:06:01.902884"
+      "updatedAt": "2026-05-30T15:10:20.474976"
     },
     "FPT": {
       "ticker": "FPT",
@@ -218,7 +218,7 @@
         "pct_from_high": -31.6
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:06:02.476862"
+      "updatedAt": "2026-05-30T15:10:21.127256"
     },
     "PVT": {
       "ticker": "PVT",
@@ -249,7 +249,7 @@
         "pct_from_high": -27.7
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:06:03.040643"
+      "updatedAt": "2026-05-30T15:10:21.758463"
     }
   }
 }
