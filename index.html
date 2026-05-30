@@ -851,6 +851,7 @@ const G = {
   analysis: null,
   wl: [],
   wlCache: {},      // { ticker: {price, chg, spark, name, sector} }
+  wlAlerts: {},
   pricesJson: null, // Dữ liệu từ prices.json (GitHub Actions, cập nhật hàng ngày)
   pricesJsonDate: null,
   chart: null,
@@ -1009,6 +1010,7 @@ function triggerSync() {
 window.initApp = async function() {
   try { G.wl = JSON.parse(localStorage.getItem('vnstk_wl') || '["VCB","HPG","VNM"]') } catch {}
   try { G.wlCache = JSON.parse(localStorage.getItem('vnstk_wlc') || '{}') } catch {}
+  try { G.wlAlerts = JSON.parse(localStorage.getItem('vnstk_alerts') || '{}') } catch { G.wlAlerts = {} }
   try { PORT.items = JSON.parse(localStorage.getItem('vnstk_port') || '[]') } catch {}
   renderWlList()
   // Load đồng thời: prices.json + GitHub sync
@@ -1972,9 +1974,6 @@ function renderWlList() {
 }
 
 // ── Price Alerts ─────────────────────────────────────────────────────
-
-// Load alerts từ localStorage
-try { G.wlAlerts = JSON.parse(localStorage.getItem('vnstk_alerts') || '{}') } catch { G.wlAlerts = {} }
 
 function saveAlerts() {
   localStorage.setItem('vnstk_alerts', JSON.stringify(G.wlAlerts))
