@@ -128,6 +128,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* ── Watchlist ── */
 .wl-item{display:flex;align-items:center;padding:8px 0;border-top:0.5px solid var(--bd);gap:8px}
+.wl-alert-btn{background:none;border:none;cursor:pointer;font-size:15px;color:var(--t3);padding:2px 3px;flex-shrink:0;transition:color .15s}
+.wl-alert-btn.on{color:#f59e0b}
+.alert-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:999;display:flex;align-items:center;justify-content:center}
+.alert-modal{background:var(--bg);border-radius:var(--rl);padding:20px;width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
+.alert-modal h3{font-size:14px;font-weight:600;margin-bottom:14px;color:var(--t)}
+.alert-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.alert-row label{font-size:12px;color:var(--t2);width:80px;flex-shrink:0}
+.alert-row input{flex:1;font-size:13px;padding:7px 9px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)}
+.alert-row select{flex:1;font-size:13px;padding:7px 9px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)}
+.alert-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.alert-tag{font-size:11px;padding:4px 10px;border-radius:99px;border:0.5px solid var(--bd2);background:var(--bg2);color:var(--t2);cursor:pointer}
+.alert-tag.on{background:#fef3c7;color:#92400e;border-color:#f59e0b}
+.alert-tag.on-dn{background:#fee2e2;color:#991b1b;border-color:#ef4444}
+.alert-actions{display:flex;gap:8px;margin-top:4px}
+.alert-actions button{flex:1;padding:8px;font-size:13px;border-radius:var(--r);cursor:pointer;border:0.5px solid var(--bd2)}
+.alert-save{background:var(--blue);color:#fff;border-color:var(--blue)!important;font-weight:500}
+.alert-cancel{background:var(--bg2);color:var(--t2)}
+.alert-delete{background:#fee2e2;color:#991b1b;border-color:#fca5a5!important}
 .wl-item:first-child{border-top:none}
 .wl-ticker{font-size:13px;font-weight:700;color:var(--blue);background:none;border:none;cursor:pointer;padding:0;min-width:46px;text-align:left}
 .wl-info{flex:1;min-width:0}
@@ -1029,6 +1047,7 @@ async function loadPricesJson() {
     if (updated) {
       localStorage.setItem('vnstk_wlc', JSON.stringify(G.wlCache))
       renderWlList()
+      if (window.checkAlerts) checkAlerts()
     }
 
     // Nếu đang xem stock thì cũng cập nhật giá
@@ -1918,6 +1937,7 @@ async function refreshWl() {
     await loadOneWlPrice(t)
     await new Promise(r=>setTimeout(r,200))
   }
+  checkAlerts()
 }
 
 function renderWlList() {
@@ -1941,12 +1961,159 @@ function renderWlList() {
       <div class="wl-spark">${c?.spark?svgSpark(c.spark,chg||0):''}</div>
       <span class="wl-price" style="color:${chg!=null?(chg>=0?C_UP:C_DN):'var(--t)'}">${price?fP(price):'—'}</span>
       <span class="wl-chg" style="color:${chg!=null?(chg>=0?C_UP:C_DN):'var(--t2)'}">${chg!=null?fPct(chg):'—'}</span>
+      <button class="wl-alert-btn ${G.wlAlerts&&G.wlAlerts[t]?'on':''}" onclick="openAlertModal('${t}')" title="Đặt cảnh báo giá">
+        <i class="ti ti-bell${G.wlAlerts&&G.wlAlerts[t]?'':'-off'}" style="font-size:14px"></i>
+      </button>
       <button class="wl-del" onclick="G.wl=G.wl.filter(x=>x!=='${t}');saveWl();renderWlList()" title="Xóa">
         <i class="ti ti-x" style="font-size:12px"></i>
       </button>
     </div>`
   }).join('')
 }
+
+// ── Price Alerts ─────────────────────────────────────────────────────
+
+// Load alerts từ localStorage
+try { G.wlAlerts = JSON.parse(localStorage.getItem('vnstk_alerts') || '{}') } catch { G.wlAlerts = {} }
+
+function saveAlerts() {
+  localStorage.setItem('vnstk_alerts', JSON.stringify(G.wlAlerts))
+}
+
+function openAlertModal(ticker) {
+  const existing = G.wlAlerts[ticker] || {}
+  const price = G.wlCache[ticker]?.price
+  const overlay = document.createElement('div')
+  overlay.className = 'alert-modal-overlay'
+  overlay.id = 'alert-overlay'
+  overlay.innerHTML = `
+    <div class="alert-modal" onclick="event.stopPropagation()">
+      <h3><i class="ti ti-bell" style="font-size:14px;margin-right:6px"></i>Cảnh báo giá — ${ticker}</h3>
+      ${price ? `<div style="font-size:11px;color:var(--t2);margin-bottom:12px">Giá hiện tại: <b style="color:var(--t)">${Math.round(price).toLocaleString('vi-VN')}</b></div>` : ''}
+      <div class="alert-row">
+        <label>Điều kiện</label>
+        <select id="al-cond">
+          <option value="above" ${existing.cond==='above'?'selected':''}>Giá vượt lên trên ↑</option>
+          <option value="below" ${existing.cond==='below'?'selected':''}>Giá xuống dưới ↓</option>
+          <option value="chg_up" ${existing.cond==='chg_up'?'selected':''}>Tăng % trong ngày ↑</option>
+          <option value="chg_dn" ${existing.cond==='chg_dn'?'selected':''}>Giảm % trong ngày ↓</option>
+        </select>
+      </div>
+      <div class="alert-row">
+        <label id="al-val-label">${existing.cond?.startsWith('chg') ? 'Ngưỡng %' : 'Mức giá'}</label>
+        <input id="al-val" type="number" placeholder="${existing.cond?.startsWith('chg') ? 'VD: 5' : 'VD: 15000'}" value="${existing.value||''}">
+      </div>
+      <div class="alert-row">
+        <label>Lặp lại</label>
+        <select id="al-repeat">
+          <option value="once" ${(!existing.repeat||existing.repeat==='once')?'selected':''}>Một lần</option>
+          <option value="always" ${existing.repeat==='always'?'selected':''}>Mỗi lần chạm</option>
+        </select>
+      </div>
+      <div class="alert-actions">
+        ${existing.value ? '<button class="alert-delete" onclick="deleteAlert(''+ticker+'')">Xóa cảnh báo</button>' : ''}
+        <button class="alert-cancel" onclick="closeAlertModal()">Hủy</button>
+        <button class="alert-save" onclick="saveAlert('${ticker}')">Lưu</button>
+      </div>
+    </div>`
+  document.body.appendChild(overlay)
+  overlay.addEventListener('click', closeAlertModal)
+
+  // Update label khi đổi điều kiện
+  document.getElementById('al-cond').addEventListener('change', function() {
+    const isPct = this.value.startsWith('chg')
+    document.getElementById('al-val-label').textContent = isPct ? 'Ngưỡng %' : 'Mức giá'
+    document.getElementById('al-val').placeholder = isPct ? 'VD: 5' : 'VD: 15000'
+  })
+}
+
+function closeAlertModal() {
+  document.getElementById('alert-overlay')?.remove()
+}
+
+function saveAlert(ticker) {
+  const cond = document.getElementById('al-cond').value
+  const value = parseFloat(document.getElementById('al-val').value)
+  const repeat = document.getElementById('al-repeat').value
+  if (!value || isNaN(value)) { alert('Vui lòng nhập giá trị'); return }
+  G.wlAlerts[ticker] = { cond, value, repeat, createdAt: Date.now(), triggered: false }
+  saveAlerts()
+  closeAlertModal()
+  renderWlList()
+  checkAlerts()
+}
+
+function deleteAlert(ticker) {
+  delete G.wlAlerts[ticker]
+  saveAlerts()
+  closeAlertModal()
+  renderWlList()
+}
+
+function checkAlerts() {
+  if (!G.wlAlerts || !Notification) return
+  Object.entries(G.wlAlerts).forEach(([ticker, al]) => {
+    if (al.triggered && al.repeat === 'once') return
+    const cache = G.wlCache[ticker]
+    if (!cache?.price) return
+    const price = cache.price
+    const chg = cache.chg || 0
+    let triggered = false
+    let msg = ''
+    if (al.cond === 'above' && price >= al.value) {
+      triggered = true
+      msg = `${ticker} vượt ${Math.round(al.value).toLocaleString('vi-VN')} → Giá hiện tại: ${Math.round(price).toLocaleString('vi-VN')}`
+    } else if (al.cond === 'below' && price <= al.value) {
+      triggered = true
+      msg = `${ticker} xuống dưới ${Math.round(al.value).toLocaleString('vi-VN')} → Giá hiện tại: ${Math.round(price).toLocaleString('vi-VN')}`
+    } else if (al.cond === 'chg_up' && chg >= al.value) {
+      triggered = true
+      msg = `${ticker} tăng ${chg.toFixed(2)}% trong ngày (ngưỡng: +${al.value}%)`
+    } else if (al.cond === 'chg_dn' && chg <= -al.value) {
+      triggered = true
+      msg = `${ticker} giảm ${Math.abs(chg).toFixed(2)}% trong ngày (ngưỡng: -${al.value}%)`
+    }
+    if (triggered) {
+      G.wlAlerts[ticker].triggered = true
+      saveAlerts()
+      sendAlertNotification(ticker, msg)
+    }
+  })
+}
+
+function sendAlertNotification(ticker, msg) {
+  // Hiển thị toast trong app
+  showAlertToast(ticker, msg)
+  // Browser notification nếu được phép
+  if (Notification.permission === 'granted') {
+    new Notification('📈 VN Stock Alert', { body: msg, icon: '' })
+  } else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') new Notification('📈 VN Stock Alert', { body: msg, icon: '' })
+    })
+  }
+}
+
+function showAlertToast(ticker, msg) {
+  let toast = document.getElementById('alert-toast')
+  if (!toast) {
+    toast = document.createElement('div')
+    toast.id = 'alert-toast'
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1c1c1a;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:9999;max-width:320px;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,0.3);border-left:3px solid #f59e0b'
+    document.body.appendChild(toast)
+  }
+  toast.innerHTML = `<i class="ti ti-bell" style="color:#f59e0b;margin-right:6px"></i>${msg}`
+  toast.style.display = 'block'
+  clearTimeout(toast._timer)
+  toast._timer = setTimeout(() => { toast.style.display = 'none' }, 6000)
+}
+
+// Xin quyền notification khi app load
+window.addEventListener('load', () => {
+  if (Notification && Notification.permission === 'default') {
+    setTimeout(() => Notification.requestPermission(), 3000)
+  }
+})
 
 // ── AI Analysis ───────────────────────────────────────────────────────
 function goAnalysis() {
