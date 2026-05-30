@@ -150,6 +150,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .calc-input{width:100%;font-size:13px;padding:7px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);margin-bottom:8px}
 .calc-select{width:100%;font-size:13px;padding:7px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);margin-bottom:8px}
 .pnl-real{font-size:10px;color:var(--t3);margin-top:2px}
+.chat-panel{display:flex;flex-direction:column;background:var(--bg);border-radius:var(--rl);border:0.5px solid var(--bd);overflow:hidden;margin-top:10px}
+.chat-panel-header{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:0.5px solid var(--bd);background:var(--bg2)}
+.chat-messages{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;max-height:320px;min-height:120px}
+.chat-msg{display:flex;flex-direction:column;gap:2px;max-width:88%}
+.chat-msg.user{align-self:flex-end;align-items:flex-end}
+.chat-msg.ai{align-self:flex-start}
+.chat-bubble{padding:7px 11px;border-radius:12px;font-size:12px;line-height:1.6}
+.chat-bubble.user{background:var(--blue);color:#fff}
+.chat-bubble.ai{background:var(--bg2);color:var(--t);border:0.5px solid var(--bd)}
+.chat-bubble.thinking{color:var(--t3);font-style:italic}
+.chat-time{font-size:10px;color:var(--t3);padding:0 2px}
+.chat-suggests{display:flex;gap:5px;flex-wrap:wrap;padding:6px 10px;border-top:0.5px solid var(--bd)}
+.chat-suggest-btn{font-size:11px;padding:3px 9px;border:0.5px solid var(--bd2);border-radius:99px;background:var(--bg2);color:var(--t2);cursor:pointer;white-space:nowrap}
+.chat-suggest-btn:hover{background:var(--bg3);color:var(--t)}
+.chat-input-row{display:flex;gap:6px;align-items:flex-end;padding:8px 10px;border-top:0.5px solid var(--bd)}
+.chat-inp{flex:1;font-size:12px;padding:7px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);resize:none;min-height:34px;max-height:80px}
+.chat-send-btn{width:34px;height:34px;border-radius:var(--r);background:var(--blue);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.chat-history-list{display:flex;flex-direction:column;gap:6px;padding:10px 0}
+.chat-history-item{padding:8px 10px;border:0.5px solid var(--bd);border-radius:var(--r);cursor:pointer;background:var(--bg)}
+.chat-history-item:hover{background:var(--bg2)}
+.chat-history-item.on{border-color:var(--blue);background:rgba(55,138,221,0.06)}
+.chat-history-ticker{font-size:12px;font-weight:700;color:var(--blue)}
+.chat-history-preview{font-size:11px;color:var(--t2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-history-time{font-size:10px;color:var(--t3);margin-top:2px}
 .alert-actions{display:flex;gap:8px;margin-top:4px}
 .alert-actions button{flex:1;padding:8px;font-size:13px;border-radius:var(--r);cursor:pointer;border:0.5px solid var(--bd2)}
 .alert-save{background:var(--blue);color:#fff;border-color:var(--blue)!important;font-weight:500}
@@ -476,6 +500,28 @@ a{color:var(--blue)}
         <button class="action-btn" onclick="goAnalysis()">
           <i class="ti ti-brain" style="font-size:13px;vertical-align:-2px;margin-right:5px"></i>Phân tích AI toàn diện ↗
         </button>
+        <!-- Chat AI panel -->
+        <div class="chat-panel" id="stock-chat-panel">
+          <div class="chat-panel-header">
+            <i class="ti ti-message-circle" style="font-size:14px;color:var(--blue)"></i>
+            <span style="font-size:12px;font-weight:600" id="stock-chat-title">Chat AI</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--t3)" id="stock-chat-count"></span>
+          </div>
+          <div class="chat-messages" id="stock-chat-messages"></div>
+          <div class="chat-suggests" id="stock-chat-suggests">
+            <button class="chat-suggest-btn" onclick="sendStockChat('Có nên mua mã này không?')">Có nên mua?</button>
+            <button class="chat-suggest-btn" onclick="sendStockChat('Đặt stoploss ở đâu hợp lý?')">Stoploss?</button>
+            <button class="chat-suggest-btn" onclick="sendStockChat('Rủi ro lớn nhất của mã này là gì?')">Rủi ro?</button>
+            <button class="chat-suggest-btn" onclick="sendStockChat('Triển vọng ngắn hạn và trung hạn?')">Triển vọng?</button>
+          </div>
+          <div class="chat-input-row">
+            <textarea class="chat-inp" id="stock-chat-inp" placeholder="Hỏi về mã này..." rows="1"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendStockChat()}"></textarea>
+            <button class="chat-send-btn" onclick="sendStockChat()" aria-label="Gửi">
+              <i class="ti ti-send" style="font-size:14px"></i>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -632,6 +678,49 @@ a{color:var(--blue)}
 
   <!-- Bottom Nav -->
   <nav class="bottom-nav">
+    <!-- ── AI Chat Tab ── -->
+    <div id="v-aichat" class="screen">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <i class="ti ti-message-circle" style="font-size:16px;color:var(--blue)"></i>
+        <span style="font-size:15px;font-weight:600">AI Chat</span>
+        <span style="font-size:11px;color:var(--t3);margin-left:4px">Lịch sử đồng bộ với màn hình cổ phiếu</span>
+      </div>
+      <div style="display:grid;grid-template-columns:180px 1fr;gap:10px;min-height:400px">
+        <div>
+          <div style="font-size:10px;color:var(--t3);font-weight:600;letter-spacing:.05em;margin-bottom:8px">LỊCH SỬ</div>
+          <div id="aichat-history-list" class="chat-history-list"></div>
+          <button onclick="openAiChatTicker()" style="width:100%;margin-top:8px;padding:7px;font-size:12px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t2);cursor:pointer">
+            <i class="ti ti-plus" style="font-size:12px"></i> Mã mới
+          </button>
+        </div>
+        <div class="chat-panel" id="aichat-panel" style="margin-top:0;min-height:400px">
+          <div class="chat-panel-header">
+            <i class="ti ti-message-circle" style="font-size:14px;color:var(--blue)"></i>
+            <span style="font-size:12px;font-weight:600" id="aichat-title">Chọn mã để bắt đầu</span>
+            <span style="margin-left:auto;font-size:10px;color:var(--t3)" id="aichat-count"></span>
+          </div>
+          <div class="chat-messages" id="aichat-messages" style="max-height:none;flex:1">
+            <div style="text-align:center;color:var(--t3);font-size:12px;padding:40px 0">
+              <i class="ti ti-message-circle" style="font-size:32px;display:block;margin-bottom:8px"></i>
+              Chọn mã từ danh sách hoặc nhấn "Mã mới"
+            </div>
+          </div>
+          <div class="chat-suggests" id="aichat-suggests" style="display:none">
+            <button class="chat-suggest-btn" onclick="sendAiChat('Có nên mua mã này không?')">Có nên mua?</button>
+            <button class="chat-suggest-btn" onclick="sendAiChat('Stoploss hợp lý?')">Stoploss?</button>
+            <button class="chat-suggest-btn" onclick="sendAiChat('Rủi ro lớn nhất?')">Rủi ro?</button>
+          </div>
+          <div class="chat-input-row">
+            <textarea class="chat-inp" id="aichat-inp" placeholder="Chọn mã trước..." rows="1" disabled
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAiChat()}"></textarea>
+            <button class="chat-send-btn" onclick="sendAiChat()" aria-label="Gửi">
+              <i class="ti ti-send" style="font-size:14px"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <button class="nav-btn active" id="nb-dash" onclick="showV('dash')">
       <i class="ti ti-home" style="font-size:19px"></i>Tổng quan
     </button>
@@ -649,6 +738,9 @@ a{color:var(--blue)}
     </button>
     <button class="nav-btn" id="nb-analysis" onclick="goAnalysis()">
       <i class="ti ti-brain" style="font-size:19px"></i>AI
+    </button>
+    <button class="nav-btn" id="nb-aichat" onclick="showV('aichat');renderAiChatTab()">
+      <i class="ti ti-message-circle" style="font-size:19px"></i>Chat
     </button>
   </nav>
 </div>
@@ -1120,13 +1212,16 @@ function onSearch(e) {
 }
 
 // ── Groq AI ──────────────────────────────────────────────────────────
-async function groq(prompt, sys, maxTok=2000, jsonMode=false) {
+async function groq(prompt, sys, maxTok=2000, jsonMode=false, history=[]) {
   const wait = 600 - (Date.now() - G.lastGroqCall)
   if (wait > 0) await new Promise(r=>setTimeout(r, wait))
   const models = G.groqModel ? [G.groqModel, ...GROQ_MODELS.filter(m=>m!==G.groqModel)] : GROQ_MODELS
   for (const model of models) {
     try {
-      const body = {model, messages:[{role:'system',content:sys},{role:'user',content:prompt}], max_tokens:maxTok, temperature:0.1}
+      const msgs = [{role:'system',content:sys}]
+      if (history && history.length) msgs.push(...history.slice(-8))
+      msgs.push({role:'user',content:prompt})
+      const body = {model, messages:msgs, max_tokens:maxTok, temperature:0.1}
       if (jsonMode) body.response_format = {type:'json_object'}
       const r = await fetch(GROQ_URL, {
         method:'POST',
@@ -1344,6 +1439,7 @@ async function loadStock(ticker) {
   el('h-meta').textContent = ''
   el('an-back-label').textContent = ticker
   showV('stock')
+  initStockChat(ticker)
   updateWlToggleBtn()
 
   el('stock-loading').style.display = 'block'
@@ -3491,7 +3587,235 @@ if (VNSTK_KEY) {
   if (typeof initApp === 'function') initApp()
 }
 
-// ── Dark/Light toggle ────────────────────────────────────────────────
+// ── AI Chat ──────────────────────────────────────────────────────────
+
+// Storage: G.chatHistory = { "VCB": [{role,content,time},...], ... }
+try { G.chatHistory = JSON.parse(localStorage.getItem('vnstk_chat') || '{}') } catch { G.chatHistory = {} }
+
+function saveChatHistory() {
+  localStorage.setItem('vnstk_chat', JSON.stringify(G.chatHistory))
+}
+
+function getChatContext(ticker) {
+  const p = G.pricesJson?.[ticker] || {}
+  const cache = G.wlCache?.[ticker] || {}
+  const price = cache.price || p.price
+  const chgPct = cache.chg ?? p.changePct
+  const hist = p.history || []
+  const closes = hist.slice(-60).map(h => h.close).filter(Boolean)
+
+  // Tính TA nhanh
+  const sma = (arr, n) => arr.length >= n ? arr.slice(-n).reduce((s,v)=>s+v,0)/n : null
+  const ma20 = sma(closes, 20), ma50 = sma(closes, 50)
+  const rsiVal = (() => {
+    if (closes.length < 15) return null
+    let gains = 0, losses = 0
+    for (let i = closes.length-14; i < closes.length; i++) {
+      const d = closes[i] - closes[i-1]
+      if (d > 0) gains += d; else losses -= d
+    }
+    const rs = gains / (losses || 1)
+    return Math.round(100 - 100/(1+rs))
+  })()
+  const trend = ma20 && price ? (price > ma20 ? 'tăng' : 'giảm') : 'không rõ'
+  const high52 = closes.length ? Math.max(...closes) : null
+  const low52 = closes.length ? Math.min(...closes) : null
+  const name = cache.name || db(ticker)?.n || ticker
+  const sector = cache.sector || db(ticker)?.s || ''
+  const aiAlert = G.aiAlerts?.[ticker]
+
+  return `Mã: ${ticker} (${name}${sector?', '+sector:''})
+Giá hiện tại: ${price ? Math.round(price).toLocaleString('vi-VN') : 'không có'}đ | Thay đổi: ${chgPct != null ? (chgPct>=0?'+':'')+chgPct.toFixed(2)+'%' : 'N/A'}
+RSI(14): ${rsiVal ?? 'N/A'} | MA20: ${ma20?Math.round(ma20).toLocaleString('vi-VN'):'N/A'} | MA50: ${ma50?Math.round(ma50).toLocaleString('vi-VN'):'N/A'}
+Xu hướng: ${trend} | 52w Cao: ${high52?Math.round(high52).toLocaleString('vi-VN'):'N/A'} | 52w Thấp: ${low52?Math.round(low52).toLocaleString('vi-VN'):'N/A'}
+${aiAlert ? `Khuyến cáo AI: ${aiAlert.action} — ${aiAlert.summary}` : ''}
+Ngày phân tích: ${new Date().toLocaleDateString('vi-VN')}`
+}
+
+function renderChatMessages(messages, containerId) {
+  const el_c = document.getElementById(containerId)
+  if (!el_c) return
+  if (!messages || !messages.length) {
+    el_c.innerHTML = '<div style="text-align:center;color:var(--t3);font-size:12px;padding:20px 0">Bắt đầu hỏi về mã này...</div>'
+    return
+  }
+  el_c.innerHTML = messages.map(m => `
+    <div class="chat-msg ${m.role}">
+      <div class="chat-bubble ${m.role} ${m.thinking?'thinking':''}">${m.content.replace(/\n/g,'<br>')}</div>
+
+      <span class="chat-time">${m.time||''}</span>
+    </div>`).join('')
+  el_c.scrollTop = el_c.scrollHeight
+}
+
+// ── Stock screen chat ─────────────────────────────────────────────────
+function initStockChat(ticker) {
+  if (!ticker) return
+  const el_title = document.getElementById('stock-chat-title')
+  const el_count = document.getElementById('stock-chat-count')
+  const msgs = G.chatHistory[ticker] || []
+  if (el_title) el_title.textContent = `Chat AI — ${ticker}`
+  if (el_count) el_count.textContent = msgs.length ? `${msgs.length} tin nhắn` : ''
+  renderChatMessages(msgs, 'stock-chat-messages')
+  const inp = document.getElementById('stock-chat-inp')
+  if (inp) { inp.value = ''; inp.placeholder = `Hỏi về ${ticker}...` }
+}
+
+async function sendStockChat(text) {
+  const ticker = G.ticker
+  if (!ticker) return
+  const inp = document.getElementById('stock-chat-inp')
+  const msg = text || inp?.value?.trim()
+  if (!msg) return
+  if (inp) inp.value = ''
+
+  if (!G.chatHistory[ticker]) G.chatHistory[ticker] = []
+  const time = new Date().toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'})
+  G.chatHistory[ticker].push({role:'user', content:msg, time})
+  saveChatHistory()
+  renderChatMessages(G.chatHistory[ticker], 'stock-chat-messages')
+
+  // Thinking indicator
+  G.chatHistory[ticker].push({role:'ai', content:'Đang phân tích...', time, thinking:true})
+  renderChatMessages(G.chatHistory[ticker], 'stock-chat-messages')
+
+  try {
+    const ctx = getChatContext(ticker)
+    const history = G.chatHistory[ticker].filter(m=>!m.thinking).slice(-8).map(m=>({
+      role: m.role==='user'?'user':'assistant',
+      content: m.content
+    }))
+
+    const systemPrompt = `Bạn là chuyên gia phân tích cổ phiếu VN. Trả lời ngắn gọn, thực tế, bằng tiếng Việt.
+Context mã ${ticker}:
+${ctx}
+Chỉ phân tích dựa trên dữ liệu thực. Không đưa ra lời khuyên tài chính tuyệt đối.`
+
+    const reply = await groq(msg, systemPrompt, 500, false, history)
+
+    // Xóa thinking, thêm reply thật
+    G.chatHistory[ticker] = G.chatHistory[ticker].filter(m=>!m.thinking)
+    G.chatHistory[ticker].push({role:'ai', content:reply, time})
+    saveChatHistory()
+    renderChatMessages(G.chatHistory[ticker], 'stock-chat-messages')
+
+    // Đồng bộ sang tab AI Chat nếu đang mở
+    const el_count = document.getElementById('stock-chat-count')
+    if (el_count) el_count.textContent = `${G.chatHistory[ticker].length} tin nhắn`
+    syncAiChatTab(ticker)
+  } catch(e) {
+    G.chatHistory[ticker] = G.chatHistory[ticker].filter(m=>!m.thinking)
+    G.chatHistory[ticker].push({role:'ai', content:'Lỗi kết nối Groq. Vui lòng thử lại.', time})
+    saveChatHistory()
+    renderChatMessages(G.chatHistory[ticker], 'stock-chat-messages')
+  }
+}
+
+// ── AI Chat Tab ───────────────────────────────────────────────────────
+var G_aichat_ticker = null
+
+function renderAiChatTab() {
+  const list = document.getElementById('aichat-history-list')
+  if (!list) return
+  const tickers = Object.keys(G.chatHistory).filter(t => G.chatHistory[t]?.length)
+  if (!tickers.length) {
+    list.innerHTML = '<div style="font-size:11px;color:var(--t3);text-align:center;padding:10px 0">Chưa có lịch sử chat</div>'
+    return
+  }
+  list.innerHTML = tickers.map(t => {
+    const msgs = G.chatHistory[t]
+    const last = msgs[msgs.length-1]
+    const isOn = t === G_aichat_ticker
+    return `<div class="chat-history-item ${isOn?'on':''}" onclick="selectAiChatTicker('${t}')">
+      <div class="chat-history-ticker">${t}</div>
+      <div class="chat-history-preview">${last?.content?.slice(0,40)||''}...</div>
+      <div class="chat-history-time">${msgs.length} tin · ${last?.time||''}</div>
+    </div>`
+  }).join('')
+}
+
+function selectAiChatTicker(ticker) {
+  G_aichat_ticker = ticker
+  const inp = document.getElementById('aichat-inp')
+  const title = document.getElementById('aichat-title')
+  const count = document.getElementById('aichat-count')
+  const suggests = document.getElementById('aichat-suggests')
+  if (inp) { inp.disabled = false; inp.placeholder = `Hỏi về ${ticker}...` }
+  if (title) title.textContent = `Chat AI — ${ticker}`
+  const msgs = G.chatHistory[ticker] || []
+  if (count) count.textContent = msgs.length ? `${msgs.length} tin` : ''
+  if (suggests) suggests.style.display = 'flex'
+  renderChatMessages(msgs, 'aichat-messages')
+  renderAiChatTab()
+}
+
+function openAiChatTicker() {
+  const t = prompt('Nhập mã cổ phiếu (VD: VCB):')?.trim().toUpperCase()
+  if (!t) return
+  if (!G.chatHistory[t]) G.chatHistory[t] = []
+  selectAiChatTicker(t)
+  renderAiChatTab()
+}
+
+async function sendAiChat(text) {
+  const ticker = G_aichat_ticker
+  if (!ticker) { alert('Vui lòng chọn mã trước'); return }
+  const inp = document.getElementById('aichat-inp')
+  const msg = text || inp?.value?.trim()
+  if (!msg) return
+  if (inp) inp.value = ''
+
+  if (!G.chatHistory[ticker]) G.chatHistory[ticker] = []
+  const time = new Date().toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'})
+  G.chatHistory[ticker].push({role:'user', content:msg, time})
+  saveChatHistory()
+  renderChatMessages(G.chatHistory[ticker], 'aichat-messages')
+
+  G.chatHistory[ticker].push({role:'ai', content:'Đang phân tích...', time, thinking:true})
+  renderChatMessages(G.chatHistory[ticker], 'aichat-messages')
+
+  try {
+    const ctx = getChatContext(ticker)
+    const history = G.chatHistory[ticker].filter(m=>!m.thinking).slice(-8).map(m=>({
+      role: m.role==='user'?'user':'assistant',
+      content: m.content
+    }))
+    const systemPrompt = `Bạn là chuyên gia phân tích cổ phiếu VN. Trả lời ngắn gọn, thực tế, bằng tiếng Việt.
+Context mã ${ticker}:
+${ctx}
+Chỉ phân tích dựa trên dữ liệu thực.`
+
+    const reply = await groq(msg, systemPrompt, 500, false, history)
+    G.chatHistory[ticker] = G.chatHistory[ticker].filter(m=>!m.thinking)
+    G.chatHistory[ticker].push({role:'ai', content:reply, time})
+    saveChatHistory()
+    renderChatMessages(G.chatHistory[ticker], 'aichat-messages')
+    const count = document.getElementById('aichat-count')
+    if (count) count.textContent = `${G.chatHistory[ticker].length} tin`
+    renderAiChatTab()
+
+    // Đồng bộ sang stock screen nếu đang xem cùng mã
+    if (G.ticker === ticker) {
+      renderChatMessages(G.chatHistory[ticker], 'stock-chat-messages')
+      const sc = document.getElementById('stock-chat-count')
+      if (sc) sc.textContent = `${G.chatHistory[ticker].length} tin nhắn`
+    }
+  } catch(e) {
+    G.chatHistory[ticker] = G.chatHistory[ticker].filter(m=>!m.thinking)
+    G.chatHistory[ticker].push({role:'ai', content:'Lỗi kết nối. Thử lại sau.', time})
+    saveChatHistory()
+    renderChatMessages(G.chatHistory[ticker], 'aichat-messages')
+  }
+}
+
+function syncAiChatTab(ticker) {
+  if (G_aichat_ticker === ticker) {
+    renderChatMessages(G.chatHistory[ticker], 'aichat-messages')
+    renderAiChatTab()
+  }
+}
+
+// ── Dark/Light toggle ────────────────────────────────────────────────────
 function applyTheme(theme) {
   const root = document.documentElement
   const btn = document.getElementById('theme-btn')
