@@ -674,10 +674,6 @@ a{color:var(--blue)}
       <div id="scr-results"></div>
     </div>
 
-  </div>
-
-  <!-- Bottom Nav -->
-  <nav class="bottom-nav">
     <!-- ── AI Chat Tab ── -->
     <div id="v-aichat" class="screen">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
@@ -721,6 +717,10 @@ a{color:var(--blue)}
       </div>
     </div>
 
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
     <button class="nav-btn active" id="nb-dash" onclick="showV('dash')">
       <i class="ti ti-home" style="font-size:19px"></i>Tổng quan
     </button>
@@ -3691,6 +3691,12 @@ Context mã ${ticker}:
 ${ctx}
 Chỉ phân tích dựa trên dữ liệu thực. Không đưa ra lời khuyên tài chính tuyệt đối.`
 
+    // Rate limit guard
+    const now = Date.now()
+    if (G.lastChatCall && now - G.lastChatCall < 2000) {
+      await new Promise(r => setTimeout(r, 2000 - (now - G.lastChatCall)))
+    }
+    G.lastChatCall = Date.now()
     const reply = await groq(msg, systemPrompt, 500, false, history)
 
     // Xóa thinking, thêm reply thật
