@@ -748,14 +748,46 @@ window.updateSyncUI = function() {
   }
 }
 
+// Fetch giá thật: Dầu Brent, Vàng, USD/VND từ Yahoo Finance qua Worker
+async function fetchCommodities() {
+  const symbols = {'BZ=F':'brent','GC=F':'gold','USDVND=X':'usdvnd'}
+  const result = {}
+  await Promise.all(Object.entries(symbols).map(async ([sym, key]) => {
+    try {
+      const r = await fetch(`${WORKER}/${sym}`, {signal: AbortSignal.timeout(6000)})
+      if (!r.ok) return
+      const d = await r.json()
+      if (d.source === 'yahoo' && d.chart?.result?.[0]) {
+        const m = d.chart.result[0].meta
+        const price = m.regularMarketPrice
+        const chgPct = m.regularMarketChangePercent
+        if (key === 'usdvnd') {
+          result[key] = Math.round(price).toLocaleString('vi-VN')
+        } else {
+          const sign = chgPct >= 0 ? '+' : ''
+          result[key] = `$${Math.round(price).toLocaleString()} (${sign}${chgPct?.toFixed(1)}%)`
+        }
+      }
+    } catch {}
+  }))
+  return result
+}
+
 window.loadBrief = async function() {
   var btn=document.getElementById('brief-btn'), body=document.getElementById('brief-content')
   if(btn){btn.textContent='Đang tải...';btn.disabled=true}
   if(body) body.innerHTML=''
   try {
-    var txt=await window.groq('Ngay hom nay. Thi truong chung khoan Viet Nam va the gioi. JSON: {"sp500":"+0.5%","nasdaq":"+0.3%","nikkei":"+0.2%","hangseng":"-0.5%","dxy":"104.5","brent":"$75","gold":"$2350","usdvnd":"25480","vnindex":"1240 (+0.3%)","hnxindex":"225","vnImpact":"Thi truong VN dang phan ung tich cuc.","watchSectors":["Ngan hang"],"keyEvents":["Su kien 1"]}',
-    'Return ONLY JSON object. No other text.', 600, true)
-    var d=window.parseJ(txt)
+    const [commodities, txt] = await Promise.all([
+      fetchCommodities(),
+      window.groq('Ngay hom nay. Thi truong chung khoan Viet Nam va the gioi. JSON: {"sp500":"+0.5%","nasdaq":"+0.3%","nikkei":"+0.2%","hangseng":"-0.5%","vnindex":"1240 (+0.3%)","hnxindex":"225","vnImpact":"Thi truong VN dang phan ung tich cuc.","watchSectors":["Ngan hang"],"keyEvents":["Su kien 1"]}',
+      'Return ONLY JSON object. No other text.', 400, true)
+    ])
+    var d = window.parseJ(txt)
+    var brent  = commodities.brent  || d.brent  || '—'
+    var gold   = commodities.gold   || d.gold   || '—'
+    var usdvnd = commodities.usdvnd || d.usdvnd || '—'
+    if (G.lastMarketCtx) { G.lastMarketCtx.brent=brent; G.lastMarketCtx.gold=gold; G.lastMarketCtx.usdvnd=usdvnd }
     if(body){
       body.style.marginTop='10px'
       body.innerHTML='<div class="brief-2">'+
@@ -764,7 +796,7 @@ window.loadBrief = async function() {
           return '<div class="brief-tile"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">'+x[0]+'</div>'+
             '<div style="font-size:14px;font-weight:600;color:'+col+'">'+(x[1]||'—')+'</div></div>'
         }).join('')+'</div>'+
-        '<div class="brief-3">'+[['Dau',d.brent],['Vang',d.gold],['USD/VND',d.usdvnd]].map(function(x){
+        '<div class="brief-3">'+[['Dầu Brent',brent],['Vàng',gold],['USD/VND',usdvnd]].map(function(x){
           return '<div class="brief-tile-c"><div style="font-size:9px;color:var(--t3)">'+x[0]+'</div><div style="font-size:12px;font-weight:600">'+(x[1]||'—')+'</div></div>'
         }).join('')+'</div>'+
         '<p style="font-size:12px;color:var(--t2);line-height:1.6;margin:8px 0">'+(d.vnImpact||'')+'</p>'
@@ -1916,21 +1948,26 @@ async function runAnalysis() {
   let marketCtx = G.lastMarketCtx || null
   if (!marketCtx || (Date.now()-G.lastMarketCtxTime>1800000)) {
     try {
-      const mTxt = await groq(
-        `Current date: ${new Date().toLocaleDateString('vi-VN')}. Return market data JSON:
-{"vnindex":"1245 (+0.3%)","hnx":"225","vn30":"1380","sp500":"+0.2%","nasdaq":"+0.1%","nikkei":"-0.3%",
-"dxy":"104.2","brent":"$74","gold":"$2340","usdvnd":"25.480",
+      const [commodities, mTxt] = await Promise.all([
+        fetchCommodities(),
+        groq(
+          `Current date: ${new Date().toLocaleDateString('vi-VN')}. Return market data JSON:
+{"vnindex":"1245 (+0.3%)","hnx":"225","vn30":"1380","sp500":"+0.2%","nasdaq":"+0.1%","nikkei":"-0.3%","dxy":"104.2",
 "vnSentiment":"Tích cực","globalSentiment":"Thận trọng",
 "hotSectors":["Ngân hàng","Bất động sản"],
 "keyRisks":["Rủi ro 1","Rủi ro 2"],
 "macro":"Bối cảnh kinh tế VN và quốc tế ảnh hưởng thị trường chứng khoán"}`,
-        'Return only JSON object. No text.',
-        400, true
-      )
+          'Return only JSON object. No text.',
+          400, true
+        )
+      ])
       marketCtx = parseJ(mTxt)
+      if (commodities.brent)  marketCtx.brent  = commodities.brent
+      if (commodities.gold)   marketCtx.gold   = commodities.gold
+      if (commodities.usdvnd) marketCtx.usdvnd = commodities.usdvnd
       G.lastMarketCtx = marketCtx
       G.lastMarketCtxTime = Date.now()
-    } catch { marketCtx = {} }
+    } catch { marketCtx = G.lastMarketCtx || {} }
   }
 
   el('an-loading-msg').textContent='Groq AI đang phân tích toàn diện...'
