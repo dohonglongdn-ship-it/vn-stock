@@ -986,6 +986,7 @@ async function syncSave() {
     GH_SHA = result.content?.sha
     updateSyncBadge('✅ Đã lưu lên GitHub')
     console.log('✅ Sync saved to GitHub')
+    triggerAiAnalysis()
     return true
   } catch(e) {
     console.warn('syncSave error:', e.message)
