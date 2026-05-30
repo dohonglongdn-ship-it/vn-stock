@@ -620,7 +620,7 @@ const WORKER     = 'https://cool-resonance-b12e.dohonglong-dn.workers.dev'
 const PRICES_URL = 'https://raw.githubusercontent.com/dohonglongdn-ship-it/vn-stock/main/prices.json'
 const VNDATA = 'https://raw.githubusercontent.com/vnstock-official/vnstock_market_data/main/historical_price/all_time'
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODELS = ['llama-3.3-70b-versatile','llama-3.1-70b-versatile','mixtral-8x7b-32768','llama-3.1-8b-instant']
+const GROQ_MODELS = ['llama-3.3-70b-versatile','llama3-70b-8192','llama-3.1-8b-instant']
 
 // ── Company DB ──────────────────────────────────────────────────────
 const COMPANY_DB = {
@@ -1049,7 +1049,7 @@ async function groq(prompt, sys, maxTok=2000, jsonMode=false) {
       const d = await r.json()
       if (r.status===429) throw new Error('Rate limit — thử lại sau 1 phút.')
       if (r.status===401) throw new Error('API key không hợp lệ. Kiểm tra lại.')
-      if (!r.ok) { continue }
+      if (!r.ok) { console.warn(`Model ${model} failed: ${r.status}`, d); continue }
       G.groqModel = model; G.lastGroqCall = Date.now()
       return d.choices?.[0]?.message?.content || ''
     } catch(e) { if (e.message.includes('Rate limit')||e.message.includes('không hợp lệ')) throw e }
@@ -2285,9 +2285,10 @@ async function analyzePortfolio(){
       }
     }
     if (!a) throw new Error('AI không trả về dữ liệu')
+    console.log('Portfolio AI parsed OK, rendering...')
 
     // Render kết quả
-    const riskC = a.overallRisk==='Cao'?'var(--dn)':a.overallRisk==='Thấp'?'var(--up)':'#d97706'
+    const riskC = /cao|high/i.test(a.overallRisk)?'var(--dn)':/thấp|low/i.test(a.overallRisk)?'var(--up)':'#d97706'
     let html = '<div class="card" style="margin-top:8px">'
     html += '<div class="card-title"><i class="ti ti-brain" style="font-size:13px;color:var(--blue)"></i>AI Phân tích danh mục</div>'
     // Risk + Diversification
@@ -2324,12 +2325,15 @@ async function analyzePortfolio(){
       html += '<div style="font-size:12px;font-weight:500">'+a.topPick+'</div></div>'
     }
     html += '</div>'
-    el('port-ai-result').innerHTML = html
+    var prEl = document.getElementById('port-ai-result'); if(prEl) prEl.innerHTML = html; else console.error('port-ai-result not found!')
 
   }catch(e){
-    el('port-ai-result').innerHTML='<div class="err-box">Lỗi: '+e.message+'</div>'
+    console.error('Portfolio AI error:', e.message, e.stack)
+    var errEl = document.getElementById('port-ai-result')
+    if (errEl) errEl.innerHTML='<div class="err-box">Lỗi: '+e.message+'</div>'
   }
-  el('port-ai-btn').disabled=false
+  var aiBtn = document.getElementById('port-ai-btn')
+  if (aiBtn) aiBtn.disabled=false
 }
 
 // ════════════════════════════════════════════════════════════════════
