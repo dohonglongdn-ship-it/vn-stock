@@ -2286,8 +2286,48 @@ async function analyzePortfolio(){
     }
     if (!a) throw new Error('AI không trả về dữ liệu')
 
+    // Render kết quả
+    const riskC = a.overallRisk==='Cao'?'var(--dn)':a.overallRisk==='Thấp'?'var(--up)':'#d97706'
+    let html = '<div class="card" style="margin-top:8px">'
+    html += '<div class="card-title"><i class="ti ti-brain" style="font-size:13px;color:var(--blue)"></i>AI Phân tích danh mục</div>'
+    // Risk + Diversification
+    html += '<div style="display:flex;gap:8px;margin-bottom:10px">'
+    html += '<div class="met" style="flex:1"><div class="met-l">Rủi ro tổng thể</div><div class="met-v" style="color:'+riskC+'">'+(a.overallRisk||'N/A')+'</div></div>'
+    html += '<div class="met" style="flex:1"><div class="met-l">Đa dạng hóa</div><div class="met-v">'+(a.diversification||'N/A')+'</div></div>'
+    html += '</div>'
+    // Strengths
+    if (a.strengths && a.strengths.length) {
+      html += '<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:var(--up);margin-bottom:4px">✅ Điểm mạnh</div>'
+      a.strengths.forEach(function(s){ html += '<div style="font-size:11px;color:var(--t2);margin-bottom:3px">· '+s+'</div>' })
+      html += '</div>'
+    }
+    // Weaknesses
+    if (a.weaknesses && a.weaknesses.length) {
+      html += '<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:var(--dn);margin-bottom:4px">⚠ Rủi ro</div>'
+      a.weaknesses.forEach(function(s){ html += '<div style="font-size:11px;color:var(--t2);margin-bottom:3px">· '+s+'</div>' })
+      html += '</div>'
+    }
+    // Rebalance
+    if (a.rebalance && a.rebalance.length) {
+      html += '<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:#d97706;margin-bottom:4px">🔄 Đề xuất tái cơ cấu</div>'
+      a.rebalance.forEach(function(r){ html += '<div style="font-size:11px;color:var(--t2);margin-bottom:3px"><b>'+(r.ticker||'')+'</b>: '+(r.action||'')+' — '+(r.reason||'')+'</div>' })
+      html += '</div>'
+    }
+    // Outlook
+    if (a.outlook) {
+      html += '<p style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:6px">'+a.outlook+'</p>'
+    }
+    // Top pick
+    if (a.topPick) {
+      html += '<div style="background:var(--bg2);border-radius:7px;padding:8px 10px">'
+      html += '<div style="font-size:10px;color:var(--t3);margin-bottom:2px">⭐ Mã tiềm năng nhất</div>'
+      html += '<div style="font-size:12px;font-weight:500">'+a.topPick+'</div></div>'
+    }
+    html += '</div>'
+    el('port-ai-result').innerHTML = html
+
   }catch(e){
-    el('port-ai-result').innerHTML=`<div class="err-box">Lỗi: ${e.message}</div>`
+    el('port-ai-result').innerHTML='<div class="err-box">Lỗi: '+e.message+'</div>'
   }
   el('port-ai-btn').disabled=false
 }
