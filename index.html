@@ -141,6 +141,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .alert-tag{font-size:11px;padding:4px 10px;border-radius:99px;border:0.5px solid var(--bd2);background:var(--bg2);color:var(--t2);cursor:pointer}
 .alert-tag.on{background:#fef3c7;color:#92400e;border-color:#f59e0b}
 .alert-tag.on-dn{background:#fee2e2;color:#991b1b;border-color:#ef4444}
+.fee-calc{background:var(--bg2);border-radius:var(--rl);padding:14px;margin-bottom:10px}
+.fee-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:0.5px solid var(--bd)}
+.fee-row:last-child{border-bottom:none}
+.fee-label{color:var(--t2)}
+.fee-val{font-weight:500;color:var(--t)}
+.fee-total{font-size:14px;font-weight:600}
+.calc-input{width:100%;font-size:13px;padding:7px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);margin-bottom:8px}
+.calc-select{width:100%;font-size:13px;padding:7px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);margin-bottom:8px}
+.pnl-real{font-size:10px;color:var(--t3);margin-top:2px}
 .alert-actions{display:flex;gap:8px;margin-top:4px}
 .alert-actions button{flex:1;padding:8px;font-size:13px;border-radius:var(--r);cursor:pointer;border:0.5px solid var(--bd2)}
 .alert-save{background:var(--blue);color:#fff;border-color:var(--blue)!important;font-weight:500}
@@ -525,7 +534,10 @@ a{color:var(--blue)}
     <div id="v-portfolio" class="screen">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
         <span style="font-size:14px;font-weight:600"><i class="ti ti-briefcase" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>Danh mục đầu tư</span>
-        <button class="pill" onclick="analyzePortfolio()" id="port-ai-btn" style="margin-left:auto">
+        <button class="pill" onclick="openFeeCalculator()" style="margin-left:auto;margin-right:6px" title="Tính lãi/lỗ">
+          <i class="ti ti-calculator" style="font-size:11px;margin-right:2px"></i>Calculator
+        </button>
+        <button class="pill" onclick="analyzePortfolio()" id="port-ai-btn" style="">
           <i class="ti ti-brain" style="font-size:11px;margin-right:2px"></i>AI phân tích
         </button>
       </div>
@@ -856,6 +868,8 @@ const G = {
   aiAlerts: {},
   aiAlertsSession: null,
   aiAlertsUpdatedAt: null,
+  brokerFee: 0.15,
+  feeCustom: null,
   pricesJson: null, // Dữ liệu từ prices.json (GitHub Actions, cập nhật hàng ngày)
   pricesJsonDate: null,
   chart: null,
@@ -1016,6 +1030,8 @@ window.initApp = async function() {
   try { G.wl = JSON.parse(localStorage.getItem('vnstk_wl') || '["VCB","HPG","VNM"]') } catch {}
   try { G.wlCache = JSON.parse(localStorage.getItem('vnstk_wlc') || '{}') } catch {}
   try { G.wlAlerts = JSON.parse(localStorage.getItem('vnstk_alerts') || '{}') } catch { G.wlAlerts = {} }
+  G.brokerFee = parseFloat(localStorage.getItem('vnstk_fee') || '0.15')
+  G.feeCustom = localStorage.getItem('vnstk_fee_custom') || null
   try { PORT.items = JSON.parse(localStorage.getItem('vnstk_port') || '[]') } catch {}
   renderWlList()
   // Load đồng thời: prices.json + GitHub sync
@@ -2082,6 +2098,117 @@ function showAiAlertDetail(ticker) {
   overlay.addEventListener('click', () => overlay.remove())
 }
 
+// ── Fee & Tax Calculator ─────────────────────────────────────────────
+
+function toggleFeeSettings() {
+  const el_fs = document.getElementById('fee-settings')
+  const el_fc = document.getElementById('fee-chevron')
+  if (!el_fs) return
+  const open = el_fs.style.display === 'block'
+  el_fs.style.display = open ? 'none' : 'block'
+  if (el_fc) el_fc.className = `ti ${open ? 'ti-chevron-down' : 'ti-chevron-up'}`
+}
+
+function setFee(val) {
+  if (val === 'custom') {
+    G.feeCustom = true
+    document.getElementById('fee-custom-row').style.display = 'flex'
+    return
+  }
+  G.brokerFee = parseFloat(val)
+  G.feeCustom = null
+  localStorage.setItem('vnstk_fee', val)
+  localStorage.removeItem('vnstk_fee_custom')
+  document.getElementById('fee-custom-row').style.display = 'none'
+  renderPortfolio()
+}
+
+function applyCustomFee() {
+  const val = parseFloat(document.getElementById('fee-custom-inp').value)
+  if (!val || val < 0.05 || val > 0.5) { alert('Phí không hợp lệ (0.05% - 0.5%)'); return }
+  G.brokerFee = val
+  G.feeCustom = val
+  localStorage.setItem('vnstk_fee', val)
+  localStorage.setItem('vnstk_fee_custom', val)
+  renderPortfolio()
+}
+
+function calcFee(buyPrice, qty, sellPrice) {
+  const fee = G.brokerFee / 100
+  const cost = buyPrice * qty
+  const revenue = sellPrice * qty
+  const buyFee = cost * fee
+  const sellFee = revenue * fee
+  const sellTax = revenue * 0.001
+  const pnlGross = revenue - cost
+  const pnlNet = pnlGross - buyFee - sellFee - sellTax
+  const pnlPct = cost > 0 ? pnlNet / cost * 100 : 0
+  return { cost, revenue, buyFee, sellFee, sellTax, pnlGross, pnlNet, pnlPct }
+}
+
+function openFeeCalculator(ticker='', buyPrice=0, qty=0) {
+  const overlay = document.createElement('div')
+  overlay.className = 'alert-modal-overlay'
+  overlay.id = 'fee-calc-overlay'
+  overlay.innerHTML = `
+    <div class="alert-modal" style="width:360px" onclick="event.stopPropagation()">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h3 style="margin:0"><i class="ti ti-calculator" style="font-size:14px;margin-right:6px;color:var(--blue)"></i>Tính lãi/lỗ thực</h3>
+        <button onclick="document.getElementById('fee-calc-overlay').remove()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--t3)">×</button>
+      </div>
+      <input id="fc-ticker" class="calc-input" placeholder="Mã CK (VD: VCB)" value="${ticker}" oninput="this.value=this.value.toUpperCase()">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:11px;color:var(--t2);margin-bottom:4px">Giá mua (đ/cp)</div>
+          <input id="fc-buy" class="calc-input" type="number" placeholder="VD: 19100" value="${buyPrice||''}">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--t2);margin-bottom:4px">Số lượng (cp)</div>
+          <input id="fc-qty" class="calc-input" type="number" placeholder="VD: 1000" value="${qty||''}">
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--t2);margin-bottom:4px">Giá bán (đ/cp)</div>
+      <input id="fc-sell" class="calc-input" type="number" placeholder="VD: 22000" oninput="updateFeeCalc()">
+      <div style="font-size:11px;color:var(--t2);margin-bottom:6px">Phí môi giới: 
+        <select id="fc-fee" style="font-size:11px;padding:2px 6px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)" onchange="G.brokerFee=parseFloat(this.value);updateFeeCalc()">
+          <option value="0.15" ${G.brokerFee==0.15?'selected':''}>SSI/VPS 0.15%</option>
+          <option value="0.2" ${G.brokerFee==0.2?'selected':''}>VCBS 0.20%</option>
+          <option value="0.25" ${G.brokerFee==0.25?'selected':''}>HSC 0.25%</option>
+          <option value="${G.brokerFee}" ${![0.15,0.2,0.25].includes(G.brokerFee)?'selected':''}>Tùy chỉnh ${G.brokerFee}%</option>
+        </select>
+      </div>
+      <div id="fc-result" class="fee-calc" style="display:none"></div>
+    </div>`
+  document.body.appendChild(overlay)
+  overlay.addEventListener('click', () => overlay.remove())
+  // Auto tính nếu đã có giá bán
+  document.getElementById('fc-buy').addEventListener('input', updateFeeCalc)
+  document.getElementById('fc-qty').addEventListener('input', updateFeeCalc)
+}
+
+function updateFeeCalc() {
+  const buy = parseFloat(document.getElementById('fc-buy')?.value) || 0
+  const qty = parseFloat(document.getElementById('fc-qty')?.value) || 0
+  const sell = parseFloat(document.getElementById('fc-sell')?.value) || 0
+  const result = document.getElementById('fc-result')
+  if (!result) return
+  if (!buy || !qty || !sell) { result.style.display='none'; return }
+  const r = calcFee(buy, qty, sell)
+  const fmt = v => Math.round(Math.abs(v)).toLocaleString('vi-VN')
+  const pnlColor = r.pnlNet >= 0 ? C_UP : C_DN
+  result.style.display = 'block'
+  result.innerHTML = `
+    <div class="fee-row"><span class="fee-label">Vốn mua</span><span class="fee-val">${fmt(r.cost)}đ</span></div>
+    <div class="fee-row"><span class="fee-label">Tiền bán</span><span class="fee-val">${fmt(r.revenue)}đ</span></div>
+    <div class="fee-row"><span class="fee-label">Phí mua (${G.brokerFee}%)</span><span class="fee-val" style="color:var(--dn)">-${fmt(r.buyFee)}đ</span></div>
+    <div class="fee-row"><span class="fee-label">Phí bán (${G.brokerFee}%)</span><span class="fee-val" style="color:var(--dn)">-${fmt(r.sellFee)}đ</span></div>
+    <div class="fee-row"><span class="fee-label">Thuế bán (0.1%)</span><span class="fee-val" style="color:var(--dn)">-${fmt(r.sellTax)}đ</span></div>
+    <div class="fee-row" style="border-top:1px solid var(--bd2);margin-top:4px;padding-top:8px">
+      <span class="fee-label fee-total">Lãi/lỗ thực</span>
+      <span class="fee-val fee-total" style="color:${pnlColor}">${r.pnlNet>=0?'+':'−'}${fmt(r.pnlNet)}đ (${r.pnlPct>=0?'+':''}${r.pnlPct.toFixed(2)}%)</span>
+    </div>`
+}
+
 // ── Price Alerts ─────────────────────────────────────────────────────
 
 function saveAlerts() {
@@ -2504,8 +2631,14 @@ async function renderPortfolio(){
     const pnl=cost>0?value-cost:0
     const pnlPct=cost>0?(value-cost)/cost*100:null
     const info=db(item.ticker)||G.pricesJson?.[item.ticker]
+    // Tính lãi/lỗ thực sau phí + thuế
+    const fee = (G.brokerFee || 0.15) / 100
+    const buyFee = cost * fee
+    const sellFee = value * fee
+    const sellTax = value * 0.001  // 0.1% thuế bán
+    const pnlReal = cost > 0 ? pnl - buyFee - sellFee - sellTax : null
     totalValue+=value; totalCost+=cost
-    return {ticker:item.ticker,qty:item.qty,price,value,cost,pnl,pnlPct,
+    return {ticker:item.ticker,qty:item.qty,price,value,cost,pnl,pnlPct,pnlReal,
             name:(G.wlCache[item.ticker]?.name||db(item.ticker)?.n||item.ticker),
             color:PORT_COLORS[i%PORT_COLORS.length]}
   })
@@ -2529,6 +2662,30 @@ async function renderPortfolio(){
       </div>
       <div class="met"><div class="met-l">Số mã</div>
         <div class="met-v">${PORT.items.length}</div></div>
+    </div>
+
+    <!-- Cài đặt phí môi giới -->
+    <div class="card" style="margin-bottom:8px">
+      <div class="card-title" style="cursor:pointer" onclick="toggleFeeSettings()">
+        <i class="ti ti-calculator" style="font-size:13px"></i>Phí giao dịch
+        <span id="fee-display" style="margin-left:auto;font-size:11px;color:var(--t2)">Phí: ${((G.brokerFee||0.15)*100).toFixed(2)}%</span>
+        <i class="ti ti-chevron-down" id="fee-chevron" style="font-size:11px;margin-left:4px;color:var(--t3)"></i>
+      </div>
+      <div id="fee-settings" style="display:none;padding-top:8px">
+        <div style="font-size:11px;color:var(--t2);margin-bottom:6px">Phí môi giới (áp dụng cho tính lãi/lỗ thực)</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+          ${[['SSI/VPS','0.15'],['VCBS','0.2'],['HSC','0.25'],['Tự nhập','custom']].map(([n,v])=>`
+          <button onclick="setFee('${v}')" class="tag ${(G.brokerFee*100).toFixed(2)===(parseFloat(v)*100||0).toFixed(2)||v==='custom'&&G.feeCustom?'tag-b':''}"
+            style="font-size:11px;padding:3px 8px;cursor:pointer">${n} ${v!=='custom'?v+'%':''}</button>`).join('')}
+        </div>
+        <div id="fee-custom-row" style="display:${G.feeCustom?'flex':'none'};align-items:center;gap:6px;margin-bottom:6px">
+          <input id="fee-custom-inp" type="number" step="0.01" min="0.05" max="0.5" placeholder="VD: 0.18"
+            value="${G.feeCustom||''}" style="width:100px;font-size:12px;padding:5px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--t)">
+          <span style="font-size:12px;color:var(--t2)">%</span>
+          <button onclick="applyCustomFee()" class="tag tag-b" style="font-size:11px;padding:3px 10px;cursor:pointer">Áp dụng</button>
+        </div>
+        <div style="font-size:10px;color:var(--t3)">Thuế bán: 0.1% (cố định theo quy định)</div>
+      </div>
     </div>
 
     <!-- Chart phân bổ -->
@@ -2555,7 +2712,12 @@ async function renderPortfolio(){
           <div>
             ${r.pnlPct!=null?`<div class="port-pnl" style="color:${r.pnl>=0?C_UP:C_DN}">${r.pnl>=0?'+':''}${r.pnlPct.toFixed(2)}%</div>`:''}
             <div style="font-size:10px;color:${r.pnl>=0?C_UP:C_DN}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</div>
+            ${r.pnlReal!=null?`<div class="pnl-real">Thực: ${r.pnlReal>=0?'+':''}${fmt(r.pnlReal)}</div>`:''}
           </div>
+          <button onclick="openFeeCalculator('${r.ticker}',${r.cost/r.qty||0},${r.qty})"
+            style="color:var(--blue);background:none;border:none;cursor:pointer;padding:0 3px;opacity:.6;font-size:13px" title="Tính lãi/lỗ">
+            <i class="ti ti-calculator"></i>
+          </button>
           <button onclick="PORT.items=PORT.items.filter(x=>x.ticker!=='${r.ticker}');savePort();renderPortfolio()"
             style="color:var(--t3);background:none;border:none;cursor:pointer;padding:0 3px;opacity:.4">
             <i class="ti ti-x" style="font-size:12px"></i></button>
