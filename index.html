@@ -2060,6 +2060,13 @@ async function loadOneWlPrice(t) {
 
 async function triggerAiAnalysis() {
   if (!GH_TOKEN || !GH_REPO) return
+  // Cooldown 30 phút để tránh spam Groq quota
+  const lastTrigger = parseInt(localStorage.getItem('vnstk_last_trigger') || '0')
+  if (Date.now() - lastTrigger < 30 * 60 * 1000) {
+    console.log('AI analysis cooldown active, skipping trigger')
+    return
+  }
+  localStorage.setItem('vnstk_last_trigger', Date.now())
   try {
     const r = await fetch(
       `https://api.github.com/repos/${GH_REPO.owner}/${GH_REPO.repo}/actions/workflows/daily_alerts.yml/dispatches`,
