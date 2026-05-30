@@ -6,11 +6,14 @@ on:
     - cron: '0 1 * * 1-5'   # 8h sáng VN (trước mở cửa)
     - cron: '0 6 * * 1-5'   # 13h trưa VN (giữa phiên)
     - cron: '0 14 * * 1-5'  # 21h tối VN (sau đóng cửa)
+
   workflow_dispatch:          # Cho phép chạy thủ công
 
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    # Không chạy khi push từ bot (tránh loop vô hạn)
+    if: github.actor != 'github-actions[bot]'
     permissions:
       contents: write
 
