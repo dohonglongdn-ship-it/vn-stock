@@ -1,5 +1,45 @@
+name: AI Stock Alerts
+
 on:
+  schedule:
+    # Giờ VN = UTC+7
+    - cron: '0 1 * * 1-5'   # 8h sáng VN (trước mở cửa)
+    - cron: '0 6 * * 1-5'   # 13h trưa VN (giữa phiên)
+    - cron: '0 14 * * 1-5'  # 21h tối VN (sau đóng cửa)
   push:
     paths:
-      - 'user_data.json'  # Auto chạy khi Sync watchlist
-  schedule: ...
+      - 'user_data.json'     # Auto chạy khi watchlist thay đổi (Sync)
+  workflow_dispatch:          # Cho phép chạy thủ công
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    # Không chạy khi push từ bot (tránh loop vô hạn)
+    if: github.actor != 'github-actions[bot]'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run AI analysis
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python analyze_alerts.py
+
+      - name: Summary
+        run: |
+          echo "✅ AI alerts updated at $(date -u '+%Y-%m-%d %H:%M UTC')"
+          if [ -f alerts_ai.json ]; then
+            echo "alerts_ai.json size: $(wc -c < alerts_ai.json) bytes"
+          fi
