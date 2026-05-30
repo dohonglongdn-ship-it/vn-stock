@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-30T15:47:33.214085",
+  "updatedAt": "2026-05-30T15:51:44.337130",
   "session": "evening",
   "alerts": {
     "OIL": {
@@ -12,8 +12,8 @@
         "MACD âm"
       ],
       "action": "GIỮ",
-      "summary": "Xu hướng tăng,MACD âm",
-      "detail": "OIL đang trong xu hướng tăng nhẹ, tuy nhiên MACD âm cho thấy đà tăng đang yếu đi. RSI trung lập, không quá mua vượt. Cần theo dõi để xác định tín hiệu tiếp theo.",
+      "summary": "Xu hướng tăng, MACD âm",
+      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -31,7 +31,7 @@
         "pct_from_high": -39.1
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:47:29.135804"
+      "updatedAt": "2026-05-30T15:51:40.144778"
     },
     "ACV": {
       "ticker": "ACV",
@@ -62,7 +62,7 @@
         "pct_from_high": -29.3
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:47:29.710904"
+      "updatedAt": "2026-05-30T15:51:40.719366"
     },
     "PLX": {
       "ticker": "PLX",
@@ -93,7 +93,7 @@
         "pct_from_high": -41.0
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:47:30.303498"
+      "updatedAt": "2026-05-30T15:51:41.297281"
     },
     "VIX": {
       "ticker": "VIX",
@@ -125,7 +125,7 @@
         "pct_from_high": -19.4
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:47:30.879154"
+      "updatedAt": "2026-05-30T15:51:41.962502"
     },
     "PVS": {
       "ticker": "PVS",
@@ -156,7 +156,7 @@
         "pct_from_high": -28.6
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:47:31.452304"
+      "updatedAt": "2026-05-30T15:51:42.532744"
     },
     "NVL": {
       "ticker": "NVL",
@@ -187,7 +187,7 @@
         "pct_from_high": -26.3
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:47:32.046688"
+      "updatedAt": "2026-05-30T15:51:43.105146"
     },
     "FPT": {
       "ticker": "FPT",
@@ -218,7 +218,7 @@
         "pct_from_high": -31.6
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:47:32.644136"
+      "updatedAt": "2026-05-30T15:51:43.679158"
     },
     "PVT": {
       "ticker": "PVT",
@@ -249,7 +249,7 @@
         "pct_from_high": -27.7
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:47:33.214051"
+      "updatedAt": "2026-05-30T15:51:44.337070"
     }
   }
 }
