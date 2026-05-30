@@ -2791,3 +2791,15 @@ function openSyncSetup() {
   })
 }
 
+
+// ── Auto-boot (cuối script: DOM + hàm đã sẵn sàng) ──────────────────
+if (VNSTK_KEY) {
+  var _ss = document.getElementById('s-setup')
+  var _sa = document.getElementById('s-app')
+  if (_ss) _ss.classList.remove('active')
+  if (_sa) _sa.classList.add('active')
+  if (typeof initApp === 'function') initApp()
+}
+</script>
+</body>
+</html>
