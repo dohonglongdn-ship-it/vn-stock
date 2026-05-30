@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-30T15:29:01.302076",
+  "updatedAt": "2026-05-30T15:30:25.737107",
   "session": "evening",
   "alerts": {
     "OIL": {
@@ -31,7 +31,7 @@
         "pct_from_high": -39.1
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:28:57.340420"
+      "updatedAt": "2026-05-30T15:30:21.419171"
     },
     "ACV": {
       "ticker": "ACV",
@@ -62,7 +62,7 @@
         "pct_from_high": -29.3
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:28:57.910399"
+      "updatedAt": "2026-05-30T15:30:22.026979"
     },
     "PLX": {
       "ticker": "PLX",
@@ -93,7 +93,7 @@
         "pct_from_high": -41.0
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:28:58.476186"
+      "updatedAt": "2026-05-30T15:30:22.652549"
     },
     "VIX": {
       "ticker": "VIX",
@@ -125,7 +125,7 @@
         "pct_from_high": -19.4
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:28:59.039654"
+      "updatedAt": "2026-05-30T15:30:23.271587"
     },
     "PVS": {
       "ticker": "PVS",
@@ -156,7 +156,7 @@
         "pct_from_high": -28.6
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:28:59.610167"
+      "updatedAt": "2026-05-30T15:30:23.874731"
     },
     "NVL": {
       "ticker": "NVL",
@@ -187,7 +187,7 @@
         "pct_from_high": -26.3
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:29:00.173587"
+      "updatedAt": "2026-05-30T15:30:24.499485"
     },
     "FPT": {
       "ticker": "FPT",
@@ -218,7 +218,7 @@
         "pct_from_high": -31.6
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:29:00.738680"
+      "updatedAt": "2026-05-30T15:30:25.109734"
     },
     "PVT": {
       "ticker": "PVT",
@@ -249,7 +249,7 @@
         "pct_from_high": -27.7
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T15:29:01.302037"
+      "updatedAt": "2026-05-30T15:30:25.737077"
     }
   }
 }
