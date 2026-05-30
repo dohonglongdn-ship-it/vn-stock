@@ -908,7 +908,7 @@ function showV(id) {
 // ── GitHub Sync ──────────────────────────────────────────────────────
 // Tự động trích xuất owner/repo từ PRICES_URL
 const GH_REPO = (() => {
-  const m = PRICES_URL.match(/github\.com\/([^/]+)\/([^/]+)\//)
+  const m = PRICES_URL.match(/(?:github\.com|raw\.githubusercontent\.com)\/([^/]+)\/([^/]+)\//)
   return m ? { owner: m[1], repo: m[2] } : null
 })()
 const GH_FILE = 'user_data.json'
