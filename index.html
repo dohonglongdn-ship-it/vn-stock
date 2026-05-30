@@ -1304,10 +1304,12 @@ async function loadStock(ticker) {
 
     // 2. Parallel: CSV history (lịch sử dài) + real-time Yahoo (intraday)
     // UPCOM không có trên Yahoo Finance → skip Worker
-    const isUpcom = (info?.e || '').toUpperCase() === 'UPCOM'
+    // Chỉ HOSE mới có trên Yahoo Finance ổn định
+    const exchange = (info?.e || '').toUpperCase()
+    const skipWorker = exchange && exchange !== 'HOSE'
     const [csvBars, rt] = await Promise.all([
       fetchCSV(ticker),
-      isUpcom ? Promise.resolve(null) : fetchRealtime(ticker)
+      skipWorker ? Promise.resolve(null) : fetchRealtime(ticker)
     ])
 
     if (!csvBars && !rt && !jsonData)
@@ -1870,12 +1872,13 @@ function addTicker(e) {
 async function loadOneWlPrice(t) {
   try {
     const info = db(t)
-    const isUpcom = (info?.e || '').toUpperCase() === 'UPCOM'
+    // Chỉ HOSE mới có trên Yahoo Finance ổn định
+    const exchange = (info?.e || '').toUpperCase()
+    const skipWorker = exchange && exchange !== 'HOSE'
 
-    // UPCOM không có trên Yahoo Finance → chỉ dùng prices.json + CSV, skip Worker
     const [csv, rt] = await Promise.all([
       fetchCSV(t),
-      isUpcom ? Promise.resolve(null) : fetchRealtime(t)
+      skipWorker ? Promise.resolve(null) : fetchRealtime(t)
     ])
     const bars = csv||[]
 
@@ -2184,10 +2187,14 @@ async function renderPortfolio(){
   // Lấy giá cho từng mã
   const prices={}
   await Promise.all(PORT.items.map(async item=>{
-    // Ưu tiên prices.json
+    // Ưu tiên prices.json (có đủ HOSE/HNX/UPCOM)
     const pj=G.pricesJson?.[item.ticker]
-    if(pj){ prices[item.ticker]=pj.price; return }
-    // Fallback: Yahoo Finance
+    if(pj?.price){ prices[item.ticker]=pj.price; return }
+    // Skip Worker nếu không phải HOSE (Yahoo chỉ có HOSE.VN ổn định)
+    const itemInfo=db(item.ticker)
+    const exchange=(itemInfo?.e||'').toUpperCase()
+    if(exchange && exchange!=='HOSE') return
+    // Fallback: Yahoo Finance (chỉ HOSE)
     try{
       const r=await fetch(`${WORKER}/${item.ticker}`,{signal:AbortSignal.timeout(5000)})
       if(!r.ok)return
