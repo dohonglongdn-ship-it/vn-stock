@@ -39,8 +39,13 @@ def gh_get(path):
     if r.status_code == 404: return None, None
     r.raise_for_status()
     d = r.json()
-    content = base64.b64decode(d["content"]).decode("utf-8")
-    return json.loads(content), d["sha"]
+    raw = base64.b64decode(d["content"]).decode("utf-8").strip()
+    if not raw: return None, d["sha"]
+    try:
+        return json.loads(raw), d["sha"]
+    except json.JSONDecodeError:
+        print(f"  WARNING: {path} has invalid JSON, treating as empty")
+        return None, d["sha"]
 
 def gh_put(path, content_dict, sha, message):
     body = json.dumps(content_dict, ensure_ascii=False, indent=2)
