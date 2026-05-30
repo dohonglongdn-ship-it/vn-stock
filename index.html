@@ -3110,7 +3110,7 @@ self.addEventListener('fetch', e => {
     }).catch(() => caches.match(e.request))
   )
 })
-\`
+`
     const blob = new Blob([swCode], {type: 'application/javascript'})
     const swUrl = URL.createObjectURL(blob)
     navigator.serviceWorker.register(swUrl).catch(() => {})
