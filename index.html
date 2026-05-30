@@ -2010,7 +2010,7 @@ function openAlertModal(ticker) {
         </select>
       </div>
       <div class="alert-actions">
-        ${existing.value ? '<button class="alert-delete" onclick="deleteAlert(''+ticker+'')">Xóa cảnh báo</button>' : ''}
+        ${existing.value ? `<button class="alert-delete" onclick="deleteAlert('${ticker}')">Xóa cảnh báo</button>` : ''}
         <button class="alert-cancel" onclick="closeAlertModal()">Hủy</button>
         <button class="alert-save" onclick="saveAlert('${ticker}')">Lưu</button>
       </div>
