@@ -2015,10 +2015,10 @@ function renderAiAlertBadge(ticker) {
   const al = G.aiAlerts?.[ticker]
   if (!al) return ''
   const colors = {
-    'MUA':     {bg:'#dcfce7', color:'#166534', border:'#86efac'},
-    'THEO DÕI':{bg:'#fef9c3', color:'#713f12', border:'#fde047'},
-    'GIỮ':    {bg:'#f1f5f9', color:'#475569', border:'#cbd5e1'},
-    'BÁN':     {bg:'#fee2e2', color:'#991b1b', border:'#fca5a5'},
+    'MUA':      {bg:'#dcfce7', color:'#166534', border:'#86efac'},
+    'THEO DÕI': {bg:'#fef9c3', color:'#713f12', border:'#fde047'},
+    'GIỮ':      {bg:'#e2e8f0', color:'#334155', border:'#94a3b8'},
+    'BÁN':      {bg:'#fee2e2', color:'#991b1b', border:'#fca5a5'},
   }
   const c = colors[al.action] || colors['GIỮ']
   return `<span class="ai-alert-badge" onclick="showAiAlertDetail('${ticker}')" title="${al.summary}"
