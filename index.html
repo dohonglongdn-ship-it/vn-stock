@@ -32,6 +32,16 @@ function boot() {
   if (typeof updateSyncUI === 'function') updateSyncUI()
 }
 function handleKeyEnter(e) { if (e.key === 'Enter') boot() }
+
+// ── Auto-boot (đặt cuối cùng: DOM + tất cả hàm đã sẵn sàng) ──────────
+if (VNSTK_KEY) {
+  var sSetup = document.getElementById('s-setup')
+  var sApp   = document.getElementById('s-app')
+  if (sSetup) sSetup.classList.remove('active')
+  if (sApp)   sApp.classList.add('active')
+  if (typeof initApp === 'function') initApp()
+}
+
 </script>
 
 <style>
@@ -961,14 +971,7 @@ function changeKey() {
   },100)
 }
 
-// Auto-boot: đợi DOM load xong mới chạy
-document.addEventListener('DOMContentLoaded', function() {
-  if (VNSTK_KEY) {
-    document.getElementById('s-setup').classList.remove('active')
-    document.getElementById('s-app').classList.add('active')
-    if (window.initApp) window.initApp()
-  }
-})
+// auto-boot moved to end of script
 
 // ── Search ───────────────────────────────────────────────────────────
 function onSearch(e) {
