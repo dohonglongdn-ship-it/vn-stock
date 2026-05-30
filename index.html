@@ -1303,9 +1303,11 @@ async function loadStock(ticker) {
     const jsonData = getPriceFromJson(ticker)
 
     // 2. Parallel: CSV history (lịch sử dài) + real-time Yahoo (intraday)
+    // UPCOM không có trên Yahoo Finance → skip Worker
+    const isUpcom = (info?.e || '').toUpperCase() === 'UPCOM'
     const [csvBars, rt] = await Promise.all([
       fetchCSV(ticker),
-      fetchRealtime(ticker)
+      isUpcom ? Promise.resolve(null) : fetchRealtime(ticker)
     ])
 
     if (!csvBars && !rt && !jsonData)
