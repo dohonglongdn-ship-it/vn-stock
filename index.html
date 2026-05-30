@@ -29,6 +29,7 @@ function boot() {
   document.getElementById('s-setup').classList.remove('active')
   document.getElementById('s-app').classList.add('active')
   if (window.initApp) window.initApp()
+  if (typeof updateSyncUI === 'function') updateSyncUI()
 }
 function handleKeyEnter(e) { if (e.key === 'Enter') boot() }
 </script>
@@ -314,8 +315,10 @@ a{color:var(--blue)}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;gap:5px">
         <span style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.07em">Danh mục theo dõi</span>
         <div style="display:flex;gap:4px">
-          ${GH_TOKEN ? '' : ''}
-          <button class="pill" onclick="syncSave().then(()=>syncLoad()).then(()=>renderWlList())" id="btn-sync" style="font-size:10px;padding:3px 9px;display:${GH_TOKEN?'inline':'none'}">
+          <button class="pill" onclick="openSyncSetup()" id="btn-sync-setup" style="font-size:10px;padding:3px 9px;display:none">
+            <i class="ti ti-cloud-off" style="font-size:10px;margin-right:2px"></i>Kết nối
+          </button>
+          <button class="pill" onclick="manualSync()" id="btn-sync" style="font-size:10px;padding:3px 9px;display:none">
             <i class="ti ti-cloud-upload" style="font-size:10px;margin-right:2px"></i>Sync
           </button>
           <button class="pill" onclick="refreshWl()" style="font-size:10px;padding:3px 9px">
@@ -889,11 +892,7 @@ window.initApp = async function() {
   // Load đồng thời: prices.json + GitHub sync
   const [_, synced] = await Promise.all([loadPricesJson(), syncLoad()])
   if (synced) { renderWlList() }
-  // Hiện nút sync trong topbar nếu có token
-  if (GH_TOKEN) {
-    const b = el('sync-badge')
-    if (b) b.style.display = 'inline'
-  }
+  updateSyncUI()
 }
 
 async function loadPricesJson() {
@@ -912,9 +911,10 @@ async function loadPricesJson() {
       const p = G.pricesJson[t]
       if (!p) return
       const hist = p.history || []
+      const fixedPrice = fixPrice(p.price, null)
       G.wlCache[t] = {
         ...(G.wlCache[t]||{}),
-        price:  p.price,
+        price:  fixedPrice,
         chg:    p.changePct,
         spark:  hist.slice(-10).map(b=>b.close),
         name:   G.wlCache[t]?.name || db(t)?.n || t,
@@ -2767,55 +2767,20 @@ function applyManualPrice() {
   el('stock-content').scrollIntoView({behavior:'smooth', block:'start'})
 }
 
-// ── Brief ─────────────────────────────────────────────────────────────
-async function loadBrief() {
-  const btn=el('brief-btn'), body=el('brief-content')
-  btn.textContent='Đang tải...'; btn.disabled=true; body.innerHTML=''
-
-  try {
-    const now=new Date().toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
-    const txt = await groq(
-      `Thời điểm: ${now} (giờ Việt Nam). Tổng quan thị trường tài chính toàn cầu và Việt Nam.
-JSON thuần túy:
-{"sp500":"+0.5%","nasdaq":"+0.3%","dow":"-0.1%","nikkei":"+0.2%","hangseng":"-0.5%","shanghai":"+0.1%",
-"dxy":"104.5","brent":"$75","gold":"$2350","usdvnd":"25,480",
-"vnindex":"1240 (+0.3%)","hnxindex":"225 (+0.1%)",
-"vnImpact":"Nhận định ngắn gọn tác động lên TTCK VN hôm nay trong 2 câu.",
-"watchSectors":["Ngân hàng","Bất động sản"],
-"keyEvents":["Sự kiện/yếu tố quan trọng cần chú ý 1","Sự kiện 2"],
-"sentiment":"Tích cực"}`,
-      'Bạn là chuyên gia tài chính. JSON THUẦN TÚY không markdown.',
-      600
-    )
-    const d = parseJ(txt)
-    body.style.marginTop='10px'
-    body.innerHTML=`
-      <div class="brief-2">
-        ${[['S&P 500',d.sp500],['Nasdaq',d.nasdaq],['Nikkei',d.nikkei],['Hang Seng',d.hangseng]].map(([l,v])=>
-          `<div class="brief-tile"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">${l}</div>
-          <div style="font-size:14px;font-weight:600;color:${String(v||'').startsWith('+')?C_UP:String(v||'').startsWith('-')?C_DN:'var(--t)'}">${v||'—'}</div></div>`
-        ).join('')}
-      </div>
-      <div class="brief-3">
-        ${[['Dầu Brent',d.brent],['Vàng',d.gold],['USD/VND',d.usdvnd]].map(([l,v])=>
-          `<div class="brief-tile-c"><div style="font-size:9px;color:var(--t3);margin-bottom:1px">${l}</div><div style="font-size:12px;font-weight:600">${v||'—'}</div></div>`
-        ).join('')}
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-        ${[['VN-Index',d.vnindex],['HNX-Index',d.hnxindex]].map(([l,v])=>
-          `<div style="background:var(--bg2);border-radius:7px;padding:5px 10px;flex:1">
-            <div style="font-size:9px;color:var(--t3);margin-bottom:1px">${l}</div>
-            <div style="font-size:13px;font-weight:600">${v||'—'}</div></div>`
-        ).join('')}
-      </div>
-      <p style="font-size:12px;color:var(--t2);line-height:1.65;margin:0 0 8px">${d.vnImpact||''}</p>
-      ${d.watchSectors?.length?`<div style="margin-bottom:6px">${d.watchSectors.map(s=>`<span class="sector-tag">${s}</span>`).join('')}</div>`:''}
-      ${d.keyEvents?.length?`<div style="font-size:11px;color:var(--t2)">${d.keyEvents.map(e=>`<div style="margin-bottom:3px">· ${e}</div>`).join('')}</div>`:''}`
-  } catch(e) {
-    body.innerHTML=`<div style="font-size:12px;color:var(--dn);margin-top:8px">${e.message}</div>`
+// ── Sync UI helpers ──────────────────────────────────────────────────
+function openSyncSetup() {
+  var tok = prompt('GitHub Token (ghp_...): Get from github.com/settings/tokens')
+  if (!tok || !tok.trim()) return
+  tok = tok.trim()
+  if (!tok.startsWith('ghp_') && !tok.startsWith('github_pat_')) {
+    alert('Token khong hop le. Phai bat dau bang ghp_ hoac github_pat_'); return
   }
-  btn.textContent='Cập nhật ↗'; btn.disabled=false
+  GH_TOKEN = tok
+  localStorage.setItem('gh_token', GH_TOKEN)
+  updateSyncUI()
+  syncLoad().then(function(synced) {
+    if (synced) { renderWlList(); renderPortfolio() }
+    else syncSave()
+  })
 }
-</script>
-</body>
-</html>
+
