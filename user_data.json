@@ -1,4 +1,43 @@
 {
-  "watchlist": ["OIL", "ACV", "PLX", "VIX", "PVS", "NVL", "FPT"],
-  "portfolio": []
+  "watchlist": [
+    "OIL",
+    "ACV",
+    "PLX",
+    "VIX",
+    "PVS",
+    "NVL"
+  ],
+  "portfolio": [
+    {
+      "ticker": "OIL",
+      "qty": 6200,
+      "cost": 19900
+    },
+    {
+      "ticker": "ACV",
+      "qty": 5000,
+      "cost": 55360
+    },
+    {
+      "ticker": "PLX",
+      "qty": 1500,
+      "cost": 58360
+    },
+    {
+      "ticker": "PVS",
+      "qty": 1500,
+      "cost": 50050
+    },
+    {
+      "ticker": "VIX",
+      "qty": 1500,
+      "cost": 18010
+    },
+    {
+      "ticker": "NVL",
+      "qty": 1300,
+      "cost": 15650
+    }
+  ],
+  "updated": "30/5/2026"
 }
