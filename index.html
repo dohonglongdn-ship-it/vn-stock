@@ -961,15 +961,14 @@ function changeKey() {
   },100)
 }
 
-// Auto-boot if key exists
-if (VNSTK_KEY) {
-  el('s-setup').classList.remove('active'); el('s-app').classList.add('active')
-  if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', function(){ if(window.initApp) window.initApp() })
-  } else {
-    setTimeout(function(){ if(window.initApp) window.initApp() }, 0)
+// Auto-boot: đợi DOM load xong mới chạy
+document.addEventListener('DOMContentLoaded', function() {
+  if (VNSTK_KEY) {
+    document.getElementById('s-setup').classList.remove('active')
+    document.getElementById('s-app').classList.add('active')
+    if (window.initApp) window.initApp()
   }
-}
+})
 
 // ── Search ───────────────────────────────────────────────────────────
 function onSearch(e) {
