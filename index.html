@@ -4,6 +4,11 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="theme-color" content="#ffffff" id="meta-theme-color"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="VN Stock"/>
 <title>VN Stock Intelligence</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -55,11 +60,16 @@ if (VNSTK_KEY) {
   --blue:#2563eb;--blueh:#1d4ed8;
   --r:8px;--rl:12px;--shadow:0 1px 3px rgba(0,0,0,0.08);
 }
-@media(prefers-color-scheme:dark){:root{
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#1c1c1a;--bg2:#242422;--bg3:#2e2e2c;
   --bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.13);
   --t:#eeede8;--t2:#aaa;--t3:#666;
 }}
+:root[data-theme="dark"]{
+  --bg:#1c1c1a;--bg2:#242422;--bg3:#2e2e2c;
+  --bd:rgba(255,255,255,0.07);--bd2:rgba(255,255,255,0.13);
+  --t:#eeede8;--t2:#aaa;--t3:#666;
+}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg2);color:var(--t);min-height:100dvh;-webkit-font-smoothing:antialiased}
 .screen{display:none!important}.screen.active{display:block!important}
 
@@ -303,6 +313,7 @@ a{color:var(--blue)}
       <span id="sync-badge" style="font-size:9px;color:var(--t3);display:none;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
       <span id="prices-json-badge" style="font-size:9px;color:var(--t3);display:none"></span>
       <span id="status-badge" class="tag tag-g" style="margin:0;font-size:9px">●&nbsp;Groq AI</span>
+      <button class="icon-btn" onclick="toggleTheme()" id="theme-btn" title="Đổi theme"><i class="ti ti-sun"></i></button>
       <button class="icon-btn" onclick="changeKey()" title="Đổi API key"><i class="ti ti-settings"></i></button>
     </div>
   </header>
@@ -3024,6 +3035,86 @@ if (VNSTK_KEY) {
   if (_ss) _ss.classList.remove('active')
   if (_sa) _sa.classList.add('active')
   if (typeof initApp === 'function') initApp()
+}
+
+// ── Dark/Light toggle ────────────────────────────────────────────────
+function applyTheme(theme) {
+  const root = document.documentElement
+  const btn = document.getElementById('theme-btn')
+  const metaTheme = document.getElementById('meta-theme-color')
+  if (theme === 'dark') {
+    root.setAttribute('data-theme', 'dark')
+    if (btn) btn.innerHTML = '<i class="ti ti-moon"></i>'
+    if (metaTheme) metaTheme.content = '#1c1c1a'
+  } else if (theme === 'light') {
+    root.setAttribute('data-theme', 'light')
+    if (btn) btn.innerHTML = '<i class="ti ti-sun"></i>'
+    if (metaTheme) metaTheme.content = '#ffffff'
+  } else {
+    root.removeAttribute('data-theme')
+    const sysDark = window.matchMedia('(prefers-color-scheme:dark)').matches
+    if (btn) btn.innerHTML = sysDark ? '<i class="ti ti-moon"></i>' : '<i class="ti ti-sun"></i>'
+    if (metaTheme) metaTheme.content = sysDark ? '#1c1c1a' : '#ffffff'
+  }
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme')
+  const sysDark = window.matchMedia('(prefers-color-scheme:dark)').matches
+  let next
+  if (!current) next = sysDark ? 'light' : 'dark'
+  else if (current === 'dark') next = 'light'
+  else next = 'dark'
+  localStorage.setItem('vnstk_theme', next)
+  applyTheme(next)
+}
+
+;(function() {
+  const saved = localStorage.getItem('vnstk_theme')
+  if (saved) applyTheme(saved)
+  else {
+    const sysDark = window.matchMedia('(prefers-color-scheme:dark)').matches
+    const btn = document.getElementById('theme-btn')
+    if (btn) btn.innerHTML = sysDark ? '<i class="ti ti-moon"></i>' : '<i class="ti ti-sun"></i>'
+  }
+  window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('vnstk_theme')) applyTheme(null)
+  })
+})()
+
+// ── PWA Service Worker ───────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    const swCode = `
+const CACHE = 'vnstock-v1'
+const PRECACHE = ['./', './index.html']
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)))
+  self.skipWaiting()
+})
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ))
+  self.clients.claim()
+})
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return
+  const url = new URL(e.request.url)
+  if (url.origin !== location.origin) return
+  e.respondWith(
+    fetch(e.request).then(r => {
+      const clone = r.clone()
+      caches.open(CACHE).then(c => c.put(e.request, clone))
+      return r
+    }).catch(() => caches.match(e.request))
+  )
+})
+\`
+    const blob = new Blob([swCode], {type: 'application/javascript'})
+    const swUrl = URL.createObjectURL(blob)
+    navigator.serviceWorker.register(swUrl).catch(() => {})
+  })
 }
 </script>
 </body>
