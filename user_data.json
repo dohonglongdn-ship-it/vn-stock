@@ -1,4 +1,5 @@
-{
-  "watchlist": ["VCB", "HPG", "VNM", "OIL", "ACV", "PLX", "PVS", "VIX"],
-  "portfolio": []
-}
+on:
+  push:
+    paths:
+      - 'user_data.json'  # Auto chạy khi Sync watchlist
+  schedule: ...
