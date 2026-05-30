@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-05-30T13:27:47.753690",
+  "updatedAt": "2026-05-30T13:41:28.960583",
   "session": "evening",
   "alerts": {
     "VCB": {
@@ -12,8 +12,8 @@
         "MACD dương"
       ],
       "action": "GIỮ",
-      "summary": "Xu hướng giảm, MACD dương",
-      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "summary": "Giá giảm, MACD dương",
+      "detail": "Xu hướng giảm nhưng chỉ số MACD dương và RSI trung lập, vùng giá hiện tại không quá hấp dẫn để mua, vì vậy giữ nguyên vị thế. Cần chú ý đến tín hiệu tiếp theo của xu hướng và chuyển động của các chỉ số kỹ thuật.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -31,7 +31,7 @@
         "pct_from_high": -18.4
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T13:27:43.781395"
+      "updatedAt": "2026-05-30T13:41:21.231454"
     },
     "HPG": {
       "ticker": "HPG",
@@ -43,8 +43,8 @@
         "MACD âm"
       ],
       "action": "GIỮ",
-      "summary": "Xu hướng giảm, MACD âm",
-      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "summary": "HOLD do xu hướng giảm",
+      "detail": "HPG đang trong xu hướng giảm, MACD âm và RSI trung lập. Giá hiện tại dưới MA20 và MA50, cách đỉnh 52 tuần là -8.6%. Rủi ro giảm giá vẫn còn vì tín hiệu kỹ thuật chưa tích cực.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -62,7 +62,7 @@
         "pct_from_high": -8.6
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T13:27:44.354347"
+      "updatedAt": "2026-05-30T13:41:22.305405"
     },
     "VNM": {
       "ticker": "VNM",
@@ -74,8 +74,8 @@
         "MACD âm"
       ],
       "action": "GIỮ",
-      "summary": "Xu hướng giảm, MACD âm",
-      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "summary": "HOLD do xu hướng giảm",
+      "detail": "Cổ phiếu VNM đang trong xu hướng giảm, MACD âm, RSI ở vùng trung lập. Dữ liệu kỹ thuật cho thấy cổ phiếu có thể tiếp tục giảm, nhưng mức giảm đã khá mạnh, cần theo dõi chặt chẽ tín hiệu đảo chiều. Rủi ro giảm giá vẫn hiện hữu.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -93,7 +93,7 @@
         "pct_from_high": -19.3
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T13:27:44.918530"
+      "updatedAt": "2026-05-30T13:41:23.444109"
     },
     "OIL": {
       "ticker": "OIL",
@@ -106,7 +106,7 @@
       ],
       "action": "GIỮ",
       "summary": "Xu hướng tăng, MACD âm",
-      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "detail": "Cổ phiếu OIL có xu hướng tăng nhưng MACD đang ở vùng âm. Dữ liệu TA cho thấy giá hiện tại trên MA20 và MA50. RSI(14) trung lập, rủi ro giảm tốc độ tăng. Bối cảnh này khiến tín hiệu kỹ thuật Hold không rõ ràng.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -124,7 +124,7 @@
         "pct_from_high": -39.1
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T13:27:45.484111"
+      "updatedAt": "2026-05-30T13:41:24.589825"
     },
     "ACV": {
       "ticker": "ACV",
@@ -136,8 +136,8 @@
         "MACD âm"
       ],
       "action": "GIỮ",
-      "summary": "Xu hướng giảm, MACD âm",
-      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "summary": "Xu hướng giảm",
+      "detail": "Cổ phiếu ACV có tín hiệu kỹ thuật HOLD với độ tin cậy medium do đang trong xu hướng giảm và MACD âm. Dữ liệu phân tích kỹ thuật cho thấy giá hiện tại đang dưới MA20 và MA50, RSI(14) ở mức trung lập và cách đỉnh 52 tuần đến 29.3%. Cần theo dõi chặt chẽ diễn biến thị trường",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -155,7 +155,7 @@
         "pct_from_high": -29.3
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T13:27:46.052025"
+      "updatedAt": "2026-05-30T13:41:25.718834"
     },
     "PLX": {
       "ticker": "PLX",
@@ -167,8 +167,8 @@
         "MACD dương"
       ],
       "action": "THEO DÕI",
-      "summary": "Xu hướng tăng, MACD dương",
-      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "summary": "Xu hướng tăng tiếp diễn",
+      "detail": "Cổ phiếu PLX hiện đang trên xu hướng tăng với MACD dương. Tuy nhiên, giá vẫn chưa chạm đến vùng kháng cự mạnh. Rủi ro ngắn hạn vẫn có thể xảy ra nếu thị trường chung điều chỉnh. Theo dõi chặt chẽ biến động của thị trường và hành động giá của cổ phiếu.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -186,7 +186,7 @@
         "pct_from_high": -41.0
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T13:27:46.619491"
+      "updatedAt": "2026-05-30T13:41:26.868898"
     },
     "PVS": {
       "ticker": "PVS",
@@ -199,7 +199,7 @@
       ],
       "action": "GIỮ",
       "summary": "Xu hướng giảm, MACD âm",
-      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "detail": "PVS đang trong xu hướng giảm, MACD ở mức âm và RSI ở vùng trung tính. Dữ liệu kỹ thuật không hỗ trợ cho một động thái mua mạnh. Nhà đầu tư nên theo dõi chặt chẽ biến động của thị trường.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -217,7 +217,7 @@
         "pct_from_high": -28.6
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T13:27:47.191771"
+      "updatedAt": "2026-05-30T13:41:27.849033"
     },
     "VIX": {
       "ticker": "VIX",
@@ -230,8 +230,8 @@
         "MACD dương"
       ],
       "action": "THEO DÕI",
-      "summary": "RSI quá bán, Xu hướng giảm",
-      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "summary": "RSI quá bán, MACD dương",
+      "detail": "VIX ở vùng quá bán với RSI(14) 28.0 và MACD dương 192.73. Xu hướng giảm nhưng có tín hiệu hồi phục, cần theo dõi thêm biến động thị trường và các chỉ báo kỹ thuật khác. Rủi ro vẫn cao do xu hướng giảm, nên thận trọng",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -249,7 +249,7 @@
         "pct_from_high": -19.4
       },
       "session": "evening",
-      "updatedAt": "2026-05-30T13:27:47.753650"
+      "updatedAt": "2026-05-30T13:41:28.960547"
     }
   }
 }
