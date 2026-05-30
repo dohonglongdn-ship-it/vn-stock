@@ -154,6 +154,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .wl-spark{width:52px;flex-shrink:0}
 .wl-price{font-size:12px;font-weight:600;width:72px;text-align:right}
 .wl-chg{font-size:11px;font-weight:600;width:56px;text-align:right}
+.ai-alert-badge{width:52px;text-align:center;flex-shrink:0;display:inline-block}
 .wl-del{background:none;border:none;color:var(--t3);cursor:pointer;padding:0 3px;opacity:.35;transition:opacity .12s}
 .wl-del:hover{opacity:1;color:var(--dn)}
 
@@ -2013,7 +2014,7 @@ function checkAiAlertNotifications() {
 
 function renderAiAlertBadge(ticker) {
   const al = G.aiAlerts?.[ticker]
-  if (!al) return ''
+  if (!al) return '<span style="width:52px;flex-shrink:0;display:inline-block"></span>'
   const colors = {
     'MUA':      {bg:'#dcfce7', color:'#166534', border:'#86efac'},
     'THEO DÕI': {bg:'#fef9c3', color:'#713f12', border:'#fde047'},
