@@ -1835,13 +1835,25 @@ function addTicker(e) {
 
 async function loadOneWlPrice(t) {
   try {
-    const [csv, rt] = await Promise.all([fetchCSV(t), fetchRealtime(t)])
-    const bars = csv||[]
     const info = db(t)
+    const isUpcom = (info?.e || '').toUpperCase() === 'UPCOM'
+
+    // UPCOM không có trên Yahoo Finance → chỉ dùng prices.json + CSV, skip Worker
+    const [csv, rt] = await Promise.all([
+      fetchCSV(t),
+      isUpcom ? Promise.resolve(null) : fetchRealtime(t)
+    ])
+    const bars = csv||[]
+
+    // Fallback giá từ prices.json cho UPCOM
+    const pj = G.pricesJson?.[t]
+    const priceFromJson = pj?.price || null
+    const chgFromJson = pj?.changePct ?? null
+
     G.wlCache[t] = {
       ...(G.wlCache[t]||{}),
-      price: rt?.price || bars[bars.length-1]?.close || null,
-      chg:   rt?.changePct ?? (bars.length>1 ? (bars[bars.length-1].close-bars[bars.length-2].close)/bars[bars.length-2].close*100 : null),
+      price: rt?.price || priceFromJson || bars[bars.length-1]?.close || null,
+      chg:   rt?.changePct ?? chgFromJson ?? (bars.length>1 ? (bars[bars.length-1].close-bars[bars.length-2].close)/bars[bars.length-2].close*100 : null),
       spark: bars.length>1 ? bars.slice(-10).map(b=>b.close) : null,
       name:  info?.n || G.wlCache[t]?.name || t,
       sector:info?.s || G.wlCache[t]?.sector || ''
