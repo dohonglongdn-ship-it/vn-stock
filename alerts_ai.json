@@ -1,0 +1,255 @@
+{
+  "updatedAt": "2026-05-30T13:27:47.753690",
+  "session": "evening",
+  "alerts": {
+    "VCB": {
+      "ticker": "VCB",
+      "name": "VCB",
+      "signal": "HOLD",
+      "confidence": "low",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD dương"
+      ],
+      "action": "GIỮ",
+      "summary": "Xu hướng giảm, MACD dương",
+      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "entry": null,
+      "stoploss": null,
+      "timeframe": "Ngắn hạn",
+      "ta": {
+        "price": 62000.0,
+        "ma20": 62090.0,
+        "ma50": 60336.0,
+        "rsi": 57.9,
+        "macd": 916.34,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 76000.0,
+        "low52": 57300.0,
+        "pct_from_high": -18.4
+      },
+      "session": "evening",
+      "updatedAt": "2026-05-30T13:27:43.781395"
+    },
+    "HPG": {
+      "ticker": "HPG",
+      "name": "HPG",
+      "signal": "HOLD",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
+      "action": "GIỮ",
+      "summary": "Xu hướng giảm, MACD âm",
+      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "entry": null,
+      "stoploss": null,
+      "timeframe": "Ngắn hạn",
+      "ta": {
+        "price": 24000.0,
+        "ma20": 24298.0,
+        "ma50": 24346.0,
+        "rsi": 37.3,
+        "macd": -146.77,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 26250.0,
+        "low52": 22630.0,
+        "pct_from_high": -8.6
+      },
+      "session": "evening",
+      "updatedAt": "2026-05-30T13:27:44.354347"
+    },
+    "VNM": {
+      "ticker": "VNM",
+      "name": "VNM",
+      "signal": "HOLD",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
+      "action": "GIỮ",
+      "summary": "Xu hướng giảm, MACD âm",
+      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "entry": null,
+      "stoploss": null,
+      "timeframe": "Ngắn hạn",
+      "ta": {
+        "price": 59200.0,
+        "ma20": 59945.0,
+        "ma50": 60788.0,
+        "rsi": 38.7,
+        "macd": -587.85,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 73400.0,
+        "low52": 58100.0,
+        "pct_from_high": -19.3
+      },
+      "session": "evening",
+      "updatedAt": "2026-05-30T13:27:44.918530"
+    },
+    "OIL": {
+      "ticker": "OIL",
+      "name": "OIL",
+      "signal": "HOLD",
+      "confidence": "low",
+      "rule_reasons": [
+        "Xu hướng tăng",
+        "MACD âm"
+      ],
+      "action": "GIỮ",
+      "summary": "Xu hướng tăng, MACD âm",
+      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "entry": null,
+      "stoploss": null,
+      "timeframe": "Ngắn hạn",
+      "ta": {
+        "price": 15100.0,
+        "ma20": 15060.0,
+        "ma50": 15072.0,
+        "rsi": 56.7,
+        "macd": -11.67,
+        "trend": "up",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 24800.0,
+        "low52": 14000.0,
+        "pct_from_high": -39.1
+      },
+      "session": "evening",
+      "updatedAt": "2026-05-30T13:27:45.484111"
+    },
+    "ACV": {
+      "ticker": "ACV",
+      "name": "ACV",
+      "signal": "HOLD",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
+      "action": "GIỮ",
+      "summary": "Xu hướng giảm, MACD âm",
+      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "entry": null,
+      "stoploss": null,
+      "timeframe": "Ngắn hạn",
+      "ta": {
+        "price": 43900.0,
+        "ma20": 44290.0,
+        "ma50": 45092.0,
+        "rsi": 48.9,
+        "macd": -389.09,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 62100.0,
+        "low52": 42900.0,
+        "pct_from_high": -29.3
+      },
+      "session": "evening",
+      "updatedAt": "2026-05-30T13:27:46.052025"
+    },
+    "PLX": {
+      "ticker": "PLX",
+      "name": "PLX",
+      "signal": "WATCH",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng tăng",
+        "MACD dương"
+      ],
+      "action": "THEO DÕI",
+      "summary": "Xu hướng tăng, MACD dương",
+      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "entry": null,
+      "stoploss": null,
+      "timeframe": "Ngắn hạn",
+      "ta": {
+        "price": 41000.0,
+        "ma20": 40238.0,
+        "ma50": 40372.0,
+        "rsi": 60.0,
+        "macd": 69.89,
+        "trend": "up",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 69500.0,
+        "low52": 36800.0,
+        "pct_from_high": -41.0
+      },
+      "session": "evening",
+      "updatedAt": "2026-05-30T13:27:46.619491"
+    },
+    "PVS": {
+      "ticker": "PVS",
+      "name": "PVS",
+      "signal": "HOLD",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
+      "action": "GIỮ",
+      "summary": "Xu hướng giảm, MACD âm",
+      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "entry": null,
+      "stoploss": null,
+      "timeframe": "Ngắn hạn",
+      "ta": {
+        "price": 39000.0,
+        "ma20": 39820.0,
+        "ma50": 39678.0,
+        "rsi": 47.0,
+        "macd": -191.18,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 54600.0,
+        "low52": 36200.0,
+        "pct_from_high": -28.6
+      },
+      "session": "evening",
+      "updatedAt": "2026-05-30T13:27:47.191771"
+    },
+    "VIX": {
+      "ticker": "VIX",
+      "name": "VIX",
+      "signal": "WATCH",
+      "confidence": "medium",
+      "rule_reasons": [
+        "RSI quá bán",
+        "Xu hướng giảm",
+        "MACD dương"
+      ],
+      "action": "THEO DÕI",
+      "summary": "RSI quá bán, Xu hướng giảm",
+      "detail": "Phân tích dựa trên chỉ số kỹ thuật.",
+      "entry": null,
+      "stoploss": null,
+      "timeframe": "Ngắn hạn",
+      "ta": {
+        "price": 17700.0,
+        "ma20": 18378.0,
+        "ma50": 17480.0,
+        "rsi": 28.0,
+        "macd": 192.73,
+        "trend": "down",
+        "rsi_signal": "oversold",
+        "ma_cross": null,
+        "high52": 21960.0,
+        "low52": 15350.0,
+        "pct_from_high": -19.4
+      },
+      "session": "evening",
+      "updatedAt": "2026-05-30T13:27:47.753650"
+    }
+  }
+}
