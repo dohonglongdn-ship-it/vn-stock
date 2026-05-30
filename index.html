@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>VN Stock Intelligence</title>
@@ -1136,6 +1137,7 @@ const YF_OVERRIDE = {
 }
 
 async function fetchRealtime(ticker) {
+  if (!ticker) return null
   try {
     const r = await fetch(`${WORKER}/${ticker}`, {signal: AbortSignal.timeout(10000)})
     if (!r.ok) return null
