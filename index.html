@@ -1419,7 +1419,7 @@ async function fetchRealtime(ticker) {
     if (d.source==='yahoo' && d.chart?.result?.[0]) {
       const res=d.chart.result[0], ts=res.timestamp, q=res.indicators.quote[0], m=res.meta
       const bars=ts.map((t,i)=>({date:new Date(t*1000).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}),close:q.close[i]??null,volume:q.volume[i]??0})).filter(b=>b.close>0)
-      return {bars,price:m.regularMarketPrice,changePct:m.regularMarketChangePercent,high52w:m.fiftyTwoWeekHigh,low52w:m.fiftyTwoWeekLow,marketCap:m.marketCap,pe:m.trailingPE,eps:m.epsTrailingTwelveMonths,src:'Yahoo Finance'}
+      return {bars,price:m.regularMarketPrice,changePct:m.regularMarketChangePercent,high52w:m.fiftyTwoWeekHigh,low52w:m.fiftyTwoWeekLow,marketCap:m.marketCap,pe:m.trailingPE,eps:m.epsTrailingTwelveMonths,divYield:m.dividendYield?m.dividendYield*100:null,src:'Yahoo Finance'}
     }
     // SSI Chart (TradingView format)
     if (d.source==='ssi_chart' && d.t?.length) {
@@ -2388,16 +2388,24 @@ function updateFundamentals(fund) {
 const _origRenderMets = renderMets
 function renderMets() {
   const d = G.stockData; if(!d) return
+  // Bổ sung từ prices.json nếu có
+  const pj = G.pricesJson?.[G.ticker]
+  const pe  = d.pe  || pj?.pe
+  const pb  = d.pb  || pj?.pb
+  const roe = d.roe || pj?.roe
+  const eps = d.eps || pj?.eps
+  const divY = d.divYield || pj?.divYield
+  const mktCap = d.mktCapT || (pj?.marketCap ? (pj.marketCap/1e12).toFixed(1) : null)
   el('stock-mets').innerHTML = [
-    {l:'P/E',          v: d.pe  ? d.pe.toFixed(1)  : '—'},
-    {l:'P/B',          v: d.pb  ? d.pb.toFixed(2)  : '—'},
-    {l:'ROE',          v: d.roe ? d.roe.toFixed(1)+'%' : '—'},
-    {l:'EPS',          v: d.eps ? fP(Math.round(d.eps)) : '—'},
-    {l:'Cổ tức',       v: d.divYield ? d.divYield.toFixed(2)+'%' : '—'},
-    {l:'52w Cao',      v: fP(d.high52w)},
-    {l:'52w Thấp',     v: fP(d.low52w)},
-    {l:'Vốn hóa',      v: d.mktCapT ? d.mktCapT+' nghìn tỷ' : '—'},
-    {l:'KL TB',        v: d.avgVol ? d.avgVol+'M' : '—'},
+    {l:'P/E',      v: pe  ? parseFloat(pe).toFixed(1)  : '—'},
+    {l:'P/B',      v: pb  ? parseFloat(pb).toFixed(2)  : '—'},
+    {l:'ROE',      v: roe ? parseFloat(roe).toFixed(1)+'%' : '—'},
+    {l:'EPS',      v: eps ? fP(Math.round(eps)) : '—'},
+    {l:'Cổ tức',   v: divY ? parseFloat(divY).toFixed(2)+'%' : '—'},
+    {l:'52w Cao',  v: fP(d.high52w || pj?.high52w)},
+    {l:'52w Thấp', v: fP(d.low52w  || pj?.low52w)},
+    {l:'Vốn hóa',  v: mktCap ? mktCap+' nghìn tỷ' : '—'},
+    {l:'KL TB',    v: d.avgVol ? d.avgVol+'M' : '—'},
   ].map(({l,v}) =>
     `<div class="met"><div class="met-l">${l}</div><div class="met-v">${v}</div></div>`
   ).join('')
