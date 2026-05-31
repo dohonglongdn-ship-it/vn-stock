@@ -641,32 +641,102 @@ a{color:var(--blue)}
 
     <!-- ── Screener ── -->
     <div id="v-screener" class="screen">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <span style="font-size:14px;font-weight:600"><i class="ti ti-filter" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>Bộ lọc cổ phiếu</span>
         <button class="pill" id="scr-run-btn" onclick="runScreener()" style="margin-left:auto">
           <i class="ti ti-refresh" style="font-size:11px;margin-right:2px"></i>Chạy lọc
         </button>
       </div>
+
+      <!-- Preset filters -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <span style="font-size:11px;color:var(--t2);align-self:center">Nhanh:</span>
+        <button class="pill" onclick="applyPreset('oversold')" style="font-size:11px">🔥 Quá bán + tăng</button>
+        <button class="pill" onclick="applyPreset('golden')" style="font-size:11px">⭐ Golden cross</button>
+        <button class="pill" onclick="applyPreset('momentum')" style="font-size:11px">🚀 Momentum</button>
+        <button class="pill" onclick="applyPreset('volatile')" style="font-size:11px">⚡ Biến động cao</button>
+        <button class="pill" onclick="applyPreset('clear')" style="font-size:11px;color:var(--t3)">✕ Xóa</button>
+      </div>
+
       <!-- Filters -->
       <div class="card" style="margin-bottom:8px">
-        <div class="card-title" style="margin-bottom:8px"><i class="ti ti-sliders" style="font-size:13px"></i>Bộ lọc</div>
+        <div class="card-title" style="margin-bottom:8px"><i class="ti ti-sliders" style="font-size:13px"></i>Điều kiện lọc</div>
+
         <div class="filter-row">
-          <span style="font-size:11px;color:var(--t2);font-weight:500">RSI:</span>
+          <span style="font-size:11px;color:var(--t2);font-weight:500;width:70px">RSI:</span>
           <button class="filter-chip" id="f-rsi-ob" onclick="toggleFilter('rsi-ob')">Quá mua &gt;70</button>
-          <button class="filter-chip on" id="f-rsi-os" onclick="toggleFilter('rsi-os')">Quá bán &lt;30</button>
-          <button class="filter-chip" id="f-rsi-neu" onclick="toggleFilter('rsi-neu')">Trung tính</button>
+          <button class="filter-chip" id="f-rsi-os" onclick="toggleFilter('rsi-os')">Quá bán &lt;30</button>
+          <button class="filter-chip" id="f-rsi-neu" onclick="toggleFilter('rsi-neu')">Trung tính 30-70</button>
+          <div style="display:flex;align-items:center;gap:4px;margin-left:4px">
+            <input id="f-rsi-min" type="number" placeholder="Min" min="0" max="100" style="width:44px;font-size:11px;padding:3px 5px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)">
+            <span style="font-size:10px;color:var(--t3)">-</span>
+            <input id="f-rsi-max" type="number" placeholder="Max" min="0" max="100" style="width:44px;font-size:11px;padding:3px 5px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)">
+          </div>
         </div>
+
         <div class="filter-row">
-          <span style="font-size:11px;color:var(--t2);font-weight:500">Xu hướng:</span>
-          <button class="filter-chip on" id="f-bull" onclick="toggleFilter('bull')">Tăng (trên MA20)</button>
-          <button class="filter-chip" id="f-bear" onclick="toggleFilter('bear')">Giảm (dưới MA20)</button>
+          <span style="font-size:11px;color:var(--t2);font-weight:500;width:70px">Xu hướng:</span>
+          <button class="filter-chip" id="f-bull" onclick="toggleFilter('bull')">Trên MA20</button>
+          <button class="filter-chip" id="f-bear" onclick="toggleFilter('bear')">Dưới MA20</button>
+          <button class="filter-chip" id="f-abv50" onclick="toggleFilter('abv50')">Trên MA50</button>
+          <button class="filter-chip" id="f-blw50" onclick="toggleFilter('blw50')">Dưới MA50</button>
         </div>
+
         <div class="filter-row">
-          <span style="font-size:11px;color:var(--t2);font-weight:500">MACD:</span>
+          <span style="font-size:11px;color:var(--t2);font-weight:500;width:70px">MACD:</span>
           <button class="filter-chip" id="f-macd-bull" onclick="toggleFilter('macd-bull')">Bullish cross</button>
           <button class="filter-chip" id="f-macd-bear" onclick="toggleFilter('macd-bear')">Bearish cross</button>
+          <button class="filter-chip" id="f-macd-pos" onclick="toggleFilter('macd-pos')">MACD dương</button>
+          <button class="filter-chip" id="f-macd-neg" onclick="toggleFilter('macd-neg')">MACD âm</button>
+        </div>
+
+        <div class="filter-row">
+          <span style="font-size:11px;color:var(--t2);font-weight:500;width:70px">% ngày:</span>
+          <button class="filter-chip" id="f-chg-up3" onclick="toggleFilter('chg-up3')">Tăng &gt;3%</button>
+          <button class="filter-chip" id="f-chg-dn3" onclick="toggleFilter('chg-dn3')">Giảm &gt;3%</button>
+          <div style="display:flex;align-items:center;gap:4px;margin-left:4px">
+            <input id="f-chg-min" type="number" placeholder="Min%" style="width:50px;font-size:11px;padding:3px 5px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)">
+            <span style="font-size:10px;color:var(--t3)">-</span>
+            <input id="f-chg-max" type="number" placeholder="Max%" style="width:50px;font-size:11px;padding:3px 5px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)">
+          </div>
+        </div>
+
+        <div class="filter-row">
+          <span style="font-size:11px;color:var(--t2);font-weight:500;width:70px">Ngành:</span>
+          <select id="f-sector" style="font-size:11px;padding:4px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)">
+            <option value="">Tất cả ngành</option>
+            <option>Ngân hàng</option><option>Bất động sản</option><option>Thép</option>
+            <option>Dầu khí</option><option>Thực phẩm</option><option>Chứng khoán</option>
+            <option>Hàng không</option><option>Công nghệ</option><option>Bán lẻ</option>
+            <option>Xây dựng</option><option>Điện</option><option>Hóa chất</option>
+          </select>
+          <span style="font-size:11px;color:var(--t2);font-weight:500;margin-left:10px">Sàn:</span>
+          <select id="f-exchange" style="font-size:11px;padding:4px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)">
+            <option value="">Tất cả</option>
+            <option>HOSE</option><option>HNX</option><option>UPCOM</option>
+          </select>
+        </div>
+
+        <div class="filter-row">
+          <span style="font-size:11px;color:var(--t2);font-weight:500;width:70px">AI Alert:</span>
+          <button class="filter-chip" id="f-ai-buy" onclick="toggleFilter('ai-buy')">AI: MUA</button>
+          <button class="filter-chip" id="f-ai-watch" onclick="toggleFilter('ai-watch')">AI: THEO DÕI</button>
+          <button class="filter-chip" id="f-ai-sell" onclick="toggleFilter('ai-sell')">AI: BÁN</button>
+        </div>
+
+        <div class="filter-row">
+          <span style="font-size:11px;color:var(--t2);font-weight:500;width:70px">Sắp xếp:</span>
+          <select id="f-sort" style="font-size:11px;padding:4px 8px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t)">
+            <option value="rsi-asc">RSI tăng dần</option>
+            <option value="rsi-desc">RSI giảm dần</option>
+            <option value="chg-desc">% ngày cao nhất</option>
+            <option value="chg-asc">% ngày thấp nhất</option>
+            <option value="m1-desc">1T tốt nhất</option>
+            <option value="vol-desc">Biến động cao</option>
+          </select>
         </div>
       </div>
+
       <div id="scr-loading" class="loading-box" style="display:none">
         <i class="ti ti-refresh spin" style="font-size:20px;margin-bottom:8px;display:block"></i>
         <div id="scr-msg">Đang tải dữ liệu...</div>
@@ -3383,6 +3453,25 @@ function toggleFilter(f) {
   el('f-'+f)?.classList.toggle('on', SCR_FILTERS.has(f))
 }
 
+function applyPreset(name) {
+  // Xóa tất cả filters
+  SCR_FILTERS.clear()
+  document.querySelectorAll('.filter-chip').forEach(b=>b.classList.remove('on'))
+  ;['f-rsi-min','f-rsi-max','f-chg-min','f-chg-max'].forEach(id=>{const e=el(id);if(e)e.value=''})
+
+  const presets = {
+    oversold: ['rsi-os','bull'],           // RSI quá bán + xu hướng tăng
+    golden:   ['bull','abv50','macd-bull'], // Trên MA20+MA50 + MACD bullish
+    momentum: ['bull','macd-pos','chg-up3'],// Tăng MA + MACD dương + tăng mạnh hôm nay
+    volatile: [],                           // Biến động cao (xử lý bằng sort)
+  }
+  if (presets[name]) {
+    presets[name].forEach(f => { SCR_FILTERS.add(f); el('f-'+f)?.classList.add('on') })
+  }
+  if (name === 'volatile') { const e=el('f-sort'); if(e) e.value='vol-desc' }
+  if (name !== 'clear') runScreener()
+}
+
 async function runScreener() {
   el('scr-loading').style.display = 'block'
   el('scr-results').innerHTML = ''
@@ -3406,7 +3495,9 @@ async function runScreener() {
         const chg = (last-prev)/prev*100
         // 1M return
         const m1 = bars.length>21 ? (last-bars[bars.length-22].close)/bars[bars.length-22].close*100 : null
-        return {t, last, chg, m1, rsi:ta.rsi, macdBull:ta.macdBull, aboveMA20:ta.aboveMA20, aboveMA50:ta.aboveMA50, annVol:ta.annVol, name:info?.n||t, sector:info?.s||''}
+        const exchange = info?.e||''
+        const macd = ta.macd||0
+        return {t, last, chg, m1, rsi:ta.rsi, macdBull:ta.macdBull, macd, aboveMA20:ta.aboveMA20, aboveMA50:ta.aboveMA50, annVol:ta.annVol, name:info?.n||t, sector:info?.s||'', exchange}
       } catch { return null }
     }))
     batchResults.forEach(r => { if(r) results.push(r) })
@@ -3416,16 +3507,47 @@ async function runScreener() {
   }
 
   // Apply filters
+  const rsiMin = parseFloat(el('f-rsi-min')?.value||'')
+  const rsiMax = parseFloat(el('f-rsi-max')?.value||'')
+  const chgMin = parseFloat(el('f-chg-min')?.value||'')
+  const chgMax = parseFloat(el('f-chg-max')?.value||'')
+  const sector = el('f-sector')?.value||''
+  const exchange = el('f-exchange')?.value||''
+  const sortBy = el('f-sort')?.value||'rsi-asc'
+
   const filtered = results.filter(r => {
     if (SCR_FILTERS.has('rsi-os') && r.rsi > 30) return false
     if (SCR_FILTERS.has('rsi-ob') && r.rsi < 70) return false
     if (SCR_FILTERS.has('rsi-neu') && (r.rsi <= 30 || r.rsi >= 70)) return false
+    if (!isNaN(rsiMin) && r.rsi < rsiMin) return false
+    if (!isNaN(rsiMax) && r.rsi > rsiMax) return false
     if (SCR_FILTERS.has('bull') && !r.aboveMA20) return false
     if (SCR_FILTERS.has('bear') && r.aboveMA20) return false
+    if (SCR_FILTERS.has('abv50') && !r.aboveMA50) return false
+    if (SCR_FILTERS.has('blw50') && r.aboveMA50) return false
     if (SCR_FILTERS.has('macd-bull') && !r.macdBull) return false
     if (SCR_FILTERS.has('macd-bear') && r.macdBull) return false
+    if (SCR_FILTERS.has('macd-pos') && (r.macd||0) <= 0) return false
+    if (SCR_FILTERS.has('macd-neg') && (r.macd||0) >= 0) return false
+    if (SCR_FILTERS.has('chg-up3') && r.chg < 3) return false
+    if (SCR_FILTERS.has('chg-dn3') && r.chg > -3) return false
+    if (!isNaN(chgMin) && r.chg < chgMin) return false
+    if (!isNaN(chgMax) && r.chg > chgMax) return false
+    if (sector && !r.sector.includes(sector)) return false
+    if (exchange && r.exchange !== exchange) return false
+    if (SCR_FILTERS.has('ai-buy') && G.aiAlerts?.[r.t]?.action !== 'MUA') return false
+    if (SCR_FILTERS.has('ai-watch') && G.aiAlerts?.[r.t]?.action !== 'THEO DÕI') return false
+    if (SCR_FILTERS.has('ai-sell') && G.aiAlerts?.[r.t]?.action !== 'BÁN') return false
     return true
-  }).sort((a,b)=>a.rsi-b.rsi)
+  }).sort((a,b) => {
+    if (sortBy==='rsi-asc')  return (a.rsi||0)-(b.rsi||0)
+    if (sortBy==='rsi-desc') return (b.rsi||0)-(a.rsi||0)
+    if (sortBy==='chg-desc') return b.chg-a.chg
+    if (sortBy==='chg-asc')  return a.chg-b.chg
+    if (sortBy==='m1-desc')  return (b.m1||0)-(a.m1||0)
+    if (sortBy==='vol-desc') return (b.annVol||0)-(a.annVol||0)
+    return 0
+  })
 
   el('scr-loading').style.display = 'none'
   el('scr-run-btn').disabled = false
@@ -3443,19 +3565,21 @@ async function runScreener() {
     <div style="overflow-x:auto">
     <table class="scr-table">
       <thead><tr>
-        <th>Mã</th><th>Tên</th><th>Giá</th><th>Hôm nay</th><th>1T</th><th>RSI</th><th>MACD</th><th>MA20</th><th>Vol/năm</th>
+        <th>Mã</th><th>Tên</th><th>Ngành</th><th>Giá</th><th>Hôm nay</th><th>1T</th><th>RSI</th><th>MACD</th><th>MA20</th><th>Vol</th><th>AI</th>
       </tr></thead>
       <tbody>
         ${filtered.map(r=>`<tr>
-          <td onclick="loadStock('${r.t}')">${r.t}</td>
-          <td>${r.name}</td>
+          <td onclick="loadStock('${r.t}')" style="cursor:pointer;color:var(--blue);font-weight:600">${r.t}</td>
+          <td style="font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</td>
+          <td style="font-size:10px;color:var(--t3)">${r.sector||'—'}</td>
           <td>${fP(r.last)}</td>
           <td class="${r.chg>=0?'perf-up':'perf-dn'}">${r.chg>=0?'▲':'▼'}${Math.abs(r.chg).toFixed(2)}%</td>
           <td class="${(r.m1||0)>=0?'perf-up':'perf-dn'}">${r.m1!=null?(r.m1>=0?'+':'')+r.m1.toFixed(1)+'%':'—'}</td>
           <td style="color:${rsiColor(r.rsi)};font-weight:600">${r.rsi?.toFixed(0)||'—'}</td>
           <td><span class="scr-badge" style="background:${r.macdBull?'#dcfce7':'#fee2e2'};color:${r.macdBull?'#166534':'#991b1b'}">${r.macdBull?'Bull':'Bear'}</span></td>
           <td><span class="scr-badge" style="background:${r.aboveMA20?'#dcfce7':'#fee2e2'};color:${r.aboveMA20?'#166534':'#991b1b'}">${r.aboveMA20?'Trên':'Dưới'}</span></td>
-          <td style="color:${r.annVol>30?C_DN:r.annVol>15?'#d97706':C_UP}">${r.annVol?.toFixed(0)||'—'}%</td>
+          <td style="color:${r.annVol>30?C_DN:r.annVol>15?'#d97706':C_UP};font-size:11px">${r.annVol?.toFixed(0)||'—'}%</td>
+          <td>${(()=>{const al=G.aiAlerts?.[r.t];if(!al)return'—';const bg={'MUA':'#dcfce7','BÁN':'#fee2e2','THEO DÕI':'#fef9c3','GIỮ':'#f1f5f9'}[al.action]||'#f1f5f9';const clr={'MUA':'#166534','BÁN':'#991b1b','THEO DÕI':'#713f12','GIỮ':'#475569'}[al.action]||'#475569';return '<span class=\"scr-badge\" style=\"background:'+bg+';color:'+clr+';cursor:pointer\" onclick=\"showAiAlertDetail(\'' +r.t+ '\')\">'+al.action+'</span>';})()</td>
         </tr>`).join('')}
       </tbody>
     </table></div>
