@@ -3453,6 +3453,14 @@ function toggleFilter(f) {
   el('f-'+f)?.classList.toggle('on', SCR_FILTERS.has(f))
 }
 
+function scrAiBadge(ticker) {
+  const al = G.aiAlerts && G.aiAlerts[ticker]
+  if (!al) return '—'
+  const bg = {'MUA':'#dcfce7','BÁN':'#fee2e2','THEO DÕI':'#fef9c3','GIỮ':'#f1f5f9'}[al.action] || '#f1f5f9'
+  const tc = {'MUA':'#166534','BÁN':'#991b1b','THEO DÕI':'#713f12','GIỮ':'#475569'}[al.action] || '#475569'
+  return '<span class="scr-badge" style="background:' + bg + ';color:' + tc + ';cursor:pointer" onclick="showAiAlertDetail('' + ticker + '')">' + al.action + '</span>'
+}
+
 function applyPreset(name) {
   // Xóa tất cả filters
   SCR_FILTERS.clear()
@@ -3579,7 +3587,7 @@ async function runScreener() {
           <td><span class="scr-badge" style="background:${r.macdBull?'#dcfce7':'#fee2e2'};color:${r.macdBull?'#166534':'#991b1b'}">${r.macdBull?'Bull':'Bear'}</span></td>
           <td><span class="scr-badge" style="background:${r.aboveMA20?'#dcfce7':'#fee2e2'};color:${r.aboveMA20?'#166534':'#991b1b'}">${r.aboveMA20?'Trên':'Dưới'}</span></td>
           <td style="color:${r.annVol>30?C_DN:r.annVol>15?'#d97706':C_UP};font-size:11px">${r.annVol?.toFixed(0)||'—'}%</td>
-          <td>${(()=>{const al=G.aiAlerts?.[r.t];if(!al)return'—';const bg={'MUA':'#dcfce7','BÁN':'#fee2e2','THEO DÕI':'#fef9c3','GIỮ':'#f1f5f9'}[al.action]||'#f1f5f9';const clr={'MUA':'#166534','BÁN':'#991b1b','THEO DÕI':'#713f12','GIỮ':'#475569'}[al.action]||'#475569';return '<span class=\"scr-badge\" style=\"background:'+bg+';color:'+clr+';cursor:pointer\" onclick=\"showAiAlertDetail(\'' +r.t+ '\')\">'+al.action+'</span>';})()</td>
+          <td>${scrAiBadge(r.t)}</td>
         </tr>`).join('')}
       </tbody>
     </table></div>
