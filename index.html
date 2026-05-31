@@ -2790,12 +2790,17 @@ async function renderPortfolio(){
   el('port-loading').style.display='block'
   el('port-content').innerHTML=''
 
+  // Đợi pricesJson load nếu chưa có
+  if (!G.pricesJson) {
+    await loadPricesJson()
+  }
+
   // Lấy giá cho từng mã
   const prices={}
   await Promise.all(PORT.items.map(async item=>{
     // Ưu tiên prices.json (có đủ HOSE/HNX/UPCOM)
     const pj=G.pricesJson?.[item.ticker]
-    if(pj?.price){ prices[item.ticker]=pj.price; return }
+    if(pj?.price){ prices[item.ticker]=fixPrice(pj.price, null); return }
     // Skip Worker nếu không phải HOSE (Yahoo chỉ có HOSE.VN ổn định)
     const itemInfo=db(item.ticker)
     const exchange=(itemInfo?.e||'').toUpperCase()
