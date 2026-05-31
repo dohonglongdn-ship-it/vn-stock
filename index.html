@@ -1705,18 +1705,21 @@ async function loadStock(ticker) {
     const mktCapT  = rtClean?.mktCap   ? (rt.mktCap/1e12).toFixed(1) : null
     const avgVol   = csvBars ? Math.round(csvBars.slice(-20).reduce((s,b)=>s+b.volume,0)/20/1e6*10)/10 : null
 
-    // Groq: only for PE, ROE, PB if not from Yahoo
+    // Groq: only for PE, ROE, PB if not from Yahoo — timeout ngắn, không block
     el('stock-loading-msg').textContent = 'Đang lấy chỉ số cơ bản...'
     let fundamental = { pe: rt?.pe||null, eps: rt?.eps||null, pb:null, roe:null }
     try {
       const fHint = info ? `"${info.f}", ngành ${info.s}, sàn ${info.e}` : `mã VN`
-      const ftxt = await enqueueGroq(() => groq(
-        `Mã ${ticker} — ${fHint}. Giá hiện tại ${fP(price)} VND.
+      const ftxt = await Promise.race([
+        groq(
+          `Mã ${ticker} — ${fHint}. Giá hiện tại ${fP(price)} VND.
 JSON: {"pe":${rt?.pe?.toFixed(1)||'null'},"pb":1.5,"roe":18.5,"eps":${rt?.eps?.toFixed(0)||'null'}}
 Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
-        'Return only JSON. No text.',
-        200, true
-      ))
+          'Return only JSON. No text.',
+          200, true
+        ),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
+      ])
       const fd = parseJ(ftxt)
       fundamental = {
         pe:  rt?.pe  || fd.pe  || null,
