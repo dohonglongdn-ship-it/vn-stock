@@ -60,49 +60,49 @@ def gh_create(path, content_dict, message):
     r.raise_for_status()
 
 def fetch_events_vndirect(ticker):
-    """Fetch sự kiện từ VNDirect"""
-    try:
-        r = requests.get(
-            f"https://finfo-api.vndirect.com.vn/v4/events?q=code:{ticker}&size=10&sort=eventDate:desc",
-            headers={
-                "User-Agent": "Mozilla/5.0",
-                "Accept": "application/json",
-                "Origin": "https://www.vndirect.com.vn",
-                "Referer": "https://www.vndirect.com.vn/"
-            },
-            timeout=10
-        )
-        if r.ok:
-            d = r.json()
-            if d.get("data"):
-                return [{
-                    "date":   e.get("eventDate") or e.get("exRightDate", ""),
-                    "type":   e.get("eventName") or e.get("eventType", ""),
-                    "detail": e.get("eventDesc") or str(e.get("ratio", "")),
-                    "source": "vndirect"
-                } for e in d["data"]]
-    except Exception as e:
-        print(f"    VNDirect error: {e}")
-
-    # Fallback: CafeF
-    try:
-        now = datetime.date.today()
-        r = requests.get(
+    """Fetch sự kiện - thử nhiều nguồn song song"""
+    # Thử CafeF trước (thường accessible hơn từ GitHub Actions)
+    sources = [
+        (
             f"https://s.cafef.vn/Ajax/PageNew/DataHistory/HistoryEvent.ashx?Symbol={ticker}&PageIndex=1&PageSize=10",
-            headers={"Referer": "https://cafef.vn/", "User-Agent": "Mozilla/5.0"},
-            timeout=10
-        )
-        if r.ok:
+            {"Referer": "https://cafef.vn/", "User-Agent": "Mozilla/5.0", "Accept": "*/*"},
+            "cafef"
+        ),
+        (
+            f"https://finfo-api.vndirect.com.vn/v4/events?q=code:{ticker}&size=10&sort=eventDate:desc",
+            {"User-Agent": "Mozilla/5.0", "Accept": "application/json",
+             "Origin": "https://www.vndirect.com.vn", "Referer": "https://www.vndirect.com.vn/"},
+            "vndirect"
+        ),
+    ]
+
+    for url, headers, source in sources:
+        try:
+            r = requests.get(url, headers=headers, timeout=5)
+            if not r.ok: continue
             d = r.json()
-            if d.get("Data"):
+
+            if source == "cafef" and d.get("Data"):
+                print(f"    CafeF OK: {len(d['Data'])} events")
                 return [{
                     "date":   e.get("Ngay", ""),
-                    "type":   e.get("LoaiSuKien", ""),
+                    "type":   e.get("LoaiSuKien", "Sự kiện"),
                     "detail": e.get("NoiDung", ""),
                     "source": "cafef"
                 } for e in d["Data"]]
-    except Exception as e:
-        print(f"    CafeF error: {e}")
+
+            if source == "vndirect" and d.get("data"):
+                print(f"    VNDirect OK: {len(d['data'])} events")
+                return [{
+                    "date":   e.get("eventDate") or e.get("exRightDate", ""),
+                    "type":   e.get("eventName") or e.get("eventType", "Sự kiện"),
+                    "detail": e.get("eventDesc") or str(e.get("ratio", "")),
+                    "source": "vndirect"
+                } for e in d["data"]]
+
+        except Exception as e:
+            print(f"    {source} error: {type(e).__name__}: {str(e)[:60]}")
+            continue
 
     return []
 
