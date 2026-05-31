@@ -63,6 +63,29 @@ def get_date_range(days=65):
     start = end - datetime.timedelta(days=days)
     return start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')
 
+def fetch_financials(ticker):
+    """Lấy P/B, ROE, EPS từ vnstock financial ratio"""
+    if not VNSTOCK_OK:
+        return {}
+    try:
+        from vnstock import financial_ratio
+        df = financial_ratio(ticker, 'quarterly', True)
+        if df is None or df.empty:
+            return {}
+        latest = df.iloc[-1]
+        result = {}
+        for src, dst in [('priceToBook','pb'),('roe','roe'),('eps','eps'),
+                          ('pe','pe'),('dividendYield','divYield')]:
+            try:
+                val = latest.get(src)
+                if val is not None and str(val) not in ['nan','None','']:
+                    v = float(val)
+                    result[dst] = round(v*100, 2) if dst in ('roe','divYield') else round(v, 2)
+            except: pass
+        return result
+    except:
+        return {}
+
 def fetch_history(ticker, days=65):
     """Lấy lịch sử giá cho 1 mã"""
     if not VNSTOCK_OK:
@@ -157,6 +180,12 @@ def main():
     for i, ticker in enumerate(TOP200):
         print(f"  [{i+1}/{len(TOP200)}] {ticker}...", end=' ')
         bars = fetch_history(ticker)
+        # Lấy thêm P/B, ROE, EPS
+        fin = fetch_financials(ticker)
+        if fin:
+            if ticker not in all_prices:
+                all_prices[ticker] = {}
+            all_prices[ticker].update(fin)
         if bars:
             if ticker not in all_prices:
                 all_prices[ticker] = {}
