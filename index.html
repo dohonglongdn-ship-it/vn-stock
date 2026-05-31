@@ -902,6 +902,14 @@ const VNDATA = 'https://raw.githubusercontent.com/vnstock-official/vnstock_marke
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 const GROQ_MODELS = ['llama-3.3-70b-versatile','llama3-70b-8192','llama-3.1-8b-instant']
 
+// ── Groq Queue — serialize tất cả Groq calls, tránh 429 ──────────────
+let _groqQueue = Promise.resolve()
+function enqueueGroq(fn) {
+  const result = _groqQueue.then(() => fn())
+  _groqQueue = result.catch(() => {})
+  return result
+}
+
 // ── Company DB ──────────────────────────────────────────────────────
 const COMPANY_DB = {
   VCB:{n:'Vietcombank',f:'Ngân hàng TMCP Ngoại thương Việt Nam',s:'Ngân hàng',e:'HOSE'},
@@ -1679,13 +1687,13 @@ async function loadStock(ticker) {
     let fundamental = { pe: rt?.pe||null, eps: rt?.eps||null, pb:null, roe:null }
     try {
       const fHint = info ? `"${info.f}", ngành ${info.s}, sàn ${info.e}` : `mã VN`
-      const ftxt = await groq(
+      const ftxt = await enqueueGroq(() => groq(
         `Mã ${ticker} — ${fHint}. Giá hiện tại ${fP(price)} VND.
 JSON: {"pe":${rt?.pe?.toFixed(1)||'null'},"pb":1.5,"roe":18.5,"eps":${rt?.eps?.toFixed(0)||'null'}}
 Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
         'Return only JSON. No text.',
         200, true
-      )
+      ))
       const fd = parseJ(ftxt)
       fundamental = {
         pe:  rt?.pe  || fd.pe  || null,
@@ -2574,7 +2582,7 @@ Trả về JSON:
 }
 sentiment chỉ là: "Tích cực", "Tiêu cực", hoặc "Trung lập". score từ 0-100. Tạo 5-8 items thực tế dựa trên tin hoặc kiến thức về doanh nghiệp.`
 
-    const rawTxt = await groq(groqPrompt, 'Return only valid JSON object. No markdown, no text outside JSON.', 1200, true)
+    const rawTxt = await enqueueGroq(() => groq(groqPrompt, 'Return only valid JSON object. No markdown, no text outside JSON.', 1200, true))
     const parsed = parseJ(rawTxt)
 
     if (!parsed?.overall || !parsed?.items) throw new Error('AI không trả về đúng định dạng')
@@ -3000,7 +3008,7 @@ async function runAnalysis() {
     try {
       const [commodities, mTxt] = await Promise.all([
         fetchCommodities(),
-        groq(
+        enqueueGroq(() => groq(
           `Current date: ${new Date().toLocaleDateString('vi-VN')}. Return market data JSON:
 {"vnindex":"1245 (+0.3%)","hnx":"225","vn30":"1380","sp500":"+0.2%","nasdaq":"+0.1%","nikkei":"-0.3%","dxy":"104.2",
 "vnSentiment":"Tích cực","globalSentiment":"Thận trọng",
@@ -3009,7 +3017,7 @@ async function runAnalysis() {
 "macro":"Bối cảnh kinh tế VN và quốc tế ảnh hưởng thị trường chứng khoán"}`,
           'Return only JSON object. No text.',
           400, true
-        )
+        ))
       ])
       marketCtx = parseJ(mTxt)
       if (commodities.brent)  marketCtx.brent  = commodities.brent
@@ -3083,7 +3091,7 @@ Trả về JSON:
 }`
 
   try {
-    const rawTxt = await groq(prompt, sys, 2500, true)
+    const rawTxt = await enqueueGroq(() => groq(prompt, sys, 2500, true))
     try { G.analysis = parseJ(rawTxt) }
     catch(_) { throw new Error('AI trả về định dạng không hợp lệ. Thử lại.') }
     renderAnalysis()
@@ -3878,7 +3886,7 @@ function renderCmpStats() {
       </tr></thead>
       <tbody>
         ${rows.map(r=>`<tr>
-          <td onclick="loadStock('${r.t}')" style="color:${r.color};font-weight:700">${r.t}</td>
+          <td onclick="loadStock('${r.t}').then(()=>showV('stock'))" style="color:${r.color};font-weight:700;cursor:pointer">${r.t}</td>
           <td style="color:var(--t2);text-align:left;font-size:10px">${r.name}</td>
           <td>${fP(r.last)}</td>
           <td class="${r.ret>=0?'perf-up':'perf-dn'}">${r.ret>=0?'▲':'▼'}${Math.abs(r.ret).toFixed(2)}%</td>
