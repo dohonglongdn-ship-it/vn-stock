@@ -3614,10 +3614,13 @@ async function runScreener() {
   // Ưu tiên dùng prices.json (nhanh, không cần fetch CSV)
   // Fallback sang fetchCSV nếu không có trong prices.json
   // Merge: top 200 + custom tickers từ user
-  const allTickers = [...new Set([...SCREENER_TICKERS, ...SCR_CUSTOM_TICKERS])]
+  // Top 200 + custom tickers
+  // Chỉ quét mã có history trong prices.json hoặc custom tickers (fetch CSV)
+  const top200WithHistory = SCREENER_TICKERS.filter(t => G.pricesJson?.[t]?.history?.length >= 30)
+  const allTickers = [...new Set([...top200WithHistory, ...SCR_CUSTOM_TICKERS])]
   const total2 = allTickers.length
 
-  el('scr-msg').textContent = `Đang phân tích ${allTickers.length} mã...`
+  el('scr-msg').textContent = `Đang phân tích ${total2} mã (${top200WithHistory.length} top200 + ${SCR_CUSTOM_TICKERS.length} custom)...`
 
   for (const t of allTickers) {
     try {
@@ -3625,7 +3628,7 @@ async function runScreener() {
       const info = db(t)
       let bars = null
 
-      // Ưu tiên history từ prices.json
+      // Dùng history từ prices.json nếu có
       if (pj?.history?.length >= 30) {
         bars = pj.history.map(h => ({
           date: h.date, open: h.open||h.close, high: h.high||h.close,
@@ -3633,8 +3636,8 @@ async function runScreener() {
         }))
       }
 
-      // Fallback: fetch CSV từ vnstock
-      if (!bars || bars.length < 30) {
+      // Custom tickers: fetch CSV on-demand
+      if (!bars && SCR_CUSTOM_TICKERS.includes(t)) {
         try {
           const csvBars = await fetchCSV(t)
           if (csvBars && csvBars.length >= 30) bars = csvBars
