@@ -2715,17 +2715,23 @@ function clearAllChats() {
 }
 
 function deleteChatMessage(ticker, index) {
-  if (!G.chatHistory[ticker]) return
-  G.chatHistory[ticker].splice(index, 1)
+  const hist = G.chatHistory[ticker]
+  if (!hist) return
+  // Xóa message tại index
+  hist.splice(index, 1)
+  // Xóa thinking messages mồ côi (thinking liên tiếp nhau hoặc ở cuối)
+  for (let i = hist.length - 1; i >= 0; i--) {
+    if (hist[i].thinking) hist.splice(i, 1)
+  }
   saveChatHistory()
   // Re-render cả hai panel
   if (G.ticker === ticker) {
-    renderChatMessages(G.chatHistory[ticker], 'stock-chat-messages')
+    renderChatMessages(hist, 'stock-chat-messages', ticker)
     const c = document.getElementById('stock-chat-count')
-    if (c) c.textContent = `${G.chatHistory[ticker].length} tin nhắn`
+    if (c) c.textContent = hist.filter(m=>!m.thinking).length ? `${hist.filter(m=>!m.thinking).length} tin nhắn` : ''
   }
   if (G_aichat_ticker === ticker) {
-    renderChatMessages(G.chatHistory[ticker], 'aichat-messages')
+    renderChatMessages(hist, 'aichat-messages', ticker)
     renderAiChatTab()
   }
 }
@@ -4380,20 +4386,24 @@ ${aiAlert ? `Khuyến cáo AI: ${aiAlert.action} — ${aiAlert.summary}` : ''}
 Ngày phân tích: ${new Date().toLocaleDateString('vi-VN')}`
 }
 
-function renderChatMessages(messages, containerId) {
+function renderChatMessages(messages, containerId, tickerOverride) {
   const el_c = document.getElementById(containerId)
   if (!el_c) return
-  if (!messages || !messages.length) {
+  // Infer ticker: stock panel → G.ticker, aichat panel → G_aichat_ticker
+  const ticker = tickerOverride ||
+    (containerId === 'stock-chat-messages' ? G.ticker : G_aichat_ticker) || ''
+  // Lọc thinking messages ra khỏi display nhưng giữ index gốc
+  const visible = (messages||[]).map((m, idx) => ({...m, _realIdx: idx})).filter(m => !m.thinking)
+  if (!visible.length) {
     el_c.innerHTML = '<div style="text-align:center;color:var(--t3);font-size:12px;padding:20px 0">Bắt đầu hỏi về mã này...</div>'
     return
   }
-  const ticker = G.ticker || G_aichat_ticker || ''
-  el_c.innerHTML = messages.map((m, idx) => `
+  el_c.innerHTML = visible.map(m => `
     <div class="chat-msg ${m.role}">
-      <div class="chat-bubble ${m.role} ${m.thinking?'thinking':''}">${m.content.replace(/\n/g,'<br>')}</div>
+      <div class="chat-bubble ${m.role}">${m.content.replace(/\n/g,'<br>')}</div>
       <div style="display:flex;align-items:center;gap:4px">
         <span class="chat-time">${m.time||''}</span>
-        ${!m.thinking && ticker ? `<div class="chat-msg-actions"><button class="chat-del-btn" onclick="deleteChatMessage('${ticker}',${idx})" title="Xóa tin này"><i class="ti ti-x" style="font-size:10px"></i> Xóa</button></div>` : ''}
+        ${ticker ? `<div class="chat-msg-actions"><button class="chat-del-btn" onclick="deleteChatMessage('${ticker}',${m._realIdx})" title="Xóa tin này"><i class="ti ti-x" style="font-size:10px"></i> Xóa</button></div>` : ''}
       </div>
     </div>`).join('')
   el_c.scrollTop = el_c.scrollHeight
