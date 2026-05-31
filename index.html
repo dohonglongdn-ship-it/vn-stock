@@ -1546,7 +1546,9 @@ async function loadStock(ticker) {
     // UPCOM không có trên Yahoo Finance → skip Worker
     // Chỉ HOSE mới có trên Yahoo Finance ổn định
     const exchange = (info?.e || '').toUpperCase()
-    const skipWorker = exchange && exchange !== 'HOSE'
+    const pjExchange = (G.pricesJson?.[ticker]?.exchange || '').toUpperCase()
+    const effectiveExchange = exchange || pjExchange
+    const skipWorker = effectiveExchange && effectiveExchange !== 'HOSE'
     const [csvBars, rt] = await Promise.all([
       fetchCSV(ticker),
       skipWorker ? Promise.resolve(null) : fetchRealtime(ticker)
@@ -2115,7 +2117,9 @@ async function loadOneWlPrice(t) {
     const info = db(t)
     // Chỉ HOSE mới có trên Yahoo Finance ổn định
     const exchange = (info?.e || '').toUpperCase()
-    const skipWorker = exchange && exchange !== 'HOSE'
+    const pjExchange = (G.pricesJson?.[t]?.exchange || '').toUpperCase()
+    const effectiveExchange = exchange || pjExchange
+    const skipWorker = effectiveExchange && effectiveExchange !== 'HOSE'
 
     const [csv, rt] = await Promise.all([
       fetchCSV(t),
