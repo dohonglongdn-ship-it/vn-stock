@@ -3489,29 +3489,47 @@ async function runScreener() {
   const total = SCREENER_TICKERS.length
   let done = 0
 
-  // Load in batches of 5
-  for (let i=0; i<SCREENER_TICKERS.length; i+=5) {
-    const batch = SCREENER_TICKERS.slice(i, i+5)
-    const batchResults = await Promise.all(batch.map(async t => {
-      try {
-        const bars = await fetchCSV(t)
-        if (!bars || bars.length < 30) return null
-        const ta = TA.calc(bars)
-        const info = db(t)
-        const last = bars[bars.length-1].close
-        const prev = bars[bars.length-2].close
-        const chg = (last-prev)/prev*100
-        // 1M return
-        const m1 = bars.length>21 ? (last-bars[bars.length-22].close)/bars[bars.length-22].close*100 : null
-        const exchange = info?.e||''
-        const macd = ta.macd||0
-        return {t, last, chg, m1, rsi:ta.rsi, macdBull:ta.macdBull, macd, aboveMA20:ta.aboveMA20, aboveMA50:ta.aboveMA50, annVol:ta.annVol, name:info?.n||t, sector:info?.s||'', exchange}
-      } catch { return null }
-    }))
-    batchResults.forEach(r => { if(r) results.push(r) })
-    done += batch.length
-    el('scr-msg').textContent = `Đã xử lý ${Math.min(done,total)}/${total} mã...`
-    await new Promise(r=>setTimeout(r,100))
+  // Ưu tiên dùng prices.json (nhanh, không cần fetch CSV)
+  // Fallback sang fetchCSV nếu không có trong prices.json
+  const allTickers = G.pricesJson ? 
+    [...new Set([...SCREENER_TICKERS, ...Object.keys(G.pricesJson)])] : 
+    SCREENER_TICKERS
+  const total2 = allTickers.length
+
+  el('scr-msg').textContent = `Đang phân tích ${total2} mã từ prices.json...`
+
+  for (const t of allTickers) {
+    try {
+      const pj = G.pricesJson?.[t]
+      const info = db(t)
+      let bars = null
+
+      // Dùng history từ prices.json nếu có
+      if (pj?.history?.length >= 30) {
+        bars = pj.history.map(h => ({
+          date: h.date, open: h.open||h.close, high: h.high||h.close,
+          low: h.low||h.close, close: h.close, volume: h.volume||0
+        }))
+      }
+
+      if (!bars || bars.length < 30) { done++; continue }
+
+      const ta = TA.calc(bars)
+      const last = pj?.price || bars[bars.length-1].close
+      const prev = bars[bars.length-2].close
+      const chg = pj?.changePct ?? (last-prev)/prev*100
+      const m1 = bars.length>21 ? (last-bars[bars.length-22].close)/bars[bars.length-22].close*100 : null
+      const exchange = info?.e || pj?.exchange || ''
+      const sector = info?.s || pj?.sector || ''
+      const name = info?.n || pj?.name || t
+      const macd = ta.macd||0
+      results.push({t, last, chg, m1, rsi:ta.rsi, macdBull:ta.macdBull, macd, aboveMA20:ta.aboveMA20, aboveMA50:ta.aboveMA50, annVol:ta.annVol, name, sector, exchange})
+    } catch(e) { console.warn('Screener error:', t, e) }
+    done++
+    if (done % 50 === 0) {
+      el('scr-msg').textContent = `Đang phân tích ${done}/${total2} mã...`
+      await new Promise(r=>setTimeout(r,10))
+    }
   }
 
   // Apply filters
