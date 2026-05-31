@@ -304,6 +304,27 @@ a{color:var(--blue)}
 .candle-wrap{position:relative;height:230px;overflow:hidden}
 .candle-up{fill:#0e9f6e;stroke:#0e9f6e}
 .candle-dn{fill:#d84040;stroke:#d84040}
+/* News Sentiment */
+.news-sentiment-bar{display:flex;height:6px;border-radius:99px;overflow:hidden;margin:8px 0}
+.news-item{padding:8px 0;border-bottom:0.5px solid var(--bd);display:flex;flex-direction:column;gap:4px}
+.news-item:last-child{border-bottom:none}
+.news-item-header{display:flex;align-items:flex-start;gap:8px}
+.news-headline{font-size:12px;font-weight:500;color:var(--t);line-height:1.45;flex:1;cursor:pointer}
+.news-headline:hover{color:var(--blue)}
+.news-meta{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--t3)}
+.news-badge{font-size:9px;padding:2px 7px;border-radius:99px;font-weight:600;flex-shrink:0;margin-top:1px}
+.news-badge.pos{background:#dcfce7;color:#166534}
+.news-badge.neg{background:#fee2e2;color:#991b1b}
+.news-badge.neu{background:var(--bg3);color:var(--t3)}
+.news-summary{font-size:11px;color:var(--t2);line-height:1.55}
+.news-overall{border-radius:var(--r);padding:10px 12px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.news-overall.pos{background:#f0fdf4;border:0.5px solid #bbf7d0}
+.news-overall.neg{background:#fef2f2;border:0.5px solid #fecaca}
+.news-overall.neu{background:var(--bg2);border:0.5px solid var(--bd)}
+:root[data-theme="dark"] .news-overall.pos{background:rgba(14,159,110,0.12);border-color:rgba(14,159,110,0.3)}
+:root[data-theme="dark"] .news-overall.neg{background:rgba(216,64,64,0.12);border-color:rgba(216,64,64,0.3)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .news-overall.pos{background:rgba(14,159,110,0.12);border-color:rgba(14,159,110,0.3)}}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .news-overall.neg{background:rgba(216,64,64,0.12);border-color:rgba(216,64,64,0.3)}}
 </style>
 </head>
 <body>
@@ -517,6 +538,20 @@ a{color:var(--blue)}
             <span id="stock-events-loading" style="font-size:10px;color:var(--t3);margin-left:8px"></span>
           </div>
           <div id="stock-events-list"></div>
+        </div>
+
+        <!-- News Sentiment card -->
+        <div class="card" id="stock-news-card" style="margin-top:10px">
+          <div class="card-title" style="margin-bottom:6px">
+            <i class="ti ti-news" style="font-size:13px"></i>Tin tức & Sentiment
+            <span id="stock-news-loading" style="font-size:10px;color:var(--t3);margin-left:8px;font-weight:400"></span>
+            <button id="stock-news-refresh" onclick="loadStockNews(G.ticker, true)"
+              style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:11px;color:var(--t3);padding:0 2px;display:flex;align-items:center;gap:2px">
+              <i class="ti ti-refresh" style="font-size:12px"></i>
+            </button>
+          </div>
+          <div id="stock-news-overall" style="display:none"></div>
+          <div id="stock-news-list"><div style="font-size:12px;color:var(--t3);padding:6px 0">Chưa tải tin tức.</div></div>
         </div>
 
         <!-- Chat AI panel -->
@@ -1563,6 +1598,7 @@ async function loadStock(ticker) {
   showV('stock')
   initStockChat(ticker)
   loadStockEvents(ticker)
+  loadStockNews(ticker)
   fetchFundamentals(ticker).then(f => { if(f) updateFundamentals(f) })
   updateWlToggleBtn()
 
@@ -1636,49 +1672,33 @@ async function loadStock(ticker) {
     const chgPct   = rtClean?.changePct != null ? rtClean?.changePct : jsonData?.changePct != null ? jsonData?.changePct : (prevBar ? (lastBar.close-prevBar.close)/prevBar.close*100 : 0)
     const high52w  = rtClean?.high52w  || (csvBars ? Math.max(...csvBars.slice(-252).map(b=>b.high||b.close)) : null)
     const low52w   = rt?.low52w   || (csvBars ? Math.min(...csvBars.slice(-252).map(b=>b.low||b.close)) : null)
-    const mktCapT  = rtClean?.mktCap   ? (rtClean.mktCap/1e12).toFixed(1) : (jsonData?.marketCap ? (jsonData.marketCap/1e12).toFixed(1) : null)
+    const mktCapT  = rtClean?.mktCap   ? (rt.mktCap/1e12).toFixed(1) : null
     const avgVol   = csvBars ? Math.round(csvBars.slice(-20).reduce((s,b)=>s+b.volume,0)/20/1e6*10)/10 : null
 
-    // Groq: lấy fundamentals nếu chưa có từ Yahoo/prices.json
+    // Groq: only for PE, ROE, PB if not from Yahoo
     el('stock-loading-msg').textContent = 'Đang lấy chỉ số cơ bản...'
-    const pjFund = G.pricesJson?.[ticker]
-    let fundamental = {
-      pe:     rtClean?.pe     || pjFund?.pe     || null,
-      eps:    rtClean?.eps    || pjFund?.eps    || null,
-      pb:     rtClean?.pb     || pjFund?.pb     || null,
-      roe:    rtClean?.roe    || pjFund?.roe    || null,
-      divYield: rtClean?.divYield || pjFund?.divYield || null,
-    }
-    // Chỉ gọi Groq nếu còn thiếu dữ liệu
-    const needsGroq = !fundamental.pe || !fundamental.pb || !fundamental.roe
-    if (needsGroq) {
-      try {
-        const fHint = info ? `"${info.f}", ngành ${info.s}, sàn ${info.e}` : `mã VN`
-        const ftxt = await groq(
-          `Mã cổ phiếu Việt Nam: ${ticker} — ${fHint}. Giá hiện tại ${fP(price)} VND.
-Trả về JSON chỉ số tài chính thực tế (trailing 12 tháng gần nhất):
-{"pe":null,"pb":null,"roe":null,"eps":null,"divYield":null}
-Điền số thực. Nếu không biết chính xác, để null. Không bịa số.`,
-          'Return only JSON object. No text. All values are numbers or null.',
-          200, true
-        )
-        const fd = parseJ(ftxt)
-        if (fd) {
-          fundamental = {
-            pe:      fundamental.pe      || fd.pe      || null,
-            eps:     fundamental.eps     || fd.eps     || null,
-            pb:      fundamental.pb      || fd.pb      || null,
-            roe:     fundamental.roe     || fd.roe     || null,
-            divYield: fundamental.divYield || fd.divYield || null,
-          }
-        }
-      } catch {}
-    }
+    let fundamental = { pe: rt?.pe||null, eps: rt?.eps||null, pb:null, roe:null }
+    try {
+      const fHint = info ? `"${info.f}", ngành ${info.s}, sàn ${info.e}` : `mã VN`
+      const ftxt = await groq(
+        `Mã ${ticker} — ${fHint}. Giá hiện tại ${fP(price)} VND.
+JSON: {"pe":${rt?.pe?.toFixed(1)||'null'},"pb":1.5,"roe":18.5,"eps":${rt?.eps?.toFixed(0)||'null'}}
+Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
+        'Return only JSON. No text.',
+        200, true
+      )
+      const fd = parseJ(ftxt)
+      fundamental = {
+        pe:  rt?.pe  || fd.pe  || null,
+        eps: rt?.eps || fd.eps || null,
+        pb:  fd.pb   || null,
+        roe: fd.roe  || null,
+      }
+    } catch {}
 
     G.stockData = {bars, ta, rt,
       price, chgPct, high52w, low52w, mktCapT, avgVol,
       ...fundamental,
-      divYield: fundamental.divYield || rtClean?.divYield || null,
       info: info || {n:ticker,f:ticker,s:'',e:''},
       dataSource: csvBars ? (rt ? 'vnstock CSV + Yahoo Finance' : 'vnstock CSV') : 'Yahoo Finance'
     }
@@ -2072,25 +2092,16 @@ function renderPerfTable() {
 // ── Metrics ──────────────────────────────────────────────────────────
 function renderMets() {
   const d = G.stockData; if(!d) return
-  // Bổ sung từ prices.json nếu có
-  const pj = G.pricesJson?.[G.ticker]
-  const pe  = d.pe  || pj?.pe
-  const pb  = d.pb  || pj?.pb
-  const roe = d.roe || pj?.roe
-  const eps = d.eps || pj?.eps
-  const divY = d.divYield || pj?.divYield
-  const mktCap = d.mktCapT || (pj?.marketCap ? (pj.marketCap/1e12).toFixed(1) : null)
   el('stock-mets').innerHTML = [
-    {l:'P/E',      v: pe  ? parseFloat(pe).toFixed(1)  : '—'},
-    {l:'P/B',      v: pb  ? parseFloat(pb).toFixed(2)  : '—'},
-    {l:'ROE',      v: roe ? parseFloat(roe).toFixed(1)+'%' : '—'},
-    {l:'EPS',      v: eps ? fP(Math.round(eps)) : '—'},
-    {l:'Cổ tức',   v: divY ? parseFloat(divY).toFixed(2)+'%' : '—'},
-    {l:'52w Cao',  v: fP(d.high52w || pj?.high52w)},
-    {l:'52w Thấp', v: fP(d.low52w  || pj?.low52w)},
-    {l:'Vốn hóa',  v: mktCap ? mktCap+' nghìn tỷ' : '—'},
-    {l:'KL TB',    v: d.avgVol ? d.avgVol+'M' : '—'},
-  ].map(({l,v}) =>
+    {l:'P/E',  v:d.pe?.toFixed(1)??'—'},
+    {l:'P/B',  v:d.pb?.toFixed(2)??'—'},
+    {l:'ROE',  v:d.roe ? d.roe.toFixed(1)+'%' : '—'},
+    {l:'EPS',  v:d.eps ? fP(Math.round(d.eps)) : '—'},
+    {l:'52w Cao', v:fP(d.high52w)},
+    {l:'52w Thấp',v:fP(d.low52w)},
+    {l:'Vốn hóa', v:d.mktCapT ? d.mktCapT+' nghìn tỷ' : '—'},
+    {l:'KL TB',   v:d.avgVol ? d.avgVol+'M' : '—'},
+  ].map(({l,v})=>
     `<div class="met"><div class="met-l">${l}</div><div class="met-v">${v}</div></div>`
   ).join('')
 }
@@ -2409,6 +2420,33 @@ function updateFundamentals(fund) {
   renderMets()
 }
 
+// Override renderMets để thêm P/B, Dividend Yield
+const _origRenderMets = renderMets
+function renderMets() {
+  const d = G.stockData; if(!d) return
+  // Bổ sung từ prices.json nếu có
+  const pj = G.pricesJson?.[G.ticker]
+  const pe  = d.pe  || pj?.pe
+  const pb  = d.pb  || pj?.pb
+  const roe = d.roe || pj?.roe
+  const eps = d.eps || pj?.eps
+  const divY = d.divYield || pj?.divYield
+  const mktCap = d.mktCapT || (pj?.marketCap ? (pj.marketCap/1e12).toFixed(1) : null)
+  el('stock-mets').innerHTML = [
+    {l:'P/E',      v: pe  ? parseFloat(pe).toFixed(1)  : '—'},
+    {l:'P/B',      v: pb  ? parseFloat(pb).toFixed(2)  : '—'},
+    {l:'ROE',      v: roe ? parseFloat(roe).toFixed(1)+'%' : '—'},
+    {l:'EPS',      v: eps ? fP(Math.round(eps)) : '—'},
+    {l:'Cổ tức',   v: divY ? parseFloat(divY).toFixed(2)+'%' : '—'},
+    {l:'52w Cao',  v: fP(d.high52w || pj?.high52w)},
+    {l:'52w Thấp', v: fP(d.low52w  || pj?.low52w)},
+    {l:'Vốn hóa',  v: mktCap ? mktCap+' nghìn tỷ' : '—'},
+    {l:'KL TB',    v: d.avgVol ? d.avgVol+'M' : '—'},
+  ].map(({l,v}) =>
+    `<div class="met"><div class="met-l">${l}</div><div class="met-v">${v}</div></div>`
+  ).join('')
+}
+
 // ── Stock Events (Cổ tức, ĐHCĐ) ─────────────────────────────────────
 
 async function loadStockEvents(ticker) {
@@ -2477,6 +2515,163 @@ function renderEventsList(list, events, loading) {
     }).join('')
 
     if (loading) loading.textContent = `${events.length} sự kiện`
+}
+
+// ── News Sentiment ────────────────────────────────────────────────────
+
+// Cache: { [ticker]: { ts: Date.now(), items: [...], overall: {...} } }
+const NEWS_CACHE = {}
+const NEWS_TTL = 60 * 60 * 1000 // 1 giờ
+
+async function loadStockNews(ticker, forceRefresh = false) {
+  if (!ticker) return
+  const card    = document.getElementById('stock-news-card')
+  const list    = document.getElementById('stock-news-list')
+  const overall = document.getElementById('stock-news-overall')
+  const loading = document.getElementById('stock-news-loading')
+  if (!card || !list) return
+
+  // Dùng cache nếu còn hạn
+  const cached = NEWS_CACHE[ticker]
+  if (!forceRefresh && cached && (Date.now() - cached.ts < NEWS_TTL)) {
+    renderNewsList(list, overall, cached.items, cached.overall, loading)
+    return
+  }
+
+  if (loading) loading.textContent = 'Đang tải...'
+  list.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:6px 0"><i class="ti ti-refresh spin" style="font-size:12px;margin-right:4px"></i>Đang phân tích tin tức...</div>'
+  overall.style.display = 'none'
+
+  const info = db(ticker)
+  const companyName = info?.f || info?.n || ticker
+
+  try {
+    // Bước 1: Fetch RSS từ Cafef qua Worker
+    let rawNews = []
+    try {
+      const r = await fetch(`${WORKER}/news/${ticker}`, { signal: AbortSignal.timeout(8000) })
+      if (r.ok) {
+        const d = await r.json()
+        rawNews = Array.isArray(d) ? d : []
+      }
+    } catch(e) {
+      console.warn('Worker news fetch failed:', e.message)
+    }
+
+    // Bước 2: Groq phân tích sentiment (dù có hay không có tin từ Worker)
+    const newsContext = rawNews.length > 0
+      ? rawNews.slice(0, 8).map((n, i) => `${i+1}. ${n.title} (${n.date || ''})`).join('\n')
+      : `Không có tin tức cụ thể. Phân tích dựa trên kiến thức về ${companyName} (${ticker}), ngành ${info?.s || 'chứng khoán VN'}, tình hình thị trường gần đây.`
+
+    const groqPrompt = `Phân tích sentiment tin tức cho cổ phiếu ${ticker} — ${companyName} (ngành: ${info?.s || 'N/A'}, sàn: ${info?.e || 'N/A'}).
+
+${rawNews.length > 0 ? 'Tin tức thu thập được:' : 'Thông tin thị trường:'}
+${newsContext}
+
+Trả về JSON:
+{
+  "overall": {
+    "sentiment": "Tích cực",
+    "score": 72,
+    "summary": "Tóm tắt tổng quan 1-2 câu về tình hình tin tức/triển vọng mã này",
+    "positive": 4,
+    "negative": 1,
+    "neutral": 3
+  },
+  "items": [
+    {
+      "title": "Tiêu đề tin tức ngắn gọn",
+      "sentiment": "Tích cực",
+      "impact": "Giải thích ngắn tại sao tích cực/tiêu cực với cổ phiếu",
+      "source": "CafeF",
+      "date": "hôm nay"
+    }
+  ]
+}
+sentiment chỉ là: "Tích cực", "Tiêu cực", hoặc "Trung lập". score từ 0-100. Tạo 5-8 items thực tế dựa trên tin hoặc kiến thức về doanh nghiệp.`
+
+    const rawTxt = await groq(groqPrompt, 'Return only valid JSON object. No markdown, no text outside JSON.', 1200, true)
+    const parsed = parseJ(rawTxt)
+
+    if (!parsed?.overall || !parsed?.items) throw new Error('AI không trả về đúng định dạng')
+
+    // Merge: nếu Worker trả về URL thì gắn vào items
+    const items = parsed.items.map((item, i) => ({
+      ...item,
+      url: rawNews[i]?.url || rawNews[i]?.link || null
+    }))
+
+    const result = { ts: Date.now(), items, overall: parsed.overall }
+    NEWS_CACHE[ticker] = result
+    renderNewsList(list, overall, items, parsed.overall, loading)
+
+  } catch(e) {
+    list.innerHTML = `<div style="font-size:12px;color:var(--dn);padding:6px 0">Lỗi tải tin tức: ${e.message}</div>`
+    if (loading) loading.textContent = ''
+  }
+}
+
+function renderNewsList(list, overallEl, items, overall, loadingEl) {
+  if (loadingEl) loadingEl.textContent = `${items?.length || 0} tin`
+
+  // Overall sentiment box
+  const sentClass = overall?.sentiment === 'Tích cực' ? 'pos' : overall?.sentiment === 'Tiêu cực' ? 'neg' : 'neu'
+  const sentIcon  = overall?.sentiment === 'Tích cực' ? 'ti-trending-up' : overall?.sentiment === 'Tiêu cực' ? 'ti-trending-down' : 'ti-minus'
+  const sentColor = overall?.sentiment === 'Tích cực' ? C_UP : overall?.sentiment === 'Tiêu cực' ? C_DN : C_NEU
+  const total = (overall?.positive||0) + (overall?.negative||0) + (overall?.neutral||0)
+  const posW  = total ? Math.round((overall?.positive||0)/total*100) : 33
+  const negW  = total ? Math.round((overall?.negative||0)/total*100) : 33
+  const neuW  = 100 - posW - negW
+
+  overallEl.className = `news-overall ${sentClass}`
+  overallEl.innerHTML = `
+    <div style="flex-shrink:0">
+      <div style="width:38px;height:38px;border-radius:50%;background:${sentColor}20;display:flex;align-items:center;justify-content:center">
+        <i class="ti ${sentIcon}" style="font-size:18px;color:${sentColor}"></i>
+      </div>
+    </div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+        <span style="font-size:13px;font-weight:700;color:${sentColor}">${overall?.sentiment || '—'}</span>
+        <span style="font-size:10px;color:var(--t3)">· Điểm: ${overall?.score ?? '—'}/100</span>
+      </div>
+      <div style="font-size:11px;color:var(--t2);line-height:1.5;margin-bottom:5px">${overall?.summary || ''}</div>
+      <div class="news-sentiment-bar">
+        <div style="width:${posW}%;background:#0e9f6e"></div>
+        <div style="width:${negW}%;background:#d84040"></div>
+        <div style="width:${neuW}%;background:var(--bg3)"></div>
+      </div>
+      <div style="display:flex;gap:10px;font-size:9px;color:var(--t3)">
+        <span style="color:#0e9f6e">▲ ${overall?.positive||0} tích cực</span>
+        <span style="color:#d84040">▼ ${overall?.negative||0} tiêu cực</span>
+        <span>· ${overall?.neutral||0} trung lập</span>
+      </div>
+    </div>`
+  overallEl.style.display = 'flex'
+
+  // News list
+  if (!items?.length) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:6px 0">Không có tin tức.</div>'
+    return
+  }
+
+  list.innerHTML = items.map(item => {
+    const sc = item.sentiment === 'Tích cực' ? 'pos' : item.sentiment === 'Tiêu cực' ? 'neg' : 'neu'
+    const titleEl = item.url
+      ? `<a href="${item.url}" target="_blank" class="news-headline">${item.title}</a>`
+      : `<span class="news-headline">${item.title}</span>`
+    return `<div class="news-item">
+      <div class="news-item-header">
+        <span class="news-badge ${sc}">${item.sentiment}</span>
+        ${titleEl}
+      </div>
+      <div class="news-meta">
+        <span>${item.source || 'AI'}</span>
+        ${item.date ? `<span>· ${item.date}</span>` : ''}
+      </div>
+      ${item.impact ? `<div class="news-summary">${item.impact}</div>` : ''}
+    </div>`
+  }).join('')
 }
 
 // ── Chat Management ───────────────────────────────────────────────────
