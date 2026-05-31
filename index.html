@@ -106,7 +106,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* ── Cards & Grids ── */
 .card{background:var(--bg);border:0.5px solid var(--bd);border-radius:var(--rl);padding:12px 14px;margin-bottom:10px}
 .card-title{font-size:12px;font-weight:600;color:var(--t);display:flex;align-items:center;gap:5px;margin-bottom:10px}
-.met-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin-bottom:10px}
+.met-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
 .met{background:var(--bg2);border-radius:var(--r);padding:9px 11px}
 .met-l{font-size:10px;color:var(--t2);margin-bottom:3px;font-weight:500}
 .met-v{font-size:14px;font-weight:600;color:var(--t)}
@@ -1038,48 +1038,28 @@ window.updateSyncUI = function() {
 
 // Fetch giá thật: Dầu Brent, Vàng, USD/VND từ Yahoo Finance qua Worker
 async function fetchCommodities() {
+  // Commodity symbols phải qua Worker (Yahoo block CORS từ browser)
   const symbols = {'BZ=F':'brent','GC=F':'gold','USDVND=X':'usdvnd'}
   const result = {}
   await Promise.all(Object.entries(symbols).map(async ([sym, key]) => {
     try {
-      // Fetch trực tiếp từ Yahoo Finance (không qua Worker để tránh 502)
-      const yUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=1d`
-      const r = await fetch(yUrl, {
-        signal: AbortSignal.timeout(6000),
-        headers: { 'Accept': 'application/json' }
+      const r = await fetch(`${WORKER}/${encodeURIComponent(sym)}`, {
+        signal: AbortSignal.timeout(7000)
       })
-      if (!r.ok) throw new Error(`Yahoo ${r.status}`)
+      if (!r.ok) return
       const d = await r.json()
-      if (d.chart?.result?.[0]) {
-        const m = d.chart.result[0].meta
-        const price = m.regularMarketPrice
-        const chgPct = m.regularMarketChangePercent
-        if (key === 'usdvnd') {
-          result[key] = Math.round(price).toLocaleString('vi-VN')
-        } else {
-          const sign = chgPct >= 0 ? '+' : ''
-          result[key] = `$${Math.round(price).toLocaleString()} (${sign}${chgPct?.toFixed(1)}%)`
-        }
+      const meta = d.chart?.result?.[0]?.meta || d.source === 'yahoo' && d.chart?.result?.[0]?.meta
+      if (!meta) return
+      const price = meta.regularMarketPrice
+      const chgPct = meta.regularMarketChangePercent
+      if (!price) return
+      if (key === 'usdvnd') {
+        result[key] = Math.round(price).toLocaleString('vi-VN')
+      } else {
+        const sign = chgPct >= 0 ? '+' : ''
+        result[key] = `$${Math.round(price).toLocaleString()} (${sign}${chgPct?.toFixed(1)}%)`
       }
-    } catch {
-      // Fallback: qua Worker nếu Yahoo block trực tiếp
-      try {
-        const r2 = await fetch(`${WORKER}/${sym}`, {signal: AbortSignal.timeout(5000)})
-        if (!r2.ok) return
-        const d2 = await r2.json()
-        if (d2.chart?.result?.[0]) {
-          const m = d2.chart.result[0].meta
-          const price = m.regularMarketPrice
-          const chgPct = m.regularMarketChangePercent
-          if (key === 'usdvnd') {
-            result[key] = Math.round(price).toLocaleString('vi-VN')
-          } else {
-            const sign = chgPct >= 0 ? '+' : ''
-            result[key] = `$${Math.round(price).toLocaleString()} (${sign}${chgPct?.toFixed(1)}%)`
-          }
-        }
-      } catch {}
-    }
+    } catch {}
   }))
   return result
 }
@@ -1627,9 +1607,13 @@ async function loadStock(ticker) {
   showV('stock')
   initStockChat(ticker)
   loadStockEvents(ticker)
-  // Delay 3s để tránh Groq 429 khi đang load fundamental/analysis cùng lúc
-  setTimeout(() => { if (G.ticker === ticker) loadStockNews(ticker) }, 3000)
-  fetchFundamentals(ticker).then(f => { if(f) updateFundamentals(f) })
+  // News sau 4s để không đụng Groq khi đang load chính
+  setTimeout(() => { if (G.ticker === ticker) loadStockNews(ticker) }, 4000)
+  // Fundamental qua Worker sau 1s (không block render)
+  setTimeout(() => {
+    if (G.ticker !== ticker) return
+    fetchFundamentals(ticker).then(f => { if(f && G.ticker===ticker) updateFundamentals(f) })
+  }, 1000)
   updateWlToggleBtn()
 
   el('stock-loading').style.display = 'block'
@@ -1702,32 +1686,18 @@ async function loadStock(ticker) {
     const chgPct   = rtClean?.changePct != null ? rtClean?.changePct : jsonData?.changePct != null ? jsonData?.changePct : (prevBar ? (lastBar.close-prevBar.close)/prevBar.close*100 : 0)
     const high52w  = rtClean?.high52w  || (csvBars ? Math.max(...csvBars.slice(-252).map(b=>b.high||b.close)) : null)
     const low52w   = rt?.low52w   || (csvBars ? Math.min(...csvBars.slice(-252).map(b=>b.low||b.close)) : null)
-    const mktCapT  = rtClean?.mktCap   ? (rt.mktCap/1e12).toFixed(1) : null
+    const mktCapT  = rtClean?.mktCap   ? (rtClean.mktCap/1e12).toFixed(1) : null
     const avgVol   = csvBars ? Math.round(csvBars.slice(-20).reduce((s,b)=>s+b.volume,0)/20/1e6*10)/10 : null
 
-    // Groq: only for PE, ROE, PB if not from Yahoo — timeout ngắn, không block
-    el('stock-loading-msg').textContent = 'Đang lấy chỉ số cơ bản...'
-    let fundamental = { pe: rt?.pe||null, eps: rt?.eps||null, pb:null, roe:null }
-    try {
-      const fHint = info ? `"${info.f}", ngành ${info.s}, sàn ${info.e}` : `mã VN`
-      const ftxt = await Promise.race([
-        groq(
-          `Mã ${ticker} — ${fHint}. Giá hiện tại ${fP(price)} VND.
-JSON: {"pe":${rt?.pe?.toFixed(1)||'null'},"pb":1.5,"roe":18.5,"eps":${rt?.eps?.toFixed(0)||'null'}}
-Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
-          'Return only JSON. No text.',
-          200, true
-        ),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
-      ])
-      const fd = parseJ(ftxt)
-      fundamental = {
-        pe:  rt?.pe  || fd.pe  || null,
-        eps: rt?.eps || fd.eps || null,
-        pb:  fd.pb   || null,
-        roe: fd.roe  || null,
-      }
-    } catch {}
+    // Lấy fundamental từ Yahoo/prices.json (không Groq để không block)
+    const pjFund = G.pricesJson?.[ticker]
+    const fundamental = {
+      pe:      rt?.pe      || pjFund?.pe      || null,
+      eps:     rt?.eps     || pjFund?.eps     || null,
+      pb:      rt?.pb      || pjFund?.pb      || null,
+      roe:     rt?.roe     || pjFund?.roe     || null,
+      divYield: rt?.divYield || pjFund?.divYield || null,
+    }
 
     G.stockData = {bars, ta, rt,
       price, chgPct, high52w, low52w, mktCapT, avgVol,
@@ -2125,15 +2095,23 @@ function renderPerfTable() {
 // ── Metrics ──────────────────────────────────────────────────────────
 function renderMets() {
   const d = G.stockData; if(!d) return
+  const pj = G.pricesJson?.[G.ticker]
+  const pe   = d.pe   || pj?.pe
+  const pb   = d.pb   || pj?.pb
+  const roe  = d.roe  || pj?.roe
+  const eps  = d.eps  || pj?.eps
+  const divY = d.divYield || pj?.divYield
+  const mktCap = d.mktCapT || (pj?.marketCap ? (pj.marketCap/1e12).toFixed(1) : null)
   el('stock-mets').innerHTML = [
-    {l:'P/E',  v:d.pe?.toFixed(1)??'—'},
-    {l:'P/B',  v:d.pb?.toFixed(2)??'—'},
-    {l:'ROE',  v:d.roe ? d.roe.toFixed(1)+'%' : '—'},
-    {l:'EPS',  v:d.eps ? fP(Math.round(d.eps)) : '—'},
-    {l:'52w Cao', v:fP(d.high52w)},
-    {l:'52w Thấp',v:fP(d.low52w)},
-    {l:'Vốn hóa', v:d.mktCapT ? d.mktCapT+' nghìn tỷ' : '—'},
-    {l:'KL TB',   v:d.avgVol ? d.avgVol+'M' : '—'},
+    {l:'P/E',      v: pe  ? parseFloat(pe).toFixed(1)    : '—'},
+    {l:'P/B',      v: pb  ? parseFloat(pb).toFixed(2)    : '—'},
+    {l:'ROE',      v: roe ? parseFloat(roe).toFixed(1)+'%' : '—'},
+    {l:'EPS',      v: eps ? fP(Math.round(parseFloat(eps))) : '—'},
+    {l:'Cổ tức',   v: divY ? parseFloat(divY).toFixed(2)+'%' : '—'},
+    {l:'52w Cao',  v: fP(d.high52w  || pj?.high52w)},
+    {l:'52w Thấp', v: fP(d.low52w   || pj?.low52w)},
+    {l:'Vốn hóa',  v: mktCap ? mktCap+' nghìn tỷ' : '—'},
+    {l:'KL TB',    v: d.avgVol ? d.avgVol+'M' : '—'},
   ].map(({l,v})=>
     `<div class="met"><div class="met-l">${l}</div><div class="met-v">${v}</div></div>`
   ).join('')
@@ -2668,8 +2646,11 @@ function renderNewsList(list, overallEl, items, overall, loadingEl) {
 
   list.innerHTML = items.map(item => {
     const sc = item.sentiment === 'Tích cực' ? 'pos' : item.sentiment === 'Tiêu cực' ? 'neg' : 'neu'
+    const isGoogleUrl = item.url?.includes('news.google.com')
     const titleEl = item.url
-      ? `<a href="${item.url}" target="_blank" class="news-headline">${item.title}</a>`
+      ? isGoogleUrl
+        ? `<span class="news-headline" style="cursor:pointer;color:var(--blue)" onclick="window.open('${item.url}','_blank')">${item.title}</span>`
+        : `<a href="${item.url}" target="_blank" rel="noopener" class="news-headline">${item.title}</a>`
       : `<span class="news-headline">${item.title}</span>`
     return `<div class="news-item">
       <div class="news-item-header">
