@@ -263,7 +263,7 @@ a{color:var(--blue)}
 .filter-chip{font-size:11px;padding:4px 10px;border-radius:99px;border:0.5px solid var(--bd2);color:var(--t2);cursor:pointer;background:transparent;font-weight:500;transition:all .12s}
 .filter-chip.on{background:var(--blue);color:#fff;border-color:transparent}
 /* Portfolio */
-.port-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-top:0.5px solid var(--bd)}
+.port-row{display:flex;align-items:center;gap:5px;padding:7px 0;border-top:0.5px solid var(--bd);flex-wrap:nowrap;overflow:hidden}
 .port-row:first-child{border-top:none}
 .port-ticker{font-size:13px;font-weight:700;color:var(--blue);min-width:46px}
 .port-name{font-size:10px;color:var(--t3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1057,8 +1057,9 @@ async function fetchCommodities() {
       if (key === 'usdvnd') {
         result[key] = Math.round(price).toLocaleString('vi-VN')
       } else {
-        const sign = chgPct >= 0 ? '+' : ''
-        result[key] = `$${Math.round(price).toLocaleString()} (${sign}${chgPct?.toFixed(1)}%)`
+        const sign = (chgPct ?? 0) >= 0 ? '+' : ''
+        const chgStr = chgPct != null ? `${sign}${chgPct.toFixed(1)}%` : ''
+        result[key] = `$${Math.round(price).toLocaleString()}${chgStr ? ' (' + chgStr + ')' : ''}`
       }
     } catch {}
   }))
@@ -3078,41 +3079,64 @@ Khối lượng: ${ta?.volRatio?.toFixed(1)||'N/A'}x | Volatility: ${ta?.annVol?
 Hỗ trợ: ${fP(ta?.support)} | Kháng cự: ${fP(ta?.resistance)} | Max DD: ${ta?.mdd?.toFixed(1)||'N/A'}%
 
 Dựa trên BỐI CẢNH THỊ TRƯỜNG THỰC + dữ liệu kỹ thuật, hãy đưa ra tư vấn đầu tư cụ thể.
+GIÁ HIỆN TẠI = ${fP(d.price)} VND. Mọi giá mục tiêu và cắt lỗ PHẢI tính từ giá này.
+QUY TẮC BẮT BUỘC:
+- stopLoss PHẢI < ${fP(d.price)} (giá hiện tại). Cắt lỗ = giá hỗ trợ gần nhất dưới giá hiện tại, thường -5% đến -15%.
+- targetPrice PHẢI > ${fP(d.price)} nếu verdict là MUA. Mục tiêu = kháng cự tiếp theo hoặc theo fundamental.
+- Tất cả giá phải là số VND thực tế phù hợp với giá ${fP(d.price)}, KHÔNG dùng số mẫu.
 Trả về JSON:
 {
-  "verdict": "MUA MẠNH",
-  "confidence": 78,
-  "targetPrice": 96000,
-  "stopLoss": 82000,
-  "riskScore": 4,
+  "verdict": "MUA/BÁN/GIỮ/MUA MẠNH/BÁN MẠNH",
+  "confidence": 65,
+  "targetPrice": ${Math.round(d.price * 1.15)},
+  "stopLoss": ${Math.round(d.price * 0.92)},
+  "riskScore": 5,
   "marketAlignment": "Xu hướng thị trường hỗ trợ/không hỗ trợ vì...",
   "entryStrategy": "Mua ngay / Mua khi giá về xxx / Chờ breakout xxx",
   "shortTerm": {
-    "outlook": "Tích cực",
-    "summary": "Phân tích kỹ thuật ngắn hạn 1-5 phiên chi tiết dựa trên RSI, MACD, volume",
-    "keyLevel": "Kháng cự quan trọng tại 90.000, hỗ trợ mạnh 84.000"
+    "outlook": "Tích cực/Tiêu cực/Trung lập",
+    "summary": "Phân tích kỹ thuật ngắn hạn 1-5 phiên dựa trên RSI=${ta?.rsi?.toFixed(0)||'N/A'}, MACD, volume",
+    "keyLevel": "Kháng cự tại xxx, hỗ trợ tại yyy"
   },
   "mediumTerm": {
-    "outlook": "Tích cực",
+    "outlook": "Tích cực/Tiêu cực/Trung lập",
     "summary": "Phân tích 1-3 tháng dựa trên MA50, xu hướng, yếu tố ngành",
-    "targetPrice": 95000
+    "targetPrice": ${Math.round(d.price * 1.12)}
   },
   "longTerm": {
-    "outlook": "Tích cực",
+    "outlook": "Tích cực/Tiêu cực/Trung lập",
     "thesis": "Luận điểm đầu tư dài hạn 6-12 tháng"
   },
   "risks": [
-    {"text": "Mô tả rủi ro cụ thể và có số liệu", "level": "medium"}
+    {"text": "Rủi ro cụ thể với con số thực tế", "level": "medium"}
   ],
-  "catalysts": ["Catalyst tích cực 1", "Catalyst 2"],
-  "sectorContext": "Bối cảnh ngành và so sánh với peers trong 2-3 câu",
-  "macro": "Yếu tố vĩ mô Việt Nam và quốc tế tác động trực tiếp"
+  "catalysts": ["Catalyst tích cực 1 cụ thể", "Catalyst 2"],
+  "sectorContext": "Bối cảnh ngành và so sánh peers 2-3 câu",
+  "macro": "Yếu tố vĩ mô VN và quốc tế tác động trực tiếp"
 }`
 
   try {
     const rawTxt = await enqueueGroq(() => groq(prompt, sys, 2500, true))
     try { G.analysis = parseJ(rawTxt) }
     catch(_) { throw new Error('AI trả về định dạng không hợp lệ. Thử lại.') }
+    // Validate và fix stopLoss/targetPrice không hợp lý
+    const price = G.stockData?.price || 0
+    if (price > 0 && G.analysis) {
+      const a = G.analysis
+      const isLong = !a.verdict?.includes('BÁN')
+      // stopLoss phải < giá hiện tại (trừ khi BÁN)
+      if (isLong && a.stopLoss >= price) {
+        a.stopLoss = Math.round(price * 0.92)
+      }
+      // targetPrice phải > giá hiện tại nếu MUA
+      if (isLong && a.targetPrice && a.targetPrice <= price) {
+        a.targetPrice = Math.round(price * 1.15)
+      }
+      // mediumTerm targetPrice cũng fix
+      if (isLong && a.mediumTerm?.targetPrice && a.mediumTerm.targetPrice <= price) {
+        a.mediumTerm.targetPrice = Math.round(price * 1.12)
+      }
+    }
     renderAnalysis()
   } catch(e) {
     el('an-err').textContent='Lỗi: '+e.message
@@ -3376,20 +3400,19 @@ async function renderPortfolio(){
       <div class="card-title"><i class="ti ti-list" style="font-size:13px"></i>Chi tiết từng mã</div>
       ${rows.map(r=>`
         <div class="port-row">
-          <button class="port-ticker" onclick="loadStock('${r.ticker}')" style="color:${r.color}">${r.ticker}</button>
-          <div style="flex:1;min-width:0">
-            <div class="port-name">${r.name} · ${r.qty.toLocaleString()} cp</div>
-            <div class="alloc-bar" style="background:${r.color};width:${totalValue>0?Math.round(r.value/totalValue*100):0}%;max-width:100%"></div>
+          <button class="port-ticker" onclick="loadStock('${r.ticker}').then(()=>showV('stock'))" style="color:${r.color};flex-shrink:0">${r.ticker}</button>
+          <div style="flex:1;min-width:0;overflow:hidden">
+            <div class="port-name">${r.name} · ${r.qty.toLocaleString()}cp</div>
             <div style="font-size:9px;color:var(--t3)">${totalValue>0?(r.value/totalValue*100).toFixed(1):0}%</div>
           </div>
-          <div>
+          <div style="flex-shrink:0;text-align:right">
             <div class="port-val">${fmt(r.value)}</div>
             <div style="font-size:10px;color:var(--t3)">${fP(r.price)}/cp</div>
           </div>
-          <div style="text-align:right;min-width:90px">
+          <div style="text-align:right;min-width:80px;flex-shrink:0">
             ${r.pnlPct!=null?`<div class="port-pnl" style="color:${r.pnl>=0?C_UP:C_DN}">${r.pnl>=0?'+':''}${r.pnlPct.toFixed(2)}%</div>`:''}
             <div style="font-size:10px;color:${r.pnl>=0?C_UP:C_DN}">${r.pnl>=0?'+':''}${fmt(r.pnl)}</div>
-            ${r.pnlReal!=null?`<div class="pnl-real" style="color:var(--t3)">Thực: ${r.pnlReal>=0?'+':''}${fmt(r.pnlReal)}</div>`:''}
+            ${r.pnlReal!=null?`<div style="font-size:9px;color:var(--t3)">T: ${r.pnlReal>=0?'+':''}${fmt(r.pnlReal)}</div>`:''}
           </div>
           <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0">
             <button onclick="openFeeCalculator('${r.ticker}',${r.cost/r.qty||0},${r.qty})"
