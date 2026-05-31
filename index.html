@@ -1043,7 +1043,7 @@ async function fetchCommodities() {
   const result = {}
   await Promise.all(Object.entries(symbols).map(async ([sym, key]) => {
     try {
-      const r = await fetch(`${WORKER}/${encodeURIComponent(sym)}`, {
+      const r = await fetch(`${WORKER}/${sym}`, {
         signal: AbortSignal.timeout(7000)
       })
       if (!r.ok) return
@@ -2410,16 +2410,33 @@ async function loadEventsJson() {
 // ── Fundamental Data (P/E, P/B, ROE...) ─────────────────────────────
 
 async function fetchFundamentals(ticker) {
-  // Thử qua Worker (proxy VNDirect, tránh CORS)
+  // Thử qua Worker (proxy VNDirect)
   try {
-    const r = await fetch(`${WORKER}/fundamental/${ticker}`, {signal: AbortSignal.timeout(7000)})
+    const r = await fetch(`${WORKER}/fundamental/${ticker}`, {signal: AbortSignal.timeout(6000)})
     if (r.ok) {
       const d = await r.json()
       if (d && (d.pe || d.pb || d.roe)) return d
     }
   } catch {}
-  // Fallback: Groq estimate nếu Worker không có
-  return null
+  // Fallback: Groq ước tính P/B, ROE (chỉ khi chưa có từ Yahoo/prices.json)
+  const d = G.stockData
+  if (d?.pb && d?.roe) return null // đã có rồi
+  try {
+    const info = G.stockData?.info
+    const fHint = info ? `${info.f}, ngành ${info.s}` : ticker
+    const txt = await enqueueGroq(() => groq(
+      `Mã cổ phiếu VN: ${ticker} (${fHint}). Chỉ số tài chính thực tế gần nhất?`,
+      'Return only JSON: {"pe":null,"pb":null,"roe":null,"eps":null,"divYield":null}. Numbers or null only.',
+      150, true
+    ))
+    const fd = parseJ(txt)
+    if (!fd) return null
+    return {
+      pe: fd.pe || null, pb: fd.pb || null,
+      roe: fd.roe || null, eps: fd.eps || null,
+      dividendYield: fd.divYield || null,
+    }
+  } catch { return null }
 }
 
 function updateFundamentals(fund) {
@@ -2646,12 +2663,10 @@ function renderNewsList(list, overallEl, items, overall, loadingEl) {
 
   list.innerHTML = items.map(item => {
     const sc = item.sentiment === 'Tích cực' ? 'pos' : item.sentiment === 'Tiêu cực' ? 'neg' : 'neu'
-    const isGoogleUrl = item.url?.includes('news.google.com')
-    const titleEl = item.url
-      ? isGoogleUrl
-        ? `<span class="news-headline" style="cursor:pointer;color:var(--blue)" onclick="window.open('${item.url}','_blank')">${item.title}</span>`
-        : `<a href="${item.url}" target="_blank" rel="noopener" class="news-headline">${item.title}</a>`
-      : `<span class="news-headline">${item.title}</span>`
+    // Tạo search URL fallback nếu không có URL thật
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(item.title)}`
+    const finalUrl = item.url || searchUrl
+    const titleEl = `<a href="${finalUrl}" target="_blank" rel="noopener" class="news-headline">${item.title}</a>`
     return `<div class="news-item">
       <div class="news-item-header">
         <span class="news-badge ${sc}">${item.sentiment}</span>
