@@ -1,0 +1,36 @@
+name: Fetch Stock Events
+
+on:
+  schedule:
+    - cron: '0 1 * * 1-5'   # 8h sáng VN (UTC+7), T2-T6
+  workflow_dispatch:          # Chạy thủ công
+
+jobs:
+  fetch-events:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch events
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python fetch_events.py
+
+      - name: Summary
+        run: |
+          echo "✅ Events updated at $(date -u '+%Y-%m-%d %H:%M UTC')"
+          if [ -f events.json ]; then
+            echo "events.json: $(wc -c < events.json) bytes"
+          fi
