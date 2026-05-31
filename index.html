@@ -1073,6 +1073,8 @@ const G = {
   aiAlertsUpdatedAt: null,
   brokerFee: 0.15,
   feeCustom: null,
+  eventsData: {},
+  newEvents: [],
   pricesJson: null, // Dữ liệu từ prices.json (GitHub Actions, cập nhật hàng ngày)
   pricesJsonDate: null,
   chart: null,
@@ -1241,6 +1243,7 @@ window.initApp = async function() {
   const [_, synced] = await Promise.all([loadPricesJson(), syncLoad()])
   if (synced) { renderWlList() }
   loadAiAlerts()
+  loadEventsJson()
   updateSyncUI()
 }
 
@@ -2232,6 +2235,7 @@ function renderWlList() {
       <span class="wl-price" style="color:${chg!=null?(chg>=0?C_UP:C_DN):'var(--t)'}">${price?fP(price):'—'}</span>
       <span class="wl-chg" style="color:${chg!=null?(chg>=0?C_UP:C_DN):'var(--t2)'}">${chg!=null?fPct(chg):'—'}</span>
       ${renderAiAlertBadge(t)}
+      ${(()=>{const ev=G.eventsData?.[t]?.items;if(!ev?.length)return '';const next=ev[0];const dStr=next.date?new Date(next.date).toLocaleDateString('vi-VN',{day:'2-digit',month:'2-digit'}):'';return '<span title="'+next.type+' '+dStr+'" style="font-size:9px;padding:1px 5px;background:#dbeafe;color:#1e40af;border-radius:99px;flex-shrink:0;cursor:default">📅'+dStr+'</span>'})()}
       <button class="wl-alert-btn ${G.wlAlerts&&G.wlAlerts[t]?'on':''}" onclick="openAlertModal('${t}')" title="Đặt cảnh báo giá">
         <i class="ti ti-bell${G.wlAlerts&&G.wlAlerts[t]?'':'-off'}" style="font-size:14px"></i>
       </button>
@@ -2325,6 +2329,36 @@ function showAiAlertDetail(ticker) {
   overlay.addEventListener('click', () => overlay.remove())
 }
 
+// ── Events từ GitHub Actions ─────────────────────────────────────────
+const EVENTS_URL = 'https://raw.githubusercontent.com/dohonglongdn-ship-it/vn-stock/main/events.json'
+
+async function loadEventsJson() {
+  try {
+    const r = await fetch(EVENTS_URL + '?t=' + Date.now(), {cache:'no-store'})
+    if (!r.ok) return
+    const d = await r.json()
+    G.eventsData = d.events || {}
+    G.newEvents = d.newEvents || []
+
+    // Hiện notification nếu có sự kiện mới
+    if (G.newEvents.length) {
+      const lastSeen = localStorage.getItem('vnstk_events_seen')
+      const updatedAt = d.updatedAt
+      if (lastSeen !== updatedAt) {
+        G.newEvents.forEach(e => {
+          showAlertToast(e.ticker,
+            `📅 ${e.ticker}: ${e.type} — ${e.date ? new Date(e.date).toLocaleDateString('vi-VN') : e.date}`)
+        })
+        localStorage.setItem('vnstk_events_seen', updatedAt)
+      }
+    }
+
+    // Update badge trên watchlist nếu mã có sự kiện
+    renderWlList()
+    console.log(`📅 Events loaded: ${Object.keys(G.eventsData).length} mã`)
+  } catch(e) { console.log('Events not available:', e.message) }
+}
+
 // ── Stock Events (Cổ tức, ĐHCĐ) ─────────────────────────────────────
 
 async function loadStockEvents(ticker) {
@@ -2335,13 +2369,29 @@ async function loadStockEvents(ticker) {
 
   card.style.display = 'block'
   list.innerHTML = ''
-  if (loading) loading.textContent = 'Đang tải...'
 
+  // Dùng cached data từ events.json trước (nhanh)
+  const cached = G.eventsData?.[ticker]?.items
+  if (cached !== undefined) {
+    renderEventsList(list, cached, loading)
+    return
+  }
+
+  // Fallback: fetch trực tiếp từ Worker
+  if (loading) loading.textContent = 'Đang tải...'
   try {
     const r = await fetch(`${WORKER}/events/${ticker}`, {signal: AbortSignal.timeout(8000)})
     const events = r.ok ? await r.json() : []
 
-    if (!events.length) {
+    renderEventsList(list, events, loading)
+  } catch(e) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:6px 0">Không tải được sự kiện</div>'
+    if (loading) loading.textContent = ''
+  }
+}
+
+function renderEventsList(list, events, loading) {
+    if (!events || !events.length) {
       list.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:6px 0">Không có sự kiện gần đây</div>'
       if (loading) loading.textContent = ''
       return
@@ -2377,10 +2427,6 @@ async function loadStockEvents(ticker) {
     }).join('')
 
     if (loading) loading.textContent = `${events.length} sự kiện`
-  } catch(e) {
-    list.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:6px 0">Không tải được sự kiện</div>'
-    if (loading) loading.textContent = ''
-  }
 }
 
 // ── Chat Management ───────────────────────────────────────────────────
