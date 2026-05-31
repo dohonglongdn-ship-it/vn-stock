@@ -641,12 +641,25 @@ a{color:var(--blue)}
 
     <!-- ── Screener ── -->
     <div id="v-screener" class="screen">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <span style="font-size:14px;font-weight:600"><i class="ti ti-filter" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>Bộ lọc cổ phiếu</span>
+        <span id="scr-data-badge" style="font-size:10px;padding:2px 8px;border-radius:99px;background:var(--bg3);color:var(--t3)">EOD Data</span>
+        <span style="font-size:10px;color:var(--t3)">· Real-time tự động lúc 12-15h</span>
         <button class="pill" id="scr-run-btn" onclick="runScreener()" style="margin-left:auto">
           <i class="ti ti-refresh" style="font-size:11px;margin-right:2px"></i>Chạy lọc
         </button>
       </div>
+
+      <!-- Tìm mã custom -->
+      <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+        <i class="ti ti-search" style="font-size:13px;color:var(--t3)"></i>
+        <input id="scr-custom-ticker" placeholder="Tìm mã ngoài top 200 (VD: OIL, PVT...)"
+          style="flex:1;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);text-transform:uppercase"
+          oninput="this.value=this.value.toUpperCase()"
+          onkeydown="if(event.key==='Enter') addCustomTicker()">
+        <button onclick="addCustomTicker()" class="pill" style="font-size:11px;flex-shrink:0">+ Thêm vào lọc</button>
+      </div>
+      <div id="scr-custom-tags" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px"></div>
 
       <!-- Preset filters -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
@@ -3435,14 +3448,37 @@ function renderCmpStats() {
 
 // ── Screener ──────────────────────────────────────────────────────────
 const SCREENER_TICKERS = [
+  // Ngân hàng
   'VCB','BID','CTG','MBB','TCB','ACB','VPB','HDB','STB','LPB',
-  'SSI','VND','HCM','VIX','MBS','VPS',
-  'HPG','HSG','NKG',
-  'VNM','MSN','SAB',
-  'VIC','VHM','NVL','PDR','KDH','DXG',
-  'GAS','PLX','PVD','PVS',
-  'FPT','CMG','MWG','FRT','PNJ',
-  'HVN','VJC','POW','REE','BVH'
+  'MSB','EIB','TPB','SHB','OCB','VIB','BAB','KLB',
+  // Chứng khoán
+  'SSI','VND','HCM','VIX','MBS','VPS','AGR','CTS','SHS',
+  // Thực phẩm & Tiêu dùng
+  'VNM','MSN','SAB','MCH','ANV','KDC',
+  // Bất động sản
+  'VIC','VHM','NVL','PDR','KDH','DXG','CEO','CII','DIG','NLG','SJS',
+  // Dầu khí & Năng lượng
+  'GAS','PLX','PVD','PVS','OIL','PVT','PPC','REE','POW','NT2',
+  // Công nghệ
+  'FPT','CMG','ELC',
+  // Bán lẻ & Tiêu dùng
+  'MWG','FRT','PNJ','DGW','TNG','MSH','STK',
+  // Thép & Vật liệu
+  'HPG','HSG','NKG','TLH','SMC',
+  // Hàng không & Vận tải
+  'HVN','VJC','GMD','HAH','VSC',
+  // Xây dựng & Hạ tầng
+  'CTD','HBC','VCG','FCN','PC1',
+  // Bảo hiểm
+  'BVH','BMI','MIG',
+  // Phân bón & Hóa chất
+  'DCM','DPM','BFC','DGC',
+  // Cao su & Nông nghiệp
+  'GVR','PHR','TRC','HAG',
+  // Dệt may
+  'VGT','TNG','TCM',
+  // Khác
+  'VRE','VGC','AAA','GEX','HDG','ACV','VGI','DHC','EVF','IMP'
 ]
 
 const SCR_FILTERS = new Set(['rsi-os','bull'])
@@ -3451,6 +3487,35 @@ function toggleFilter(f) {
   if (SCR_FILTERS.has(f)) SCR_FILTERS.delete(f)
   else SCR_FILTERS.add(f)
   el('f-'+f)?.classList.toggle('on', SCR_FILTERS.has(f))
+}
+
+// Custom tickers cho screener
+let SCR_CUSTOM_TICKERS = []
+
+function addCustomTicker() {
+  const inp = document.getElementById('scr-custom-ticker')
+  const t = inp?.value?.trim().toUpperCase()
+  if (!t || SCR_CUSTOM_TICKERS.includes(t)) { if(inp) inp.value=''; return }
+  SCR_CUSTOM_TICKERS.push(t)
+  if(inp) inp.value = ''
+  renderCustomTags()
+}
+
+function removeCustomTicker(t) {
+  SCR_CUSTOM_TICKERS = SCR_CUSTOM_TICKERS.filter(x => x !== t)
+  renderCustomTags()
+}
+
+function renderCustomTags() {
+  const el_ct = document.getElementById('scr-custom-tags')
+  if (!el_ct) return
+  if (!SCR_CUSTOM_TICKERS.length) { el_ct.innerHTML = ''; return }
+  el_ct.innerHTML = SCR_CUSTOM_TICKERS.map(t =>
+    `<span style="font-size:11px;padding:2px 8px;background:var(--bg3);border:0.5px solid var(--bd2);border-radius:99px;display:flex;align-items:center;gap:4px">
+      ${t}
+      <button onclick="removeCustomTicker('${t}')" style="background:none;border:none;cursor:pointer;color:var(--t3);font-size:12px;padding:0;line-height:1">×</button>
+    </span>`
+  ).join('')
 }
 
 function scrAiBadge(ticker) {
@@ -3480,10 +3545,67 @@ function applyPreset(name) {
   if (name !== 'clear') runScreener()
 }
 
+// Top 50 mã phổ biến HOSE để fetch real-time lúc 13h
+const TOP50_RT = [
+  'VCB','BID','CTG','MBB','TCB','ACB','VPB','HDB','STB','LPB',
+  'HPG','HSG','VNM','MSN','SAB','MWG','FRT','PNJ','FPT','CMG',
+  'VIC','VHM','NVL','PDR','KDH','GAS','PLX','PVD','PVS','REE',
+  'SSI','VND','HCM','VIX','MBS','HVN','VJC','POW','BVH','VRE',
+  'VGC','DGW','GMD','HAH','PPC','DCM','DPM','GVR','PHR','BSR'
+]
+
+async function fetchRealtimeForScreener() {
+  const now = new Date()
+  const vnHour = (now.getUTCHours() + 7) % 24
+  const isMidday = vnHour >= 12 && vnHour < 15 && now.getUTCDay() >= 1 && now.getUTCDay() <= 5
+
+  const badge = document.getElementById('scr-data-badge')
+  if (!isMidday) {
+    if (badge) { badge.textContent = 'EOD Data'; badge.style.background='var(--bg3)'; badge.style.color='var(--t3)' }
+    return false
+  }
+
+  if (badge) { badge.textContent = '⚡ Đang tải real-time...'; badge.style.background='#fef9c3'; badge.style.color='#713f12' }
+
+  // Fetch real-time giá cho TOP50 song song (batch 10)
+  let updated = 0
+  for (let i = 0; i < TOP50_RT.length; i += 10) {
+    const batch = TOP50_RT.slice(i, i + 10)
+    await Promise.all(batch.map(async t => {
+      try {
+        const info = db(t)
+        if (info?.e && info.e !== 'HOSE') return // Chỉ HOSE có Yahoo
+        const r = await fetch(`${WORKER}/${t}`, {signal: AbortSignal.timeout(5000)})
+        if (!r.ok) return
+        const d = await r.json()
+        if (d.source === 'yahoo' && d.chart?.result?.[0]?.meta) {
+          const m = d.chart.result[0].meta
+          if (!G.pricesJson) G.pricesJson = {}
+          if (!G.pricesJson[t]) G.pricesJson[t] = {}
+          G.pricesJson[t].price = m.regularMarketPrice
+          G.pricesJson[t].changePct = m.regularMarketChangePercent
+          updated++
+        }
+      } catch {}
+    }))
+    el('scr-msg').textContent = `Tải real-time ${Math.min(i+10, TOP50_RT.length)}/${TOP50_RT.length} mã...`
+  }
+
+  if (badge) {
+    badge.textContent = `⚡ Real-time (${updated} mã)`
+    badge.style.background = '#dcfce7'
+    badge.style.color = '#166534'
+  }
+  return true
+}
+
 async function runScreener() {
   el('scr-loading').style.display = 'block'
   el('scr-results').innerHTML = ''
   el('scr-run-btn').disabled = true
+
+  // Fetch real-time nếu đang giờ giao dịch (12-15h VN)
+  await fetchRealtimeForScreener()
 
   const results = []
   const total = SCREENER_TICKERS.length
@@ -3491,12 +3613,11 @@ async function runScreener() {
 
   // Ưu tiên dùng prices.json (nhanh, không cần fetch CSV)
   // Fallback sang fetchCSV nếu không có trong prices.json
-  const allTickers = G.pricesJson ? 
-    [...new Set([...SCREENER_TICKERS, ...Object.keys(G.pricesJson)])] : 
-    SCREENER_TICKERS
+  // Merge: top 200 + custom tickers từ user
+  const allTickers = [...new Set([...SCREENER_TICKERS, ...SCR_CUSTOM_TICKERS])]
   const total2 = allTickers.length
 
-  el('scr-msg').textContent = `Đang phân tích ${total2} mã từ prices.json...`
+  el('scr-msg').textContent = `Đang phân tích ${allTickers.length} mã...`
 
   for (const t of allTickers) {
     try {
@@ -3504,12 +3625,20 @@ async function runScreener() {
       const info = db(t)
       let bars = null
 
-      // Dùng history từ prices.json nếu có
+      // Ưu tiên history từ prices.json
       if (pj?.history?.length >= 30) {
         bars = pj.history.map(h => ({
           date: h.date, open: h.open||h.close, high: h.high||h.close,
           low: h.low||h.close, close: h.close, volume: h.volume||0
         }))
+      }
+
+      // Fallback: fetch CSV từ vnstock
+      if (!bars || bars.length < 30) {
+        try {
+          const csvBars = await fetchCSV(t)
+          if (csvBars && csvBars.length >= 30) bars = csvBars
+        } catch {}
       }
 
       if (!bars || bars.length < 30) { done++; continue }
