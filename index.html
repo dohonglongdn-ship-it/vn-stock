@@ -150,6 +150,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .calc-input{width:100%;font-size:13px;padding:7px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);margin-bottom:8px}
 .calc-select{width:100%;font-size:13px;padding:7px 10px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg2);color:var(--t);margin-bottom:8px}
 .pnl-real{font-size:10px;color:var(--t3);margin-top:2px}
+.event-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--bd)}
+.event-item:last-child{border-bottom:none}
+.event-date{font-size:11px;font-weight:600;color:var(--blue);min-width:72px;flex-shrink:0}
+.event-type{font-size:11px;font-weight:500;color:var(--t);flex:1}
+.event-detail{font-size:10px;color:var(--t2);margin-top:2px}
+.event-badge{font-size:10px;padding:2px 7px;border-radius:99px;flex-shrink:0}
+.chat-msg-actions{display:none;gap:4px;margin-top:2px}
+.chat-msg:hover .chat-msg-actions{display:flex}
+.chat-del-btn{font-size:10px;color:var(--t3);background:none;border:none;cursor:pointer;padding:0 3px}
+.chat-del-btn:hover{color:var(--dn)}
 .chat-panel{display:flex;flex-direction:column;background:var(--bg);border-radius:var(--rl);border:0.5px solid var(--bd);overflow:hidden;margin-top:10px}
 .chat-panel-header{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:0.5px solid var(--bd);background:var(--bg2)}
 .chat-messages{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;max-height:320px;min-height:120px}
@@ -500,12 +510,24 @@ a{color:var(--blue)}
         <button class="action-btn" onclick="goAnalysis()">
           <i class="ti ti-brain" style="font-size:13px;vertical-align:-2px;margin-right:5px"></i>Phân tích AI toàn diện ↗
         </button>
+        <!-- Lịch sự kiện -->
+        <div class="card" id="stock-events-card" style="margin-top:10px;display:none">
+          <div class="card-title" style="margin-bottom:8px">
+            <i class="ti ti-calendar-event" style="font-size:13px"></i>Sự kiện & Cổ tức
+            <span id="stock-events-loading" style="font-size:10px;color:var(--t3);margin-left:8px"></span>
+          </div>
+          <div id="stock-events-list"></div>
+        </div>
+
         <!-- Chat AI panel -->
         <div class="chat-panel" id="stock-chat-panel">
           <div class="chat-panel-header">
             <i class="ti ti-message-circle" style="font-size:14px;color:var(--blue)"></i>
             <span style="font-size:12px;font-weight:600" id="stock-chat-title">Chat AI</span>
             <span style="margin-left:auto;font-size:10px;color:var(--t3)" id="stock-chat-count"></span>
+            <button onclick="clearStockChat()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--t3);padding:0 4px;margin-left:4px" title="Xóa toàn bộ chat">
+              <i class="ti ti-trash" style="font-size:12px"></i>
+            </button>
           </div>
           <div class="chat-messages" id="stock-chat-messages"></div>
           <div class="chat-suggests" id="stock-chat-suggests">
@@ -777,6 +799,12 @@ a{color:var(--blue)}
             <i class="ti ti-message-circle" style="font-size:14px;color:var(--blue)"></i>
             <span style="font-size:12px;font-weight:600" id="aichat-title">Chọn mã để bắt đầu</span>
             <span style="margin-left:auto;font-size:10px;color:var(--t3)" id="aichat-count"></span>
+            <button onclick="clearAiChat()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--t3);padding:0 4px;margin-left:4px" title="Xóa chat này">
+              <i class="ti ti-trash" style="font-size:12px"></i>
+            </button>
+            <button onclick="clearAllChats()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--t3);padding:0 4px" title="Xóa tất cả lịch sử">
+              <i class="ti ti-trash-x" style="font-size:12px"></i>
+            </button>
           </div>
           <div class="chat-messages" id="aichat-messages" style="max-height:none;flex:1">
             <div style="text-align:center;color:var(--t3);font-size:12px;padding:40px 0">
@@ -1531,6 +1559,7 @@ async function loadStock(ticker) {
   el('an-back-label').textContent = ticker
   showV('stock')
   initStockChat(ticker)
+  loadStockEvents(ticker)
   updateWlToggleBtn()
 
   el('stock-loading').style.display = 'block'
@@ -2294,6 +2323,125 @@ function showAiAlertDetail(ticker) {
     </div>`
   document.body.appendChild(overlay)
   overlay.addEventListener('click', () => overlay.remove())
+}
+
+// ── Stock Events (Cổ tức, ĐHCĐ) ─────────────────────────────────────
+
+async function loadStockEvents(ticker) {
+  const card = document.getElementById('stock-events-card')
+  const list = document.getElementById('stock-events-list')
+  const loading = document.getElementById('stock-events-loading')
+  if (!card || !list) return
+
+  card.style.display = 'block'
+  list.innerHTML = ''
+  if (loading) loading.textContent = 'Đang tải...'
+
+  try {
+    const r = await fetch(`${WORKER}/events/${ticker}`, {signal: AbortSignal.timeout(8000)})
+    const events = r.ok ? await r.json() : []
+
+    if (!events.length) {
+      list.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:6px 0">Không có sự kiện gần đây</div>'
+      if (loading) loading.textContent = ''
+      return
+    }
+
+    const typeColors = {
+      'Cổ tức': '#dcfce7', 'Dividend': '#dcfce7',
+      'ĐHCĐ': '#dbeafe', 'AGM': '#dbeafe',
+      'Chốt quyền': '#fef9c3', 'Ex-right': '#fef9c3',
+      'Phát hành': '#fee2e2',
+    }
+    const typeTC = {
+      'Cổ tức': '#166534', 'Dividend': '#166534',
+      'ĐHCĐ': '#1e40af', 'AGM': '#1e40af',
+      'Chốt quyền': '#713f12', 'Ex-right': '#713f12',
+      'Phát hành': '#991b1b',
+    }
+
+    list.innerHTML = events.slice(0, 8).map(e => {
+      const bg = typeColors[e.type] || 'var(--bg3)'
+      const tc = typeTC[e.type] || 'var(--t2)'
+      const dateStr = e.date ? new Date(e.date).toLocaleDateString('vi-VN') : e.date
+      return `<div class="event-item">
+        <div class="event-date">${dateStr || '—'}</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="event-type">${e.type || 'Sự kiện'}</span>
+            <span class="event-badge" style="background:${bg};color:${tc}">${e.type || ''}</span>
+          </div>
+          ${e.detail ? `<div class="event-detail">${e.detail}</div>` : ''}
+        </div>
+      </div>`
+    }).join('')
+
+    if (loading) loading.textContent = `${events.length} sự kiện`
+  } catch(e) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:6px 0">Không tải được sự kiện</div>'
+    if (loading) loading.textContent = ''
+  }
+}
+
+// ── Chat Management ───────────────────────────────────────────────────
+
+function clearStockChat() {
+  const ticker = G.ticker
+  if (!ticker) return
+  if (!confirm(`Xóa toàn bộ lịch sử chat với ${ticker}?`)) return
+  delete G.chatHistory[ticker]
+  saveChatHistory()
+  renderChatMessages([], 'stock-chat-messages')
+  const count = document.getElementById('stock-chat-count')
+  if (count) count.textContent = ''
+  // Sync sang tab AI Chat
+  if (G_aichat_ticker === ticker) renderAiChatTab()
+}
+
+function clearAiChat() {
+  const ticker = G_aichat_ticker
+  if (!ticker) return
+  if (!confirm(`Xóa chat với ${ticker}?`)) return
+  delete G.chatHistory[ticker]
+  saveChatHistory()
+  renderChatMessages([], 'aichat-messages')
+  const count = document.getElementById('aichat-count')
+  if (count) count.textContent = ''
+  renderAiChatTab()
+  // Sync sang stock screen
+  if (G.ticker === ticker) {
+    renderChatMessages([], 'stock-chat-messages')
+    const sc = document.getElementById('stock-chat-count')
+    if (sc) sc.textContent = ''
+  }
+}
+
+function clearAllChats() {
+  if (!confirm('Xóa toàn bộ lịch sử chat tất cả mã?')) return
+  G.chatHistory = {}
+  saveChatHistory()
+  G_aichat_ticker = null
+  renderChatMessages([], 'aichat-messages')
+  renderChatMessages([], 'stock-chat-messages')
+  renderAiChatTab()
+  const title = document.getElementById('aichat-title')
+  if (title) title.textContent = 'Chọn mã để bắt đầu'
+}
+
+function deleteChatMessage(ticker, index) {
+  if (!G.chatHistory[ticker]) return
+  G.chatHistory[ticker].splice(index, 1)
+  saveChatHistory()
+  // Re-render cả hai panel
+  if (G.ticker === ticker) {
+    renderChatMessages(G.chatHistory[ticker], 'stock-chat-messages')
+    const c = document.getElementById('stock-chat-count')
+    if (c) c.textContent = `${G.chatHistory[ticker].length} tin nhắn`
+  }
+  if (G_aichat_ticker === ticker) {
+    renderChatMessages(G.chatHistory[ticker], 'aichat-messages')
+    renderAiChatTab()
+  }
 }
 
 // ── Fee & Tax Calculator ─────────────────────────────────────────────
@@ -3953,11 +4101,14 @@ function renderChatMessages(messages, containerId) {
     el_c.innerHTML = '<div style="text-align:center;color:var(--t3);font-size:12px;padding:20px 0">Bắt đầu hỏi về mã này...</div>'
     return
   }
-  el_c.innerHTML = messages.map(m => `
+  const ticker = G.ticker || G_aichat_ticker || ''
+  el_c.innerHTML = messages.map((m, idx) => `
     <div class="chat-msg ${m.role}">
       <div class="chat-bubble ${m.role} ${m.thinking?'thinking':''}">${m.content.replace(/\n/g,'<br>')}</div>
-
-      <span class="chat-time">${m.time||''}</span>
+      <div style="display:flex;align-items:center;gap:4px">
+        <span class="chat-time">${m.time||''}</span>
+        ${!m.thinking && ticker ? `<button class="chat-del-btn" onclick="deleteChatMessage('${ticker}',${idx})" title="Xóa tin này"><i class="ti ti-x" style="font-size:10px"></i></button>` : ''}
+      </div>
     </div>`).join('')
   el_c.scrollTop = el_c.scrollHeight
 }
