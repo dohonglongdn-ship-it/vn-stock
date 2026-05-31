@@ -1362,7 +1362,7 @@ function onSearch(e) {
 
 // ── Groq AI ──────────────────────────────────────────────────────────
 async function groq(prompt, sys, maxTok=2000, jsonMode=false, history=[]) {
-  const wait = 600 - (Date.now() - G.lastGroqCall)
+  const wait = 1200 - (Date.now() - G.lastGroqCall)
   if (wait > 0) await new Promise(r=>setTimeout(r, wait))
   const models = G.groqModel ? [G.groqModel, ...GROQ_MODELS.filter(m=>m!==G.groqModel)] : GROQ_MODELS
   for (const model of models) {
@@ -1378,20 +1378,19 @@ async function groq(prompt, sys, maxTok=2000, jsonMode=false, history=[]) {
         body: JSON.stringify(body)
       })
       const d = await r.json()
-      if (r.status===429) throw new Error('Rate limit — thử lại sau 1 phút.')
       if (r.status===401) throw new Error('API key không hợp lệ. Kiểm tra lại.')
       if (r.status === 429) {
         const waitMsg = d?.error?.message || ''
         const waitMatch = waitMsg.match(/try again in ([\d.]+)s/)
-        const waitSec = waitMatch ? parseFloat(waitMatch[1]) + 1 : 8
-        console.log(`Groq 429, waiting ${waitSec}s...`)
+        const waitSec = waitMatch ? parseFloat(waitMatch[1]) + 1 : 10
+        console.log(`Groq 429 on ${model}, waiting ${waitSec}s...`)
         await new Promise(res => setTimeout(res, waitSec * 1000))
         continue
       }
       if (!r.ok) { console.warn(`Model ${model} failed: ${r.status}`, d); continue }
       G.groqModel = model; G.lastGroqCall = Date.now()
       return d.choices?.[0]?.message?.content || ''
-    } catch(e) { if (e.message.includes('Rate limit')||e.message.includes('không hợp lệ')) throw e }
+    } catch(e) { if (e.message.includes('không hợp lệ')) throw e; console.warn('groq err:', e.message) }
   }
   throw new Error('Không kết nối Groq. Kiểm tra API key.')
 }
@@ -1598,7 +1597,8 @@ async function loadStock(ticker) {
   showV('stock')
   initStockChat(ticker)
   loadStockEvents(ticker)
-  loadStockNews(ticker)
+  // Delay 3s để tránh Groq 429 khi đang load fundamental/analysis cùng lúc
+  setTimeout(() => { if (G.ticker === ticker) loadStockNews(ticker) }, 3000)
   fetchFundamentals(ticker).then(f => { if(f) updateFundamentals(f) })
   updateWlToggleBtn()
 
@@ -2606,8 +2606,11 @@ sentiment chỉ là: "Tích cực", "Tiêu cực", hoặc "Trung lập". score t
     renderNewsList(list, overall, items, parsed.overall, loading)
 
   } catch(e) {
-    list.innerHTML = `<div style="font-size:12px;color:var(--dn);padding:6px 0">Lỗi tải tin tức: ${e.message}</div>`
+    const is429 = e.message?.includes('429') || e.message?.includes('rate') || e.message?.toLowerCase().includes('too many')
+    list.innerHTML = `<div style="font-size:12px;color:var(--dn);padding:6px 0">${is429 ? 'Rate limit — thử lại sau 1 phút.' : 'Lỗi tải tin tức: ' + e.message}</div>`
     if (loading) loading.textContent = ''
+    // Tự retry sau 60s nếu bị 429
+    if (is429) setTimeout(() => { if (G.ticker === ticker) loadStockNews(ticker) }, 60000)
   }
 }
 
@@ -4398,7 +4401,7 @@ function renderChatMessages(messages, containerId) {
       <div class="chat-bubble ${m.role} ${m.thinking?'thinking':''}">${m.content.replace(/\n/g,'<br>')}</div>
       <div style="display:flex;align-items:center;gap:4px">
         <span class="chat-time">${m.time||''}</span>
-        ${!m.thinking && ticker ? `<button class="chat-del-btn" onclick="deleteChatMessage('${ticker}',${idx})" title="Xóa tin này"><i class="ti ti-x" style="font-size:10px"></i></button>` : ''}
+        ${!m.thinking && ticker ? `<div class="chat-msg-actions"><button class="chat-del-btn" onclick="deleteChatMessage('${ticker}',${idx})" title="Xóa tin này"><i class="ti ti-x" style="font-size:10px"></i> Xóa</button></div>` : ''}
       </div>
     </div>`).join('')
   el_c.scrollTop = el_c.scrollHeight
