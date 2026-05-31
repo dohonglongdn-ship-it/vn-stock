@@ -1563,6 +1563,7 @@ async function loadStock(ticker) {
   showV('stock')
   initStockChat(ticker)
   loadStockEvents(ticker)
+  fetchFundamentals(ticker).then(f => { if(f) updateFundamentals(f) })
   updateWlToggleBtn()
 
   el('stock-loading').style.display = 'block'
@@ -2357,6 +2358,49 @@ async function loadEventsJson() {
     renderWlList()
     console.log(`📅 Events loaded: ${Object.keys(G.eventsData).length} mã`)
   } catch(e) { console.log('Events not available:', e.message) }
+}
+
+// ── Fundamental Data (P/E, P/B, ROE...) ─────────────────────────────
+
+async function fetchFundamentals(ticker) {
+  try {
+    const r = await fetch(`${WORKER}/fundamental/${ticker}`, {signal: AbortSignal.timeout(8000)})
+    if (!r.ok) return null
+    const d = await r.json()
+    if (!d || Object.keys(d).length === 0) return null
+    return d
+  } catch { return null }
+}
+
+function updateFundamentals(fund) {
+  if (!fund || !G.stockData) return
+  if (fund.pe)           G.stockData.pe       = fund.pe
+  if (fund.pb)           G.stockData.pb       = fund.pb
+  if (fund.roe)          G.stockData.roe      = fund.roe
+  if (fund.eps)          G.stockData.eps      = fund.eps
+  if (fund.dividendYield)G.stockData.divYield = fund.dividendYield
+  if (fund.marketCap)    G.stockData.mktCapT  = (fund.marketCap/1e12).toFixed(1)
+  if (fund.bookValue)    G.stockData.bookValue = fund.bookValue
+  renderMets()
+}
+
+// Override renderMets để thêm P/B, Dividend Yield
+const _origRenderMets = renderMets
+function renderMets() {
+  const d = G.stockData; if(!d) return
+  el('stock-mets').innerHTML = [
+    {l:'P/E',          v: d.pe  ? d.pe.toFixed(1)  : '—'},
+    {l:'P/B',          v: d.pb  ? d.pb.toFixed(2)  : '—'},
+    {l:'ROE',          v: d.roe ? d.roe.toFixed(1)+'%' : '—'},
+    {l:'EPS',          v: d.eps ? fP(Math.round(d.eps)) : '—'},
+    {l:'Cổ tức',       v: d.divYield ? d.divYield.toFixed(2)+'%' : '—'},
+    {l:'52w Cao',      v: fP(d.high52w)},
+    {l:'52w Thấp',     v: fP(d.low52w)},
+    {l:'Vốn hóa',      v: d.mktCapT ? d.mktCapT+' nghìn tỷ' : '—'},
+    {l:'KL TB',        v: d.avgVol ? d.avgVol+'M' : '—'},
+  ].map(({l,v}) =>
+    `<div class="met"><div class="met-l">${l}</div><div class="met-v">${v}</div></div>`
+  ).join('')
 }
 
 // ── Stock Events (Cổ tức, ĐHCĐ) ─────────────────────────────────────
