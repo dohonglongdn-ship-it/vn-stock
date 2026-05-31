@@ -3747,7 +3747,7 @@ async function runScreener() {
       </tr></thead>
       <tbody>
         ${filtered.map(r=>`<tr>
-          <td onclick="loadStock('${r.t}')" style="cursor:pointer;color:var(--blue);font-weight:600">${r.t}</td>
+          <td onclick="loadStock('${r.t}').then(()=>showV('stock'))" style="cursor:pointer;color:var(--blue);font-weight:600">${r.t}</td>
           <td style="font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</td>
           <td style="font-size:10px;color:var(--t3)">${r.sector||'—'}</td>
           <td>${fP(r.last)}</td>
