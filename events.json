@@ -1,0 +1,38 @@
+{
+  "updatedAt": "2026-05-31",
+  "newEvents": [],
+  "events": {
+    "OIL": {
+      "items": [],
+      "updatedAt": "2026-05-31"
+    },
+    "ACV": {
+      "items": [],
+      "updatedAt": "2026-05-31"
+    },
+    "PLX": {
+      "items": [],
+      "updatedAt": "2026-05-31"
+    },
+    "VIX": {
+      "items": [],
+      "updatedAt": "2026-05-31"
+    },
+    "PVS": {
+      "items": [],
+      "updatedAt": "2026-05-31"
+    },
+    "NVL": {
+      "items": [],
+      "updatedAt": "2026-05-31"
+    },
+    "FPT": {
+      "items": [],
+      "updatedAt": "2026-05-31"
+    },
+    "PVT": {
+      "items": [],
+      "updatedAt": "2026-05-31"
+    }
+  }
+}
