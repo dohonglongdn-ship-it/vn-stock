@@ -1636,33 +1636,49 @@ async function loadStock(ticker) {
     const chgPct   = rtClean?.changePct != null ? rtClean?.changePct : jsonData?.changePct != null ? jsonData?.changePct : (prevBar ? (lastBar.close-prevBar.close)/prevBar.close*100 : 0)
     const high52w  = rtClean?.high52w  || (csvBars ? Math.max(...csvBars.slice(-252).map(b=>b.high||b.close)) : null)
     const low52w   = rt?.low52w   || (csvBars ? Math.min(...csvBars.slice(-252).map(b=>b.low||b.close)) : null)
-    const mktCapT  = rtClean?.mktCap   ? (rt.mktCap/1e12).toFixed(1) : null
+    const mktCapT  = rtClean?.mktCap   ? (rtClean.mktCap/1e12).toFixed(1) : (jsonData?.marketCap ? (jsonData.marketCap/1e12).toFixed(1) : null)
     const avgVol   = csvBars ? Math.round(csvBars.slice(-20).reduce((s,b)=>s+b.volume,0)/20/1e6*10)/10 : null
 
-    // Groq: only for PE, ROE, PB if not from Yahoo
+    // Groq: lấy fundamentals nếu chưa có từ Yahoo/prices.json
     el('stock-loading-msg').textContent = 'Đang lấy chỉ số cơ bản...'
-    let fundamental = { pe: rt?.pe||null, eps: rt?.eps||null, pb:null, roe:null }
-    try {
-      const fHint = info ? `"${info.f}", ngành ${info.s}, sàn ${info.e}` : `mã VN`
-      const ftxt = await groq(
-        `Mã ${ticker} — ${fHint}. Giá hiện tại ${fP(price)} VND.
-JSON: {"pe":${rt?.pe?.toFixed(1)||'null'},"pb":1.5,"roe":18.5,"eps":${rt?.eps?.toFixed(0)||'null'}}
-Chỉ điền pb và roe nếu chưa có, giữ nguyên pe và eps từ trên.`,
-        'Return only JSON. No text.',
-        200, true
-      )
-      const fd = parseJ(ftxt)
-      fundamental = {
-        pe:  rt?.pe  || fd.pe  || null,
-        eps: rt?.eps || fd.eps || null,
-        pb:  fd.pb   || null,
-        roe: fd.roe  || null,
-      }
-    } catch {}
+    const pjFund = G.pricesJson?.[ticker]
+    let fundamental = {
+      pe:     rtClean?.pe     || pjFund?.pe     || null,
+      eps:    rtClean?.eps    || pjFund?.eps    || null,
+      pb:     rtClean?.pb     || pjFund?.pb     || null,
+      roe:    rtClean?.roe    || pjFund?.roe    || null,
+      divYield: rtClean?.divYield || pjFund?.divYield || null,
+    }
+    // Chỉ gọi Groq nếu còn thiếu dữ liệu
+    const needsGroq = !fundamental.pe || !fundamental.pb || !fundamental.roe
+    if (needsGroq) {
+      try {
+        const fHint = info ? `"${info.f}", ngành ${info.s}, sàn ${info.e}` : `mã VN`
+        const ftxt = await groq(
+          `Mã cổ phiếu Việt Nam: ${ticker} — ${fHint}. Giá hiện tại ${fP(price)} VND.
+Trả về JSON chỉ số tài chính thực tế (trailing 12 tháng gần nhất):
+{"pe":null,"pb":null,"roe":null,"eps":null,"divYield":null}
+Điền số thực. Nếu không biết chính xác, để null. Không bịa số.`,
+          'Return only JSON object. No text. All values are numbers or null.',
+          200, true
+        )
+        const fd = parseJ(ftxt)
+        if (fd) {
+          fundamental = {
+            pe:      fundamental.pe      || fd.pe      || null,
+            eps:     fundamental.eps     || fd.eps     || null,
+            pb:      fundamental.pb      || fd.pb      || null,
+            roe:     fundamental.roe     || fd.roe     || null,
+            divYield: fundamental.divYield || fd.divYield || null,
+          }
+        }
+      } catch {}
+    }
 
     G.stockData = {bars, ta, rt,
       price, chgPct, high52w, low52w, mktCapT, avgVol,
       ...fundamental,
+      divYield: fundamental.divYield || rtClean?.divYield || null,
       info: info || {n:ticker,f:ticker,s:'',e:''},
       dataSource: csvBars ? (rt ? 'vnstock CSV + Yahoo Finance' : 'vnstock CSV') : 'Yahoo Finance'
     }
@@ -2056,16 +2072,25 @@ function renderPerfTable() {
 // ── Metrics ──────────────────────────────────────────────────────────
 function renderMets() {
   const d = G.stockData; if(!d) return
+  // Bổ sung từ prices.json nếu có
+  const pj = G.pricesJson?.[G.ticker]
+  const pe  = d.pe  || pj?.pe
+  const pb  = d.pb  || pj?.pb
+  const roe = d.roe || pj?.roe
+  const eps = d.eps || pj?.eps
+  const divY = d.divYield || pj?.divYield
+  const mktCap = d.mktCapT || (pj?.marketCap ? (pj.marketCap/1e12).toFixed(1) : null)
   el('stock-mets').innerHTML = [
-    {l:'P/E',  v:d.pe?.toFixed(1)??'—'},
-    {l:'P/B',  v:d.pb?.toFixed(2)??'—'},
-    {l:'ROE',  v:d.roe ? d.roe.toFixed(1)+'%' : '—'},
-    {l:'EPS',  v:d.eps ? fP(Math.round(d.eps)) : '—'},
-    {l:'52w Cao', v:fP(d.high52w)},
-    {l:'52w Thấp',v:fP(d.low52w)},
-    {l:'Vốn hóa', v:d.mktCapT ? d.mktCapT+' nghìn tỷ' : '—'},
-    {l:'KL TB',   v:d.avgVol ? d.avgVol+'M' : '—'},
-  ].map(({l,v})=>
+    {l:'P/E',      v: pe  ? parseFloat(pe).toFixed(1)  : '—'},
+    {l:'P/B',      v: pb  ? parseFloat(pb).toFixed(2)  : '—'},
+    {l:'ROE',      v: roe ? parseFloat(roe).toFixed(1)+'%' : '—'},
+    {l:'EPS',      v: eps ? fP(Math.round(eps)) : '—'},
+    {l:'Cổ tức',   v: divY ? parseFloat(divY).toFixed(2)+'%' : '—'},
+    {l:'52w Cao',  v: fP(d.high52w || pj?.high52w)},
+    {l:'52w Thấp', v: fP(d.low52w  || pj?.low52w)},
+    {l:'Vốn hóa',  v: mktCap ? mktCap+' nghìn tỷ' : '—'},
+    {l:'KL TB',    v: d.avgVol ? d.avgVol+'M' : '—'},
+  ].map(({l,v}) =>
     `<div class="met"><div class="met-l">${l}</div><div class="met-v">${v}</div></div>`
   ).join('')
 }
@@ -2382,33 +2407,6 @@ function updateFundamentals(fund) {
   if (fund.marketCap)    G.stockData.mktCapT  = (fund.marketCap/1e12).toFixed(1)
   if (fund.bookValue)    G.stockData.bookValue = fund.bookValue
   renderMets()
-}
-
-// Override renderMets để thêm P/B, Dividend Yield
-const _origRenderMets = renderMets
-function renderMets() {
-  const d = G.stockData; if(!d) return
-  // Bổ sung từ prices.json nếu có
-  const pj = G.pricesJson?.[G.ticker]
-  const pe  = d.pe  || pj?.pe
-  const pb  = d.pb  || pj?.pb
-  const roe = d.roe || pj?.roe
-  const eps = d.eps || pj?.eps
-  const divY = d.divYield || pj?.divYield
-  const mktCap = d.mktCapT || (pj?.marketCap ? (pj.marketCap/1e12).toFixed(1) : null)
-  el('stock-mets').innerHTML = [
-    {l:'P/E',      v: pe  ? parseFloat(pe).toFixed(1)  : '—'},
-    {l:'P/B',      v: pb  ? parseFloat(pb).toFixed(2)  : '—'},
-    {l:'ROE',      v: roe ? parseFloat(roe).toFixed(1)+'%' : '—'},
-    {l:'EPS',      v: eps ? fP(Math.round(eps)) : '—'},
-    {l:'Cổ tức',   v: divY ? parseFloat(divY).toFixed(2)+'%' : '—'},
-    {l:'52w Cao',  v: fP(d.high52w || pj?.high52w)},
-    {l:'52w Thấp', v: fP(d.low52w  || pj?.low52w)},
-    {l:'Vốn hóa',  v: mktCap ? mktCap+' nghìn tỷ' : '—'},
-    {l:'KL TB',    v: d.avgVol ? d.avgVol+'M' : '—'},
-  ].map(({l,v}) =>
-    `<div class="met"><div class="met-l">${l}</div><div class="met-v">${v}</div></div>`
-  ).join('')
 }
 
 // ── Stock Events (Cổ tức, ĐHCĐ) ─────────────────────────────────────
