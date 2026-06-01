@@ -1,38 +1,38 @@
 {
-  "updatedAt": "2026-05-31",
+  "updatedAt": "2026-06-01",
   "newEvents": [],
   "events": {
     "OIL": {
       "items": [],
-      "updatedAt": "2026-05-31"
+      "updatedAt": "2026-06-01"
     },
     "ACV": {
       "items": [],
-      "updatedAt": "2026-05-31"
+      "updatedAt": "2026-06-01"
     },
     "PLX": {
       "items": [],
-      "updatedAt": "2026-05-31"
+      "updatedAt": "2026-06-01"
     },
     "VIX": {
       "items": [],
-      "updatedAt": "2026-05-31"
+      "updatedAt": "2026-06-01"
     },
     "PVS": {
       "items": [],
-      "updatedAt": "2026-05-31"
+      "updatedAt": "2026-06-01"
     },
     "NVL": {
       "items": [],
-      "updatedAt": "2026-05-31"
+      "updatedAt": "2026-06-01"
     },
     "FPT": {
       "items": [],
-      "updatedAt": "2026-05-31"
+      "updatedAt": "2026-06-01"
     },
     "PVT": {
       "items": [],
-      "updatedAt": "2026-05-31"
+      "updatedAt": "2026-06-01"
     }
   }
 }
