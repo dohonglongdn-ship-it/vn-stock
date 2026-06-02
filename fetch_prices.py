@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 """
 fetch_prices.py — VN Stock Intelligence
-Lấy giá từ vnstock (VCI/TCBS) - đây là nguồn cho giá đúng
-Thêm financial ratios từ TCBS
+Nguồn: TCBS public API (không cần key, không bị rate limit từ GitHub Actions)
 """
 
-import json, os, sys, time, math
+import json, os, sys, time, math, requests
 from datetime import datetime, timedelta
 
 OUTPUT_FILE  = 'prices.json'
 HISTORY_DAYS = 90
 TOP_N        = 200
-SLEEP        = 0.5
+SLEEP        = 0.15
 
 def today():
     return datetime.now().strftime('%Y-%m-%d')
@@ -34,73 +33,56 @@ def sanitize(obj):
 
 # ── 1. Danh sách mã ───────────────────────────────────────────────────
 def get_all_tickers():
+    """Lấy danh sách mã từ TCBS (không cần vnstock)"""
+    tickers = []
+    # TCBS có endpoint trả toàn bộ mã niêm yết
+    try:
+        r = requests.get(
+            'https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/ticker-list',
+            headers={'User-Agent': 'Mozilla/5.0'}, timeout=15
+        )
+        if r.ok:
+            data = r.json()
+            items = data if isinstance(data, list) else data.get('data', [])
+            for item in items:
+                sym = item.get('ticker', '')
+                if sym:
+                    tickers.append({
+                        'ticker':   sym,
+                        'name':     item.get('organName', item.get('companyName', '')),
+                        'exchange': item.get('exchange', ''),
+                        'industry': item.get('industryName', ''),
+                    })
+            print(f'  TCBS ticker list: {len(tickers)} mã')
+            if tickers: return tickers
+    except Exception as e:
+        print(f'  [WARN] TCBS ticker list: {e}')
+
+    # Fallback: vnstock listing (chỉ dùng listing, không lấy history)
     try:
         from vnstock import Listing
-        tickers = []
         for exchange in ['HOSE', 'HNX', 'UPCOM']:
             try:
                 df = Listing().symbols_by_exchange(exchange=exchange, lang='vi')
                 for _, row in df.iterrows():
                     tickers.append({
                         'ticker':   row.get('symbol', ''),
-                        'name':     row.get('organ_name', row.get('organName', '')),
+                        'name':     row.get('organ_name', ''),
                         'exchange': exchange,
-                        'industry': row.get('icb_name3', row.get('industryName', '')),
+                        'industry': row.get('icb_name3', ''),
                     })
-            except Exception as e:
-                print(f'  [WARN] Listing {exchange}: {e}')
-        print(f'  Tổng {len(tickers)} mã')
-        return tickers
+            except: pass
+        print(f'  vnstock listing: {len(tickers)} mã')
     except Exception as e:
-        print(f'  [ERROR] Listing: {e}')
-        return []
+        print(f'  [WARN] vnstock listing: {e}')
 
-# ── 2. Lịch sử giá từ vnstock (VCI ưu tiên) ──────────────────────────
-def get_history(ticker):
-    """Dùng vnstock VCI/TCBS - giá đúng đơn vị"""
-    try:
-        from vnstock import Quote
-    except ImportError:
-        return [], None
+    return tickers
 
-    for source in ['VCI', 'TCBS']:
-        for attempt in range(2):  # retry 1 lần
-            try:
-                df = Quote(symbol=ticker, source=source).history(
-                    start=days_ago(HISTORY_DAYS + 10),
-                    end=today(),
-                    interval='1D'
-                )
-                if df is not None and not df.empty:
-                    records = []
-                    for _, row in df.tail(HISTORY_DAYS).iterrows():
-                        c = safe_float(row.get('close'))
-                        if c and c > 0:
-                            records.append({
-                                'date':   str(row.get('time', '')).split()[0],
-                                'open':   safe_float(row.get('open')),
-                                'high':   safe_float(row.get('high')),
-                                'low':    safe_float(row.get('low')),
-                                'close':  c,
-                                'volume': safe_float(row.get('volume')),
-                            })
-                    if records:
-                        return records, source
-                break  # empty df → không retry
-            except Exception as e:
-                msg = str(e).lower()
-                if 'rate' in msg or 'limit' in msg or '429' in msg:
-                    time.sleep(2)  # rate limit → chờ lâu hơn
-                elif attempt == 0:
-                    time.sleep(0.5)
-    return [], None
-
-# ── 3. Giá EOD hàng loạt (nhanh, không có history) ───────────────────
-def get_eod_batch(tickers_without_history, existing):
-    """Dùng TCBS batch API - không bị block từ GitHub Actions"""
-    import requests
+# ── 2. Giá real-time từ TCBS batch ───────────────────────────────────
+def get_tcbs_prices(tickers):
+    """TCBS second-tc-price — batch, nhanh, đúng đơn vị VND"""
     results = {}
-    syms = [t['ticker'] for t in tickers_without_history]
+    syms = [t['ticker'] for t in tickers]
 
     for i in range(0, len(syms), 100):
         batch = syms[i:i+100]
@@ -116,151 +98,166 @@ def get_eod_batch(tickers_without_history, existing):
                 items = items.get('data', [])
             for item in items:
                 t = item.get('ticker', '')
-                price = safe_float(item.get('p') or item.get('lastPrice'))
-                ref   = safe_float(item.get('r') or item.get('refPrice'))
+                price = safe_float(item.get('p') or item.get('lastPrice') or item.get('close'))
+                ref   = safe_float(item.get('r') or item.get('refPrice') or item.get('basicPrice'))
+                vol   = safe_float(item.get('vol') or item.get('totalVolume'))
                 chg   = round((price-ref)/ref*100, 2) if price and ref and ref > 0 else None
                 if t and price:
-                    results[t] = {'price': price, 'changePct': chg,
-                                  'volume': safe_float(item.get('vol')), 'date': today()}
+                    results[t] = {'price': price, 'changePct': chg, 'volume': vol, 'date': today()}
         except Exception as e:
-            print(f'  [WARN] TCBS batch {i//100}: {e}')
+            print(f'  [WARN] TCBS price batch {i//100}: {e}')
+        time.sleep(SLEEP)
 
-        # Fallback existing cho mã vẫn thiếu
-        for sym in batch:
-            if sym not in results and isinstance(existing.get(sym), dict) and existing[sym].get('price'):
-                ex = existing[sym]
-                results[sym] = {'price': ex.get('price'), 'changePct': ex.get('changePct'),
-                                'date': ex.get('date', today())}
-        time.sleep(0.2)
-
-    print(f'  EOD: {len(results)} mã')
+    print(f'  TCBS prices: {len(results)} mã')
     return results
+
+# ── 3. Lịch sử OHLCV từ TCBS (từng mã, top N) ───────────────────────
+def get_tcbs_history(ticker):
+    """TCBS history API — không qua vnstock, không rate limit"""
+    try:
+        # TCBS chart API
+        to_ts   = int(datetime.now().timestamp())
+        from_ts = int((datetime.now() - timedelta(days=HISTORY_DAYS+10)).timestamp())
+        r = requests.get(
+            f'https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/bars-long-term',
+            params={'ticker': ticker, 'type': 'stock', 'resolution': 'D',
+                    'from': from_ts, 'to': to_ts},
+            headers={'User-Agent': 'Mozilla/5.0'},
+            timeout=10
+        )
+        if not r.ok: return []
+        d = r.json()
+        times  = d.get('t', [])
+        closes = d.get('c', [])
+        opens  = d.get('o', [])
+        highs  = d.get('h', [])
+        lows   = d.get('l', [])
+        vols   = d.get('v', [])
+        records = []
+        for i, ts in enumerate(times):
+            c = safe_float(closes[i] if i < len(closes) else None)
+            if c and c > 0:
+                records.append({
+                    'date':   datetime.fromtimestamp(ts).strftime('%Y-%m-%d'),
+                    'open':   safe_float(opens[i]  if i < len(opens)  else None),
+                    'high':   safe_float(highs[i]  if i < len(highs)  else None),
+                    'low':    safe_float(lows[i]   if i < len(lows)   else None),
+                    'close':  c,
+                    'volume': safe_float(vols[i]   if i < len(vols)   else None),
+                })
+        return records[-HISTORY_DAYS:]
+    except: return []
 
 # ── Main ──────────────────────────────────────────────────────────────
 def main():
     print(f'=== fetch_prices.py: {datetime.now()} ===')
 
-    # Load existing để giữ lại ratios và data cũ
+    # Load existing
     existing = {}
     if os.path.exists(OUTPUT_FILE):
         try:
             raw = json.load(open(OUTPUT_FILE))
-            # Đọc đúng format {prices: {...}, updated: ..., count: ...}
             existing = raw.get('prices', raw)
-            if not isinstance(existing, dict):
-                existing = {}
+            if not isinstance(existing, dict): existing = {}
             print(f'  Existing: {len(existing)} mã')
         except: pass
 
-    # Danh sách mã
+    # 1. Danh sách mã
+    print('Bước 1: Danh sách mã...')
     tickers = get_all_tickers()
     if not tickers:
-        print('Không lấy được danh sách mã — exit')
-        sys.exit(1)
+        print('Không lấy được danh sách mã — dùng existing')
+        tickers = [{'ticker': k, 'name': v.get('name',''), 'exchange': v.get('exchange',''), 'industry': v.get('industry','')}
+                   for k, v in existing.items() if isinstance(v, dict)]
 
     ticker_map = {t['ticker']: t for t in tickers}
 
-    # Lấy history cho top HOSE + watchlist
-    print(f'Lấy lịch sử {HISTORY_DAYS} ngày...')
+    # 2. Giá real-time tất cả mã
+    print('Bước 2: Giá real-time TCBS...')
+    prices = get_tcbs_prices(tickers)
 
-    # Watchlist từ user_data.json
+    # 3. Lịch sử top N HOSE + watchlist
+    print(f'Bước 3: Lịch sử top {TOP_N} mã...')
     watchlist = []
     if os.path.exists('user_data.json'):
         try:
             ud = json.load(open('user_data.json'))
             watchlist = ud.get('watchlist', [])
-            print(f'  Watchlist: {watchlist}')
         except: pass
 
-    # Top HOSE theo volume từ existing
     hose_by_vol = sorted(
-        [t['ticker'] for t in tickers if t['exchange'] == 'HOSE'],
-        key=lambda t: existing.get(t, {}).get('volume', 0) or 0,
+        [t['ticker'] for t in tickers if 'HOSE' in t.get('exchange','').upper()],
+        key=lambda t: prices.get(t, {}).get('volume', 0) or 0,
         reverse=True
     )[:TOP_N]
 
     history_tickers = list(set(hose_by_vol + watchlist))
-    print(f'  Lấy history cho {len(history_tickers)} mã...')
+    print(f'  {len(history_tickers)} mã cần history')
 
     histories = {}
-    success = 0
     for i, t in enumerate(history_tickers):
-        records, src = get_history(t)
-        if records:
-            histories[t] = records
-            success += 1
-        if (i+1) % 30 == 0:
-            print(f'  {i+1}/{len(history_tickers)} | ok={success}')
+        h = get_tcbs_history(t)
+        if h: histories[t] = h
+        if (i+1) % 50 == 0:
+            print(f'  {i+1}/{len(history_tickers)} | ok={len(histories)}')
         time.sleep(SLEEP)
 
-    print(f'  History: {success}/{len(history_tickers)} mã')
+    print(f'  History: {len(histories)} mã')
 
-    # Lấy giá EOD cho các mã không có history
-    no_history = [t for t in tickers if t['ticker'] not in histories]
-    print(f'Lấy giá EOD cho {len(no_history)} mã còn lại...')
-    eod_prices = get_eod_batch(no_history, existing)
-    print(f'  EOD: {len(eod_prices)} mã')
-
-    # Ghép kết quả
-    print('Ghép dữ liệu...')
+    # 4. Ghép kết quả
+    print('Bước 4: Ghép dữ liệu...')
     result = {}
     for ticker_info in tickers:
         t = ticker_info['ticker']
         ex = existing.get(t, {})
-        history = histories.get(t, [])
+        if not isinstance(ex, dict): ex = {}
 
-        # Giá từ vnstock history (đúng nhất)
+        price_data = prices.get(t, {})
+        history    = histories.get(t, [])
+
+        # Giá: TCBS real-time > existing
+        price = price_data.get('price') or ex.get('price')
+        chg   = price_data.get('changePct') if price_data.get('price') else ex.get('changePct')
+        vol   = price_data.get('volume') or ex.get('volume')
+
+        # 52w từ history
         if history:
-            last  = history[-1]
-            prev  = history[-2] if len(history) > 1 else last
-            price = last.get('close')
-            chg   = round((last['close'] - prev['close']) / prev['close'] * 100, 2) if prev['close'] else None
-            high52w = max(b['close'] for b in history if b.get('close'))
-            low52w  = min(b['close'] for b in history if b.get('close'))
-            vol   = last.get('volume')
+            closes = [b['close'] for b in history if b.get('close')]
+            high52w = max(closes) if closes else ex.get('high52w')
+            low52w  = min(closes) if closes else ex.get('low52w')
         else:
-            # Fallback: EOD batch hoặc existing
-            eod = eod_prices.get(t, {})
-            price   = eod.get('price')   or ex.get('price')
-            chg     = eod.get('changePct') or ex.get('changePct')
             high52w = ex.get('high52w')
             low52w  = ex.get('low52w')
-            vol     = ex.get('volume')
 
         result[t] = {
-            'name':      ticker_info.get('name', ex.get('name', '')),
-            'exchange':  ticker_info.get('exchange', ex.get('exchange', '')),
-            'industry':  ticker_info.get('industry', ex.get('industry', '')),
+            'name':      ticker_info.get('name') or ex.get('name', ''),
+            'exchange':  ticker_info.get('exchange') or ex.get('exchange', ''),
+            'industry':  ticker_info.get('industry') or ex.get('industry', ''),
             'price':     price,
             'changePct': chg,
             'high52w':   high52w,
             'low52w':    low52w,
             'volume':    vol,
-            'date':      today(),
-            # Giữ ratios từ lần chạy trước (fetch_ratios.py cập nhật)
+            'date':      today() if price_data.get('price') else ex.get('date', ''),
+            # Giữ ratios
             'pe':        ex.get('pe'),
             'pb':        ex.get('pb'),
             'roe':       ex.get('roe'),
             'eps':       ex.get('eps'),
             'divYield':  ex.get('divYield'),
             'marketCap': ex.get('marketCap'),
-            'history':   history,
+            'history':   history or ex.get('history', []),
             'updatedAt': today(),
         }
 
     result = sanitize(result)
-
-    output = {
-        'prices':  result,
-        'updated': today(),
-        'count':   len(result),
-    }
+    output = {'prices': result, 'updated': today(), 'count': len(result)}
 
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, separators=(',', ':'))
 
-    size_mb = os.path.getsize(OUTPUT_FILE) / 1024 / 1024
     has_price = sum(1 for v in result.values() if v.get('price'))
+    size_mb   = os.path.getsize(OUTPUT_FILE) / 1024 / 1024
     print(f'\n=== Xong: {len(result)} mã | {has_price} có giá | {size_mb:.1f} MB ===')
 
 if __name__ == '__main__':
