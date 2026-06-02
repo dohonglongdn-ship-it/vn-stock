@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 OUTPUT_FILE  = 'prices.json'
 HISTORY_DAYS = 90
 TOP_N        = 200
-SLEEP        = 0.3
+SLEEP        = 0.5
 
 def today():
     return datetime.now().strftime('%Y-%m-%d')
@@ -57,71 +57,83 @@ def get_all_tickers():
 
 # ── 2. Lịch sử giá từ vnstock (VCI ưu tiên) ──────────────────────────
 def get_history(ticker):
-    """
-    Dùng vnstock để lấy lịch sử — giá đúng đơn vị VND thực tế
-    VCI là nguồn chính, TCBS là fallback
-    """
-    from vnstock import Quote
+    """Dùng vnstock VCI/TCBS - giá đúng đơn vị"""
+    try:
+        from vnstock import Quote
+    except ImportError:
+        return [], None
+
     for source in ['VCI', 'TCBS']:
-        try:
-            df = Quote(symbol=ticker, source=source).history(
-                start=days_ago(HISTORY_DAYS + 10),
-                end=today(),
-                interval='1D'
-            )
-            if df is not None and not df.empty:
-                records = []
-                for _, row in df.tail(HISTORY_DAYS).iterrows():
-                    c = safe_float(row.get('close'))
-                    if c and c > 0:
-                        records.append({
-                            'date':   str(row.get('time', '')).split()[0],
-                            'open':   safe_float(row.get('open')),
-                            'high':   safe_float(row.get('high')),
-                            'low':    safe_float(row.get('low')),
-                            'close':  c,
-                            'volume': safe_float(row.get('volume')),
-                        })
-                if records:
-                    return records, source
-        except: continue
+        for attempt in range(2):  # retry 1 lần
+            try:
+                df = Quote(symbol=ticker, source=source).history(
+                    start=days_ago(HISTORY_DAYS + 10),
+                    end=today(),
+                    interval='1D'
+                )
+                if df is not None and not df.empty:
+                    records = []
+                    for _, row in df.tail(HISTORY_DAYS).iterrows():
+                        c = safe_float(row.get('close'))
+                        if c and c > 0:
+                            records.append({
+                                'date':   str(row.get('time', '')).split()[0],
+                                'open':   safe_float(row.get('open')),
+                                'high':   safe_float(row.get('high')),
+                                'low':    safe_float(row.get('low')),
+                                'close':  c,
+                                'volume': safe_float(row.get('volume')),
+                            })
+                    if records:
+                        return records, source
+                break  # empty df → không retry
+            except Exception as e:
+                msg = str(e).lower()
+                if 'rate' in msg or 'limit' in msg or '429' in msg:
+                    time.sleep(2)  # rate limit → chờ lâu hơn
+                elif attempt == 0:
+                    time.sleep(0.5)
     return [], None
 
 # ── 3. Giá EOD hàng loạt (nhanh, không có history) ───────────────────
 def get_eod_batch(tickers_without_history, existing):
-    """
-    Với mã không lấy được history, lấy giá từ existing prices.json
-    hoặc dùng VNDirect batch làm fallback (chỉ lấy giá, không history)
-    """
+    """Dùng TCBS batch API - không bị block từ GitHub Actions"""
     import requests
     results = {}
-    all_syms = [t['ticker'] for t in tickers_without_history]
+    syms = [t['ticker'] for t in tickers_without_history]
 
-    # Thử VNDirect batch - giá có thể cần điều chỉnh đơn vị
-    for i in range(0, len(all_syms), 200):
-        batch = all_syms[i:i+200]
-        codes = ','.join(batch)
-        url = f'https://finfo-api.vndirect.com.vn/v4/stock_prices?q=code:{codes}&sort=date:desc&size=200'
+    for i in range(0, len(syms), 100):
+        batch = syms[i:i+100]
         try:
-            import requests as req
-            r = req.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=15)
-            seen = set()
-            for item in r.json().get('data', []):
-                code = item.get('code', '')
-                if code and code not in seen:
-                    seen.add(code)
-                    raw = safe_float(item.get('close'))
-                    pct = safe_float(item.get('pctChange'))
-                    if raw:
-                        # VNDirect: giá < 1000 → đơn vị nghìn đồng → nhân 1000
-                        price = round(raw * 1000) if raw < 1000 else raw
-                        # pctChange: nếu < 1 thì là dạng thập phân
-                        chg = round(pct * 100, 2) if pct and abs(pct) < 1 else pct
-                        results[code] = {'price': price, 'changePct': chg, 'date': today()}
+            r = requests.get(
+                'https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/second-tc-price',
+                params={'tickers': ','.join(batch)},
+                headers={'User-Agent': 'Mozilla/5.0'},
+                timeout=15
+            )
+            items = r.json() if r.ok else []
+            if not isinstance(items, list):
+                items = items.get('data', [])
+            for item in items:
+                t = item.get('ticker', '')
+                price = safe_float(item.get('p') or item.get('lastPrice'))
+                ref   = safe_float(item.get('r') or item.get('refPrice'))
+                chg   = round((price-ref)/ref*100, 2) if price and ref and ref > 0 else None
+                if t and price:
+                    results[t] = {'price': price, 'changePct': chg,
+                                  'volume': safe_float(item.get('vol')), 'date': today()}
         except Exception as e:
-            print(f'  [WARN] EOD batch {i//200}: {e}')
-        time.sleep(SLEEP)
+            print(f'  [WARN] TCBS batch {i//100}: {e}')
 
+        # Fallback existing cho mã vẫn thiếu
+        for sym in batch:
+            if sym not in results and isinstance(existing.get(sym), dict) and existing[sym].get('price'):
+                ex = existing[sym]
+                results[sym] = {'price': ex.get('price'), 'changePct': ex.get('changePct'),
+                                'date': ex.get('date', today())}
+        time.sleep(0.2)
+
+    print(f'  EOD: {len(results)} mã')
     return results
 
 # ── Main ──────────────────────────────────────────────────────────────
