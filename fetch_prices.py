@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 """
-fetch_prices.py — VN Stock Intelligence
-Nguồn: TCBS public API (không cần key, không bị rate limit từ GitHub Actions)
+VN Stock - Fetch Prices (version gốc đang hoạt động)
+Cập nhật hàng ngày lúc 16h (GitHub Actions)
+- Lấy giá tất cả mã niêm yết từ vnstock board
+- Lưu history 60 ngày cho top 200 mã HOSE
+- Format: {updated, count, prices: {ticker: {price, changePct, history?, ...}}}
 """
 
-import json, os, sys, time, math, requests
+import json, os, sys, time, math
 from datetime import datetime, timedelta
+from pathlib import Path
 
-OUTPUT_FILE  = 'prices.json'
-HISTORY_DAYS = 90
-TOP_N        = 200
-SLEEP        = 0.15
+OUTPUT_FILE = 'prices.json'
 
-def today():
+def get_today():
     return datetime.now().strftime('%Y-%m-%d')
 
-def days_ago(n):
-    return (datetime.now() - timedelta(days=n)).strftime('%Y-%m-%d')
+def get_from_date(days=400):
+    return (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
 
 def safe_float(v):
     try:
@@ -26,158 +27,144 @@ def safe_float(v):
     except: return None
 
 def sanitize(obj):
-    if isinstance(obj, dict):  return {k: sanitize(v) for k, v in obj.items()}
-    if isinstance(obj, list):  return [sanitize(v) for v in obj]
+    if isinstance(obj, dict): return {k: sanitize(v) for k, v in obj.items()}
+    if isinstance(obj, list): return [sanitize(v) for v in obj]
     if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)): return None
     return obj
 
-# ── 1. Danh sách mã ───────────────────────────────────────────────────
-def get_all_tickers():
-    """Lấy danh sách mã từ TCBS (không cần vnstock)"""
-    tickers = []
-    # TCBS có endpoint trả toàn bộ mã niêm yết
-    try:
-        r = requests.get(
-            'https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/ticker-list',
-            headers={'User-Agent': 'Mozilla/5.0'}, timeout=15
-        )
-        if r.ok:
-            data = r.json()
-            items = data if isinstance(data, list) else data.get('data', [])
-            for item in items:
-                sym = item.get('ticker', '')
-                if sym:
-                    tickers.append({
-                        'ticker':   sym,
-                        'name':     item.get('organName', item.get('companyName', '')),
-                        'exchange': item.get('exchange', ''),
-                        'industry': item.get('industryName', ''),
-                    })
-            print(f'  TCBS ticker list: {len(tickers)} mã')
-            if tickers: return tickers
-    except Exception as e:
-        print(f'  [WARN] TCBS ticker list: {e}')
+print(f"=== fetch_prices.py bắt đầu: {datetime.now()} ===")
 
-    # Fallback: vnstock listing (chỉ dùng listing, không lấy history)
+try:
+    from vnstock import Vnstock
+    print("✅ vnstock loaded")
+except ImportError as e:
+    print(f"❌ vnstock import failed: {e}")
+    sys.exit(1)
+
+# ── 1. Lấy danh sách tất cả mã ───────────────────────────────────────
+def get_all_symbols():
+    symbols = []
+    for exchange in ['HOSE', 'HNX', 'UPCOM']:
+        try:
+            stock = Vnstock().stock(symbol='VCB', source='VCI')
+            df = stock.listing.symbols_by_exchange(exchange=exchange)
+            if df is not None and not df.empty:
+                col = next((c for c in ['symbol','ticker','code'] if c in df.columns), None)
+                if col:
+                    for _, row in df.iterrows():
+                        sym = str(row[col]).strip().upper()
+                        if sym:
+                            symbols.append({
+                                'ticker':   sym,
+                                'name':     str(row.get('organ_name', row.get('organName', ''))),
+                                'exchange': exchange,
+                                'industry': str(row.get('icb_name3', row.get('industryName', ''))),
+                            })
+                    print(f"  {exchange}: {len(df)} mã")
+        except Exception as e:
+            print(f"  [WARN] {exchange}: {e}")
+    print(f"  Tổng: {len(symbols)} mã")
+    return symbols
+
+# ── 2. Lấy giá tất cả mã từ bảng giá VCI ────────────────────────────
+def get_board_prices(symbols):
+    """Lấy giá realtime từ VCI board — nhanh, 1 request cho tất cả"""
+    prices = {}
     try:
-        from vnstock import Listing
+        stock = Vnstock().stock(symbol='VCB', source='VCI')
+        # Thử lấy bảng giá toàn thị trường
         for exchange in ['HOSE', 'HNX', 'UPCOM']:
             try:
-                df = Listing().symbols_by_exchange(exchange=exchange, lang='vi')
-                for _, row in df.iterrows():
-                    tickers.append({
-                        'ticker':   row.get('symbol', ''),
-                        'name':     row.get('organ_name', ''),
-                        'exchange': exchange,
-                        'industry': row.get('icb_name3', ''),
-                    })
-            except: pass
-        print(f'  vnstock listing: {len(tickers)} mã')
+                df = stock.trading.price_board(symbols_list=[
+                    s['ticker'] for s in symbols if s['exchange'] == exchange
+                ][:500])
+                if df is not None and not df.empty:
+                    for _, row in df.iterrows():
+                        t = str(row.get('symbol', row.get('ticker', ''))).upper()
+                        close = safe_float(row.get('close') or row.get('match_price') or row.get('price'))
+                        ref   = safe_float(row.get('ref_price') or row.get('reference'))
+                        if t and close:
+                            chg = round((close - ref) / ref * 100, 2) if ref and ref > 0 else None
+                            prices[t] = {
+                                'price':     close,
+                                'changePct': chg,
+                                'volume':    safe_float(row.get('match_volume') or row.get('volume')),
+                            }
+            except Exception as e:
+                print(f"  [WARN] board {exchange}: {e}")
     except Exception as e:
-        print(f'  [WARN] vnstock listing: {e}')
+        print(f"  [WARN] board prices: {e}")
+    print(f"  Board prices: {len(prices)} mã")
+    return prices
 
-    return tickers
-
-# ── 2. Giá real-time từ TCBS batch ───────────────────────────────────
-def get_tcbs_prices(tickers):
-    """TCBS second-tc-price — batch, nhanh, đúng đơn vị VND"""
-    results = {}
-    syms = [t['ticker'] for t in tickers]
-
-    for i in range(0, len(syms), 100):
-        batch = syms[i:i+100]
+# ── 3. Lấy lịch sử cho top 200 mã ───────────────────────────────────
+def get_history(ticker, days=60):
+    """Lấy lịch sử OHLCV — thử VCI trước, TCBS fallback"""
+    from_date = get_from_date(days + 10)
+    today = get_today()
+    for source in ['VCI', 'TCBS']:
         try:
-            r = requests.get(
-                'https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/second-tc-price',
-                params={'tickers': ','.join(batch)},
-                headers={'User-Agent': 'Mozilla/5.0'},
-                timeout=15
-            )
-            items = r.json() if r.ok else []
-            if not isinstance(items, list):
-                items = items.get('data', [])
-            for item in items:
-                t = item.get('ticker', '')
-                price = safe_float(item.get('p') or item.get('lastPrice') or item.get('close'))
-                ref   = safe_float(item.get('r') or item.get('refPrice') or item.get('basicPrice'))
-                vol   = safe_float(item.get('vol') or item.get('totalVolume'))
-                chg   = round((price-ref)/ref*100, 2) if price and ref and ref > 0 else None
-                if t and price:
-                    results[t] = {'price': price, 'changePct': chg, 'volume': vol, 'date': today()}
-        except Exception as e:
-            print(f'  [WARN] TCBS price batch {i//100}: {e}')
-        time.sleep(SLEEP)
+            stock = Vnstock().stock(symbol=ticker, source=source)
+            df = stock.quote.history(start=from_date, end=today, interval='1D')
+            if df is not None and not df.empty and len(df) >= 10:
+                records = []
+                for _, row in df.tail(days).iterrows():
+                    c = safe_float(row.get('close'))
+                    if c and c > 0:
+                        records.append({
+                            'date':   str(row.get('time', row.name))[:10],
+                            'open':   safe_float(row.get('open')),
+                            'high':   safe_float(row.get('high')),
+                            'low':    safe_float(row.get('low')),
+                            'close':  c,
+                            'volume': safe_float(row.get('volume')),
+                        })
+                if records:
+                    return records
+        except: continue
+    return []
 
-    print(f'  TCBS prices: {len(results)} mã')
-    return results
-
-# ── 3. Lịch sử OHLCV từ TCBS (từng mã, top N) ───────────────────────
-def get_tcbs_history(ticker):
-    """TCBS history API — không qua vnstock, không rate limit"""
+# ── 4. Lấy P/B, ROE, EPS từ vnstock financials ──────────────────────
+def get_financials(ticker):
+    """Lấy chỉ số tài chính — không bắt buộc, lỗi thì bỏ qua"""
     try:
-        # TCBS chart API
-        to_ts   = int(datetime.now().timestamp())
-        from_ts = int((datetime.now() - timedelta(days=HISTORY_DAYS+10)).timestamp())
-        r = requests.get(
-            f'https://apipubaws.tcbs.com.vn/stock-insight/v1/stock/bars-long-term',
-            params={'ticker': ticker, 'type': 'stock', 'resolution': 'D',
-                    'from': from_ts, 'to': to_ts},
-            headers={'User-Agent': 'Mozilla/5.0'},
-            timeout=10
-        )
-        if not r.ok: return []
-        d = r.json()
-        times  = d.get('t', [])
-        closes = d.get('c', [])
-        opens  = d.get('o', [])
-        highs  = d.get('h', [])
-        lows   = d.get('l', [])
-        vols   = d.get('v', [])
-        records = []
-        for i, ts in enumerate(times):
-            c = safe_float(closes[i] if i < len(closes) else None)
-            if c and c > 0:
-                records.append({
-                    'date':   datetime.fromtimestamp(ts).strftime('%Y-%m-%d'),
-                    'open':   safe_float(opens[i]  if i < len(opens)  else None),
-                    'high':   safe_float(highs[i]  if i < len(highs)  else None),
-                    'low':    safe_float(lows[i]   if i < len(lows)   else None),
-                    'close':  c,
-                    'volume': safe_float(vols[i]   if i < len(vols)   else None),
-                })
-        return records[-HISTORY_DAYS:]
-    except: return []
+        stock = Vnstock().stock(symbol=ticker, source='TCBS')
+        df = stock.finance.ratio(period='quarter', lang='vi', dropna=True)
+        if df is None or df.empty: return {}
+        latest = df.iloc[-1]
+        return {
+            'pe':  safe_float(latest.get('P/E') or latest.get('pe')),
+            'pb':  safe_float(latest.get('P/B') or latest.get('pb')),
+            'roe': safe_float(latest.get('ROE') or latest.get('roe')),
+            'eps': safe_float(latest.get('EPS') or latest.get('eps')),
+        }
+    except: return {}
 
-# ── Main ──────────────────────────────────────────────────────────────
+# ── Main ─────────────────────────────────────────────────────────────
 def main():
-    print(f'=== fetch_prices.py: {datetime.now()} ===')
-
-    # Load existing
+    # Load existing để giữ data
     existing = {}
     if os.path.exists(OUTPUT_FILE):
         try:
             raw = json.load(open(OUTPUT_FILE))
-            existing = raw.get('prices', raw)
+            existing = raw.get('prices', {})
             if not isinstance(existing, dict): existing = {}
-            print(f'  Existing: {len(existing)} mã')
+            print(f"  Existing: {len(existing)} mã")
         except: pass
 
     # 1. Danh sách mã
-    print('Bước 1: Danh sách mã...')
-    tickers = get_all_tickers()
-    if not tickers:
-        print('Không lấy được danh sách mã — dùng existing')
-        tickers = [{'ticker': k, 'name': v.get('name',''), 'exchange': v.get('exchange',''), 'industry': v.get('industry','')}
+    print("Bước 1: Danh sách mã...")
+    symbols = get_all_symbols()
+    if not symbols:
+        print("Không lấy được danh sách — dùng existing")
+        symbols = [{'ticker': k, **{f: v.get(f,'') for f in ['name','exchange','industry']}}
                    for k, v in existing.items() if isinstance(v, dict)]
 
-    ticker_map = {t['ticker']: t for t in tickers}
+    # 2. Giá board (nhanh)
+    print("Bước 2: Giá board...")
+    board = get_board_prices(symbols)
 
-    # 2. Giá real-time tất cả mã
-    print('Bước 2: Giá real-time TCBS...')
-    prices = get_tcbs_prices(tickers)
-
-    # 3. Lịch sử top N HOSE + watchlist
-    print(f'Bước 3: Lịch sử top {TOP_N} mã...')
+    # 3. Watchlist từ user_data.json
     watchlist = []
     if os.path.exists('user_data.json'):
         try:
@@ -185,80 +172,81 @@ def main():
             watchlist = ud.get('watchlist', [])
         except: pass
 
-    hose_by_vol = sorted(
-        [t['ticker'] for t in tickers if 'HOSE' in t.get('exchange','').upper()],
-        key=lambda t: prices.get(t, {}).get('volume', 0) or 0,
-        reverse=True
-    )[:TOP_N]
-
-    history_tickers = list(set(hose_by_vol + watchlist))
-    print(f'  {len(history_tickers)} mã cần history')
+    # Top 200 HOSE theo volume
+    hose_syms = [s['ticker'] for s in symbols if s.get('exchange') == 'HOSE']
+    top200 = sorted(hose_syms,
+        key=lambda t: board.get(t, {}).get('volume') or existing.get(t, {}).get('volume') or 0,
+        reverse=True)[:200]
+    history_list = list(set(top200 + watchlist))
+    print(f"Bước 3: Lịch sử {len(history_list)} mã...")
 
     histories = {}
-    for i, t in enumerate(history_tickers):
-        h = get_tcbs_history(t)
-        if h: histories[t] = h
-        if (i+1) % 50 == 0:
-            print(f'  {i+1}/{len(history_tickers)} | ok={len(histories)}')
-        time.sleep(SLEEP)
+    history_count = 0
+    for i, t in enumerate(history_list):
+        h = get_history(t)
+        if h:
+            histories[t] = h
+            history_count += 1
+        if (i + 1) % 30 == 0:
+            print(f"  {i+1}/{len(history_list)} | ok={history_count}")
+        time.sleep(0.4)
+    print(f"  History xong: {history_count} mã")
 
-    print(f'  History: {len(histories)} mã')
+    # 4. Ghép tất cả
+    print("Bước 4: Ghép dữ liệu...")
+    all_prices = {}
+    sym_map = {s['ticker']: s for s in symbols}
 
-    # 4. Ghép kết quả
-    print('Bước 4: Ghép dữ liệu...')
-    result = {}
-    for ticker_info in tickers:
-        t = ticker_info['ticker']
+    for s in symbols:
+        t = s['ticker']
         ex = existing.get(t, {})
         if not isinstance(ex, dict): ex = {}
+        bd = board.get(t, {})
+        h  = histories.get(t, [])
 
-        price_data = prices.get(t, {})
-        history    = histories.get(t, [])
+        price = bd.get('price') or ex.get('price')
+        chg   = bd.get('changePct') if bd.get('price') else ex.get('changePct')
+        vol   = bd.get('volume') or ex.get('volume')
 
-        # Giá: TCBS real-time > existing
-        price = price_data.get('price') or ex.get('price')
-        chg   = price_data.get('changePct') if price_data.get('price') else ex.get('changePct')
-        vol   = price_data.get('volume') or ex.get('volume')
+        closes = [b['close'] for b in h if b.get('close')]
+        high52 = max(closes) if closes else ex.get('high52w')
+        low52  = min(closes) if closes else ex.get('low52w')
 
-        # 52w từ history
-        if history:
-            closes = [b['close'] for b in history if b.get('close')]
-            high52w = max(closes) if closes else ex.get('high52w')
-            low52w  = min(closes) if closes else ex.get('low52w')
-        else:
-            high52w = ex.get('high52w')
-            low52w  = ex.get('low52w')
-
-        result[t] = {
-            'name':      ticker_info.get('name') or ex.get('name', ''),
-            'exchange':  ticker_info.get('exchange') or ex.get('exchange', ''),
-            'industry':  ticker_info.get('industry') or ex.get('industry', ''),
+        all_prices[t] = {
+            'name':      s.get('name') or ex.get('name', ''),
+            'exchange':  s.get('exchange') or ex.get('exchange', ''),
+            'industry':  s.get('industry') or ex.get('industry', ''),
             'price':     price,
             'changePct': chg,
-            'high52w':   high52w,
-            'low52w':    low52w,
             'volume':    vol,
-            'date':      today() if price_data.get('price') else ex.get('date', ''),
-            # Giữ ratios
+            'high52w':   high52,
+            'low52w':    low52,
+            'history':   h or ex.get('history', []),
+            # Giữ ratios từ existing
             'pe':        ex.get('pe'),
             'pb':        ex.get('pb'),
             'roe':       ex.get('roe'),
             'eps':       ex.get('eps'),
             'divYield':  ex.get('divYield'),
             'marketCap': ex.get('marketCap'),
-            'history':   history or ex.get('history', []),
-            'updatedAt': today(),
+            'date':      get_today() if bd.get('price') else ex.get('date', ''),
+            'updatedAt': get_today(),
         }
 
-    result = sanitize(result)
-    output = {'prices': result, 'updated': today(), 'count': len(result)}
+    all_prices = sanitize(all_prices)
+    output = {
+        'updated':        get_today(),
+        'count':          len(all_prices),
+        'top200_history': history_count,
+        'prices':         all_prices,
+    }
 
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, separators=(',', ':'))
 
-    has_price = sum(1 for v in result.values() if v.get('price'))
-    size_mb   = os.path.getsize(OUTPUT_FILE) / 1024 / 1024
-    print(f'\n=== Xong: {len(result)} mã | {has_price} có giá | {size_mb:.1f} MB ===')
+    size_mb = os.path.getsize(OUTPUT_FILE) / 1024 / 1024
+    has_price = sum(1 for v in all_prices.values() if v.get('price'))
+    print(f"\n=== Xong: {len(all_prices)} mã | {has_price} có giá | history: {history_count} | {size_mb:.1f}MB ===")
 
 if __name__ == '__main__':
     main()
