@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-02T13:10:24.934093",
+  "updatedAt": "2026-06-02T13:57:05.399182",
   "session": "evening",
   "alerts": {
     "OIL": {
@@ -15,69 +15,37 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T13:10:22.551005"
+      "updatedAt": "2026-06-02T13:57:02.385551"
     },
     "ACV": {
       "ticker": "ACV",
       "name": "Tổng Công ty Cảng Hàng không Việt Nam - CTCP",
       "signal": "HOLD",
-      "confidence": "medium",
-      "rule_reasons": [
-        "Xu hướng giảm",
-        "MACD âm"
-      ],
+      "confidence": "low",
       "action": "GIỮ",
-      "summary": "Xu hướng giảm",
-      "detail": "Cổ phiếu ACV đang trong xu hướng giảm ngắn hạn với giá hiện tại 43.4 thấp hơn MA20 và MA50. RSI ở mức 36.6 cho thấy thị trường đang giảm, MACD âm cũng ủng hộ quan điểm này. Tuy nhiên, nhà đầu tư cần theo dõi chặt chẽ diễn biến thị trường để có quyết định phù hợp.",
+      "summary": "Không đủ dữ liệu lịch sử",
+      "detail": "",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {
-        "price": 43.4,
-        "ma20": 44.0,
-        "ma50": 45.0,
-        "rsi": 36.6,
-        "macd": -0.34,
-        "trend": "down",
-        "rsi_signal": "neutral",
-        "ma_cross": null,
-        "high52": 55.6,
-        "low52": 42.9,
-        "pct_from_high": -21.9
-      },
+      "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T13:10:23.839618"
+      "updatedAt": "2026-06-02T13:57:02.385563"
     },
     "PLX": {
       "ticker": "PLX",
       "name": "Tập đoàn Xăng Dầu Việt Nam",
       "signal": "HOLD",
-      "confidence": "medium",
-      "rule_reasons": [
-        "Xu hướng giảm",
-        "MACD âm"
-      ],
+      "confidence": "low",
       "action": "GIỮ",
-      "summary": "Xu hướng giảm",
-      "detail": "PLX đang trong xu hướng giảm với MACD âm, MA20 và MA50 đều trên giá hiện tại. RSI(14) ở mức trung lập, cách đỉnh 52 tuần -44.1%. Rủi ro giảm tiếp vẫn còn tồn tại.",
+      "summary": "Không đủ dữ liệu lịch sử",
+      "detail": "",
       "entry": null,
       "stoploss": null,
-      "timeframe": "Trung hạn",
-      "ta": {
-        "price": 38.85,
-        "ma20": 40.0,
-        "ma50": 40.0,
-        "rsi": 46.2,
-        "macd": -0.02,
-        "trend": "down",
-        "rsi_signal": "neutral",
-        "ma_cross": null,
-        "high52": 69.5,
-        "low52": 36.8,
-        "pct_from_high": -44.1
-      },
+      "timeframe": "Ngắn hạn",
+      "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T13:10:24.934010"
+      "updatedAt": "2026-06-02T13:57:02.385568"
     },
     "VIX": {
       "ticker": "VIX",
@@ -92,7 +60,7 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T13:10:24.934052"
+      "updatedAt": "2026-06-02T13:57:02.385572"
     },
     "PVS": {
       "ticker": "PVS",
@@ -107,22 +75,41 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T13:10:24.934060"
+      "updatedAt": "2026-06-02T13:57:02.385575"
     },
     "NVL": {
       "ticker": "NVL",
       "name": "CTCP Tập đoàn Đầu tư Địa ốc No Va ",
-      "signal": "HOLD",
-      "confidence": "low",
-      "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "signal": "SELL",
+      "confidence": "high",
+      "rule_reasons": [
+        "RSI quá bán",
+        "MA20 cắt xuống MA50 (death cross)",
+        "Xu hướng giảm",
+        "MACD âm",
+        "Giảm mạnh -6.9% hôm nay"
+      ],
+      "action": "BÁN",
+      "summary": "Death cross và RSI quá bán",
+      "detail": "Cổ phiếu NVL đang cho tín hiệu kỹ thuật bán mạnh do hình thành death cross và RSI quá bán, rủi ro ngắn hạn cao. Xu hướng giảm và MACD âm cũng ủng hộ việc bán ra. Tuy nhiên, nên cân nhắc thời điểm bán vì giá đã giảm mạnh -6.9% trong ngày và có thể có phản ứng tăng kỹ thuật.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {},
+      "ta": {
+        "price": 14.2,
+        "ma20": 16.0,
+        "ma50": 16.0,
+        "rsi": 23.4,
+        "macd": -0.53,
+        "trend": "down",
+        "rsi_signal": "oversold",
+        "ma_cross": "death",
+        "high52": 20.5,
+        "low52": 10.5,
+        "pct_from_high": -30.7
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T13:10:24.934067"
+      "updatedAt": "2026-06-02T13:57:03.760529"
     },
     "FPT": {
       "ticker": "FPT",
@@ -137,22 +124,38 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T13:10:24.934073"
+      "updatedAt": "2026-06-02T13:57:03.760574"
     },
     "PVT": {
       "ticker": "PVT",
       "name": "Tổng Công ty cổ phần Vận tải Dầu khí",
       "signal": "HOLD",
-      "confidence": "low",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng giảm",
+      "detail": "Cổ phiếu PVT hiện tại đang trong xu hướng giảm với tín hiệu kỹ thuật trung bình (medium), giá dưới đường MA20 và MA50. RSI(14) ở mức 36.2 tương đối trung lập, còn MACD âm cho thấy xu hướng giảm vẫn đang tiếp tục. Tuy nhiên, không nên bán tháo vì vẫn cần theo dõi các tín hiệu kỹ thuật tiếp theo.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {},
+      "ta": {
+        "price": 21.55,
+        "ma20": 23.0,
+        "ma50": 22.0,
+        "rsi": 36.2,
+        "macd": -0.14,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 30.7,
+        "low52": 19.9,
+        "pct_from_high": -29.8
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T13:10:24.934090"
+      "updatedAt": "2026-06-02T13:57:05.399146"
     }
   }
 }
