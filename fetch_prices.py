@@ -172,6 +172,30 @@ def main():
             watchlist = ud.get('watchlist', [])
         except: pass
 
+    # Bổ sung: lấy giá trực tiếp từ TCBS cho watchlist (đảm bảo có giá đúng)
+    if watchlist:
+        import requests as req
+        print(f"  TCBS price cho watchlist {watchlist}...")
+        try:
+            r = req.get(
+                'https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/second-tc-price',
+                params={'tickers': ','.join(watchlist)},
+                headers={'User-Agent': 'Mozilla/5.0'}, timeout=10
+            )
+            if r.ok:
+                items = r.json() if isinstance(r.json(), list) else r.json().get('data', [])
+                for item in items:
+                    t = item.get('ticker', '')
+                    price = safe_float(item.get('p') or item.get('lastPrice'))
+                    ref   = safe_float(item.get('r') or item.get('refPrice'))
+                    if t and price:
+                        chg = round((price-ref)/ref*100, 2) if ref and ref > 0 else None
+                        board[t] = {'price': price, 'changePct': chg,
+                                    'volume': safe_float(item.get('vol')), 'source': 'tcbs'}
+                        print(f"    TCBS {t}: {price:,.0f} ({chg:+.2f}%)" if chg else f"    TCBS {t}: {price:,.0f}")
+        except Exception as e:
+            print(f"  [WARN] TCBS watchlist: {e}")
+
     # Top 200 HOSE theo volume
     hose_syms = [s['ticker'] for s in symbols if s.get('exchange') == 'HOSE']
     top200 = sorted(hose_syms,
