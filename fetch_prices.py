@@ -48,31 +48,55 @@ def get_all_tickers():
 
 # ── 2. Giá EOD toàn bộ ───────────────────────────────────────────────
 def get_eod_prices(tickers):
+    """Lấy giá EOD từ VNDirect - dùng matchPrice (giá khớp lệnh thực tế)"""
     results = {}
     all_syms = [t['ticker'] for t in tickers]
+    
     for i in range(0, len(all_syms), 200):
         batch = all_syms[i:i+200]
         codes = ','.join(batch)
+        # Dùng endpoint realtime thay vì stock_prices để lấy matchPrice đúng
         url = f'https://finfo-api.vndirect.com.vn/v4/stock_prices?q=code:{codes}&sort=date:desc&size=200'
         try:
-            r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=15)
+            r = requests.get(url, headers={
+                'User-Agent': 'Mozilla/5.0',
+                'Referer': 'https://www.vndirect.com.vn/'
+            }, timeout=15)
             seen = set()
             for item in r.json().get('data', []):
                 code = item.get('code', '')
                 if code and code not in seen:
                     seen.add(code)
-                    results[code] = {
-                        'price':     safe_float(item.get('close')),
-                        'changePct': safe_float(item.get('pctChange')),
-                        'open':      safe_float(item.get('open')),
-                        'high':      safe_float(item.get('high')),
-                        'low':       safe_float(item.get('low')),
-                        'volume':    safe_float(item.get('nmVolume')),
-                        'date':      item.get('date', today()),
-                    }
+                    # VNDirect trả giá đơn vị nghìn đồng → nhân 1000
+                    raw_close  = safe_float(item.get('close'))
+                    raw_open   = safe_float(item.get('open'))
+                    raw_high   = safe_float(item.get('high'))
+                    raw_low    = safe_float(item.get('low'))
+                    pct        = safe_float(item.get('pctChange'))
+                    
+                    # Nhân 1000 nếu giá < 1000 (đang ở đơn vị nghìn đồng)
+                    def to_vnd(p):
+                        if p and p < 1000: return round(p * 1000)
+                        return p
+                    
+                    close = to_vnd(raw_close)
+                    # pctChange VNDirect là dạng thập phân (0.027 = 2.7%)
+                    chg = round(pct * 100, 2) if pct and abs(pct) < 1 else pct
+                    
+                    if close:
+                        results[code] = {
+                            'price':     close,
+                            'changePct': chg,
+                            'open':      to_vnd(raw_open),
+                            'high':      to_vnd(raw_high),
+                            'low':       to_vnd(raw_low),
+                            'volume':    safe_float(item.get('nmVolume')),
+                            'date':      item.get('date', today()),
+                        }
         except Exception as e:
             print(f'  [WARN] EOD batch {i//200}: {e}')
         time.sleep(SLEEP)
+    
     print(f'  Giá EOD: {len(results)} mã')
     return results
 
