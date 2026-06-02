@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-02T12:38:39.417263",
+  "updatedAt": "2026-06-02T13:10:24.934093",
   "session": "evening",
   "alerts": {
     "OIL": {
@@ -15,37 +15,69 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T12:38:37.987733"
+      "updatedAt": "2026-06-02T13:10:22.551005"
     },
     "ACV": {
       "ticker": "ACV",
       "name": "Tổng Công ty Cảng Hàng không Việt Nam - CTCP",
       "signal": "HOLD",
-      "confidence": "low",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng giảm",
+      "detail": "Cổ phiếu ACV đang trong xu hướng giảm ngắn hạn với giá hiện tại 43.4 thấp hơn MA20 và MA50. RSI ở mức 36.6 cho thấy thị trường đang giảm, MACD âm cũng ủng hộ quan điểm này. Tuy nhiên, nhà đầu tư cần theo dõi chặt chẽ diễn biến thị trường để có quyết định phù hợp.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {},
+      "ta": {
+        "price": 43.4,
+        "ma20": 44.0,
+        "ma50": 45.0,
+        "rsi": 36.6,
+        "macd": -0.34,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 55.6,
+        "low52": 42.9,
+        "pct_from_high": -21.9
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T12:38:37.987747"
+      "updatedAt": "2026-06-02T13:10:23.839618"
     },
     "PLX": {
       "ticker": "PLX",
       "name": "Tập đoàn Xăng Dầu Việt Nam",
       "signal": "HOLD",
-      "confidence": "low",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng giảm",
+      "detail": "PLX đang trong xu hướng giảm với MACD âm, MA20 và MA50 đều trên giá hiện tại. RSI(14) ở mức trung lập, cách đỉnh 52 tuần -44.1%. Rủi ro giảm tiếp vẫn còn tồn tại.",
       "entry": null,
       "stoploss": null,
-      "timeframe": "Ngắn hạn",
-      "ta": {},
+      "timeframe": "Trung hạn",
+      "ta": {
+        "price": 38.85,
+        "ma20": 40.0,
+        "ma50": 40.0,
+        "rsi": 46.2,
+        "macd": -0.02,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 69.5,
+        "low52": 36.8,
+        "pct_from_high": -44.1
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T12:38:37.987752"
+      "updatedAt": "2026-06-02T13:10:24.934010"
     },
     "VIX": {
       "ticker": "VIX",
@@ -60,7 +92,7 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T12:38:37.987760"
+      "updatedAt": "2026-06-02T13:10:24.934052"
     },
     "PVS": {
       "ticker": "PVS",
@@ -75,7 +107,7 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T12:38:37.987764"
+      "updatedAt": "2026-06-02T13:10:24.934060"
     },
     "NVL": {
       "ticker": "NVL",
@@ -90,38 +122,22 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T12:38:37.987768"
+      "updatedAt": "2026-06-02T13:10:24.934067"
     },
     "FPT": {
       "ticker": "FPT",
       "name": "CTCP FPT",
       "signal": "HOLD",
       "confidence": "low",
-      "rule_reasons": [
-        "Xu hướng tăng",
-        "MACD âm"
-      ],
       "action": "GIỮ",
-      "summary": "Xu hướng tăng, MACD âm",
-      "detail": "Giá hiện tại cao hơn MA20 và MA50, RSI(14) ở mức trung lập. Tuy nhiên, MACD âm và cách đỉnh 52 tuần -23.4% cho thấy xu hướng tăng vẫn còn nhưng có tín hiệu cảnh báo. Rủi ro điều chỉnh vẫn存在, nhà đầu tư cần theo dõi chặt chẽ.",
+      "summary": "Không đủ dữ liệu lịch sử",
+      "detail": "",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {
-        "price": 74.8,
-        "ma20": 73.0,
-        "ma50": 74.0,
-        "rsi": 62.2,
-        "macd": -0.03,
-        "trend": "up",
-        "rsi_signal": "neutral",
-        "ma_cross": null,
-        "high52": 97.65,
-        "low52": 69.05,
-        "pct_from_high": -23.4
-      },
+      "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T12:38:39.417204"
+      "updatedAt": "2026-06-02T13:10:24.934073"
     },
     "PVT": {
       "ticker": "PVT",
@@ -136,7 +152,7 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T12:38:39.417259"
+      "updatedAt": "2026-06-02T13:10:24.934090"
     }
   }
 }
