@@ -1,56 +1,67 @@
 #!/usr/bin/env python3
 """
 fetch_ratios.py — Cập nhật financial ratios vào prices.json
-Nguồn: TCBS (HOSE) + SSI (HNX/UPCOM)
+Chỉ lấy HOSE (~400 mã) để tránh timeout GitHub Actions
+TCBS batch API thay vì từng mã một
 """
 
 import json, os, time, requests
 from datetime import datetime
 
 OUTPUT_FILE = 'prices.json'
-SLEEP       = 0.4
 
 def safe_float(v):
     try: return float(v) if v is not None else None
     except: return None
 
-def get_ratio_tcbs(ticker):
-    """TCBS — chủ yếu HOSE, ổn định từ GitHub Actions"""
-    for url in [
-        f'https://apipubaws.tcbs.com.vn/tcanalysis/v1/ticker/{ticker}/financialratio?yearly=0&isAll=false',
-        f'https://apipubaws.tcbs.com.vn/tcanalysis/v1/ticker/{ticker}/fundamental',
-    ]:
+def get_ratios_batch_tcbs(tickers):
+    """
+    TCBS screening API — lấy nhiều mã cùng lúc
+    Trả về dict {ticker: {pe, pb, roe, eps, ...}}
+    """
+    # TCBS có endpoint lấy danh sách với ratios
+    url = 'https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/second-tc-price'
+    results = {}
+    
+    # Batch 50 mã/request
+    for i in range(0, len(tickers), 50):
+        batch = tickers[i:i+50]
+        params = {'tickers': ','.join(batch)}
         try:
-            r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=8)
+            r = requests.get(url, params=params,
+                           headers={'User-Agent': 'Mozilla/5.0'}, timeout=15)
             if not r.ok: continue
-            d = r.json()
-            item = d[0] if isinstance(d, list) and d else d
-            if not item: continue
-            result = {
-                'pe':        safe_float(item.get('pe')),
-                'pb':        safe_float(item.get('pb')),
-                'roe':       safe_float(item.get('roe')),
-                'eps':       safe_float(item.get('eps')),
-                'divYield':  safe_float(item.get('dividendYield') or item.get('divYield')),
-                'marketCap': safe_float(item.get('marketCap')),
-            }
-            if any(v for v in result.values()):
-                return result
-        except: continue
-    return {}
+            data = r.json()
+            items = data if isinstance(data, list) else data.get('data', [])
+            for item in items:
+                t = item.get('ticker', '')
+                if t:
+                    results[t] = {
+                        'pe':  safe_float(item.get('pe')),
+                        'pb':  safe_float(item.get('pb')),
+                        'roe': safe_float(item.get('roe')),
+                        'eps': safe_float(item.get('eps')),
+                    }
+        except Exception as e:
+            print(f'  [WARN] TCBS batch {i//50}: {e}')
+        time.sleep(0.3)
+    
+    return results
 
-def get_ratio_ssi(ticker):
-    """SSI Data — fallback cho HNX/UPCOM"""
-    url = f'https://fc.ssi.com.vn/utilities/StockDetail?symbol={ticker}'
+def get_ratio_single(ticker):
+    """Single ticker fallback"""
+    url = f'https://apipubaws.tcbs.com.vn/tcanalysis/v1/ticker/{ticker}/financialratio?yearly=0&isAll=false'
     try:
         r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=8)
         if not r.ok: return {}
-        d = r.json().get('data', {}) or {}
+        d = r.json()
+        item = d[0] if isinstance(d, list) and d else d
+        if not item or not isinstance(item, dict): return {}
         return {
-            'pe':  safe_float(d.get('pe')  or d.get('PeRatio')),
-            'pb':  safe_float(d.get('pb')  or d.get('PbRatio')),
-            'roe': safe_float(d.get('roe') or d.get('Roe')),
-            'eps': safe_float(d.get('eps') or d.get('Eps')),
+            'pe':  safe_float(item.get('pe')),
+            'pb':  safe_float(item.get('pb')),
+            'roe': safe_float(item.get('roe')),
+            'eps': safe_float(item.get('eps')),
         }
     except: return {}
 
@@ -64,47 +75,53 @@ def main():
     with open(OUTPUT_FILE) as f:
         raw = json.load(f)
 
-    # Chỉ xử lý entry là dict
     data = {k: v for k, v in raw.items() if isinstance(v, dict)}
-    print(f'  {len(data)} mã hợp lệ')
+    print(f'  {len(data)} mã hợp lệ trong prices.json')
 
-    # Sắp xếp: HOSE trước
-    def ex_order(t):
-        return {'HOSE': 0, 'HNX': 1, 'UPCOM': 2}.get(data[t].get('exchange',''), 3)
-    tickers = sorted(data.keys(), key=ex_order)
+    # Chỉ xử lý HOSE để tránh timeout (~400 mã)
+    hose = [t for t, v in data.items() if v.get('exchange') == 'HOSE']
+    hnx  = [t for t, v in data.items() if v.get('exchange') == 'HNX']
+    print(f'  HOSE: {len(hose)} | HNX: {len(hnx)} mã')
 
-    updated = failed = 0
-    for i, ticker in enumerate(tickers):
-        ex = data[ticker].get('exchange', '')
+    # Thử batch API trước
+    print('Bước 1: TCBS batch API...')
+    all_tickers = hose + hnx[:100]  # HOSE + 100 mã HNX lớn nhất
+    batch_results = get_ratios_batch_tcbs(all_tickers)
+    print(f'  Batch: {len(batch_results)} mã có data')
 
-        # HOSE → TCBS, HNX/UPCOM → SSI
-        if ex == 'HOSE':
-            ratios = get_ratio_tcbs(ticker)
-        else:
-            ratios = get_ratio_ssi(ticker)
-            if not any(v for v in ratios.values()):
-                ratios = get_ratio_tcbs(ticker)  # fallback
+    # Với mã HOSE chưa có PE → single request
+    missing = [t for t in hose if not batch_results.get(t, {}).get('pe')]
+    print(f'Bước 2: Single request cho {len(missing)} mã HOSE thiếu PE...')
+    
+    for i, ticker in enumerate(missing):
+        r = get_ratio_single(ticker)
+        if r:
+            batch_results[ticker] = batch_results.get(ticker, {})
+            batch_results[ticker].update({k: v for k, v in r.items() if v})
+        if (i+1) % 50 == 0:
+            print(f'  {i+1}/{len(missing)}...')
+        time.sleep(0.2)
 
-        if any(v is not None for v in ratios.values()):
-            for f in ['pe','pb','roe','eps','divYield','marketCap']:
-                if ratios.get(f) is not None:
-                    data[ticker][f] = ratios[f]
-            updated += 1
-        else:
-            failed += 1
+    # Merge vào prices.json
+    updated = 0
+    for ticker, ratios in batch_results.items():
+        if ticker not in data: continue
+        changed = False
+        for field in ['pe', 'pb', 'roe', 'eps']:
+            if ratios.get(field) is not None:
+                data[ticker][field] = ratios[field]
+                changed = True
+        if changed: updated += 1
 
-        if (i+1) % 100 == 0:
-            print(f'  {i+1}/{len(tickers)} | ok={updated} fail={failed}')
-        time.sleep(SLEEP)
-
-    # Ghi lại
     raw.update(data)
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         json.dump(raw, f, ensure_ascii=False, separators=(',', ':'))
 
-    pe = sum(1 for v in data.values() if v.get('pe'))
-    pb = sum(1 for v in data.values() if v.get('pb'))
-    print(f'\n=== Xong: updated={updated} fail={failed} | PE={pe} PB={pb} mã ===')
+    pe  = sum(1 for v in data.values() if v.get('pe'))
+    pb  = sum(1 for v in data.values() if v.get('pb'))
+    roe = sum(1 for v in data.values() if v.get('roe'))
+    print(f'\n=== Xong: updated={updated} | PE={pe} PB={pb} ROE={roe} mã ===')
+    print(f'  {datetime.now()}')
 
 if __name__ == '__main__':
     main()
