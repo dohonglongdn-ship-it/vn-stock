@@ -75,25 +75,26 @@ def get_eod_prices(tickers):
 # ── 3. Lịch sử OHLCV top 200 mã ─────────────────────────────────────
 def get_history(ticker):
     from vnstock import Quote
-    try:
-        df = Quote(symbol=ticker, source='TCBS').history(
-            start=days_ago(HISTORY_DAYS + 10), end=today(), interval='1D'
-        )
-        if df is None or df.empty: return []
-        records = []
-        for _, row in df.tail(HISTORY_DAYS).iterrows():
-            records.append({
-                'date':   str(row.get('time', '')).split()[0],
-                'open':   safe_float(row.get('open')),
-                'high':   safe_float(row.get('high')),
-                'low':    safe_float(row.get('low')),
-                'close':  safe_float(row.get('close')),
-                'volume': safe_float(row.get('volume')),
-            })
-        return records
-    except Exception as e:
-        print(f'  [WARN] History {ticker}: {e}')
-        return []
+    for source in ['VCI', 'TCBS', 'MSN']:
+        try:
+            df = Quote(symbol=ticker, source=source).history(
+                start=days_ago(HISTORY_DAYS + 10), end=today(), interval='1D'
+            )
+            if df is not None and not df.empty:
+                records = []
+                for _, row in df.tail(HISTORY_DAYS).iterrows():
+                    records.append({
+                        'date':   str(row.get('time', '')).split()[0],
+                        'open':   safe_float(row.get('open')),
+                        'high':   safe_float(row.get('high')),
+                        'low':    safe_float(row.get('low')),
+                        'close':  safe_float(row.get('close')),
+                        'volume': safe_float(row.get('volume')),
+                    })
+                return records
+        except: continue
+    print(f'  [WARN] History {ticker}: all sources failed')
+    return []
 
 def calc_52w(history):
     if not history: return None, None
