@@ -31,9 +31,10 @@ jobs:
           python3 -c "
           import json
           d = json.load(open('prices.json'))
-          pe = sum(1 for v in d.values() if v.get('pe'))
-          pb = sum(1 for v in d.values() if v.get('pb'))
-          print(f'P/E: {pe} mã | P/B: {pb} mã / {len(d)} tổng')
+          valid = {k: v for k, v in d.items() if isinstance(v, dict)}
+          pe = sum(1 for v in valid.values() if v.get('pe'))
+          pb = sum(1 for v in valid.values() if v.get('pb'))
+          print(f'P/E: {pe} ma | P/B: {pb} ma / {len(valid)} tong')
           "
 
       - name: Commit & push
