@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-02T07:50:44.224729",
-  "session": "midday",
+  "updatedAt": "2026-06-02T09:38:48.260594",
+  "session": "evening",
   "alerts": {
     "OIL": {
       "ticker": "OIL",
@@ -14,8 +14,8 @@
       "stoploss": null,
       "timeframe": "Ngắn hạn",
       "ta": {},
-      "session": "midday",
-      "updatedAt": "2026-06-02T07:50:44.224666"
+      "session": "evening",
+      "updatedAt": "2026-06-02T09:38:48.260547"
     },
     "ACV": {
       "ticker": "ACV",
@@ -29,8 +29,8 @@
       "stoploss": null,
       "timeframe": "Ngắn hạn",
       "ta": {},
-      "session": "midday",
-      "updatedAt": "2026-06-02T07:50:44.224685"
+      "session": "evening",
+      "updatedAt": "2026-06-02T09:38:48.260565"
     },
     "PLX": {
       "ticker": "PLX",
@@ -44,8 +44,8 @@
       "stoploss": null,
       "timeframe": "Ngắn hạn",
       "ta": {},
-      "session": "midday",
-      "updatedAt": "2026-06-02T07:50:44.224692"
+      "session": "evening",
+      "updatedAt": "2026-06-02T09:38:48.260570"
     },
     "VIX": {
       "ticker": "VIX",
@@ -59,8 +59,8 @@
       "stoploss": null,
       "timeframe": "Ngắn hạn",
       "ta": {},
-      "session": "midday",
-      "updatedAt": "2026-06-02T07:50:44.224696"
+      "session": "evening",
+      "updatedAt": "2026-06-02T09:38:48.260573"
     },
     "PVS": {
       "ticker": "PVS",
@@ -74,8 +74,8 @@
       "stoploss": null,
       "timeframe": "Ngắn hạn",
       "ta": {},
-      "session": "midday",
-      "updatedAt": "2026-06-02T07:50:44.224701"
+      "session": "evening",
+      "updatedAt": "2026-06-02T09:38:48.260575"
     },
     "NVL": {
       "ticker": "NVL",
@@ -89,8 +89,8 @@
       "stoploss": null,
       "timeframe": "Ngắn hạn",
       "ta": {},
-      "session": "midday",
-      "updatedAt": "2026-06-02T07:50:44.224706"
+      "session": "evening",
+      "updatedAt": "2026-06-02T09:38:48.260578"
     },
     "FPT": {
       "ticker": "FPT",
@@ -104,8 +104,8 @@
       "stoploss": null,
       "timeframe": "Ngắn hạn",
       "ta": {},
-      "session": "midday",
-      "updatedAt": "2026-06-02T07:50:44.224711"
+      "session": "evening",
+      "updatedAt": "2026-06-02T09:38:48.260581"
     },
     "PVT": {
       "ticker": "PVT",
@@ -119,8 +119,8 @@
       "stoploss": null,
       "timeframe": "Ngắn hạn",
       "ta": {},
-      "session": "midday",
-      "updatedAt": "2026-06-02T07:50:44.224726"
+      "session": "evening",
+      "updatedAt": "2026-06-02T09:38:48.260592"
     }
   }
 }
