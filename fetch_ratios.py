@@ -11,7 +11,11 @@ from datetime import datetime
 OUTPUT_FILE = 'prices.json'
 
 def safe_float(v):
-    try: return float(v) if v is not None else None
+    try:
+        f = float(v) if v is not None else None
+        if f is None: return None
+        import math
+        return None if math.isnan(f) or math.isinf(f) else f
     except: return None
 
 def get_ratios_batch_tcbs(tickers):
@@ -115,7 +119,7 @@ def main():
 
     raw.update(data)
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-        json.dump(raw, f, ensure_ascii=False, separators=(',', ':'))
+        json.dump(raw, f, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
 
     pe  = sum(1 for v in data.values() if v.get('pe'))
     pb  = sum(1 for v in data.values() if v.get('pb'))
