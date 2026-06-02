@@ -2,13 +2,13 @@ name: Update Financial Ratios Weekly
 
 on:
   schedule:
-    - cron: '0 2 * * 6'   # 09:00 ICT T7 hàng tuần
+    - cron: '0 2 * * 6'   # 09:00 ICT T7
   workflow_dispatch:
 
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 25
     permissions:
       contents: write
 
@@ -26,7 +26,7 @@ jobs:
 
       - name: Run fetch_ratios.py
         run: python fetch_ratios.py
-        timeout-minutes: 40
+        timeout-minutes: 20
 
       - name: Show results
         run: |
@@ -36,7 +36,7 @@ jobs:
           valid = {k: v for k, v in d.items() if isinstance(v, dict)}
           pe = sum(1 for v in valid.values() if v.get('pe'))
           pb = sum(1 for v in valid.values() if v.get('pb'))
-          print(f'P/E: {pe} ma | P/B: {pb} ma / {len(valid)} tong')
+          print(f'PE={pe} PB={pb} / {len(valid)} ma')
           "
 
       - name: Commit & push
