@@ -182,8 +182,22 @@ def main():
             'updatedAt':today(),
         }
 
+    import math
+
+    def sanitize(obj):
+        """Đệ quy thay NaN/Inf bằng None trước khi ghi JSON"""
+        if isinstance(obj, dict):
+            return {k: sanitize(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [sanitize(v) for v in obj]
+        if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+            return None
+        return obj
+
+    result = sanitize(result)
+
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-        json.dump(result, f, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
+        json.dump(result, f, ensure_ascii=False, separators=(',', ':'))
 
     size_mb = os.path.getsize(OUTPUT_FILE) / 1024 / 1024
     print(f'\n=== Xong: {len(result)} mã, {size_mb:.1f} MB, {datetime.now()} ===')
