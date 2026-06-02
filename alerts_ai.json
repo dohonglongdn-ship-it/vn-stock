@@ -1,70 +1,134 @@
 {
-  "updatedAt": "2026-06-02T09:38:48.260594",
+  "updatedAt": "2026-06-02T10:15:58.683933",
   "session": "evening",
   "alerts": {
     "OIL": {
       "ticker": "OIL",
-      "name": "OIL",
+      "name": "Tổng Công ty Dầu Việt Nam - CTCP",
       "signal": "HOLD",
-      "confidence": "low",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng giảm, tín hiệu hỗn hợp",
+      "detail": "Tín hiệu kỹ thuật ở mức HOLD với độ tin cậy trung bình. Giá cổ phiếu OIL đang phía dưới đường MA20 và MA50, RSI(14) ở mức trung lập, MACD âm. Cổ phiếu đang cách đỉnh 52 tuần 41.1%.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {},
+      "ta": {
+        "price": 14.6,
+        "ma20": 15.0,
+        "ma50": 15.0,
+        "rsi": 44.3,
+        "macd": -0.02,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 24.8,
+        "low52": 14.1,
+        "pct_from_high": -41.1
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T09:38:48.260547"
+      "updatedAt": "2026-06-02T10:15:54.663078"
     },
     "ACV": {
       "ticker": "ACV",
-      "name": "ACV",
+      "name": "Tổng Công ty Cảng Hàng không Việt Nam - CTCP",
       "signal": "HOLD",
-      "confidence": "low",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng giảm",
+      "detail": "Giá hiện tại dưới MA20 và MA50, RSI trung lập, MACD âm. Xu hướng giảm vẫn tiếp diễn, nhà đầu tư nên thận trọng. Risks bao gồm giá tiếp tục giảm",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {},
+      "ta": {
+        "price": 43.4,
+        "ma20": 44.0,
+        "ma50": 45.0,
+        "rsi": 36.6,
+        "macd": -0.34,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 55.6,
+        "low52": 42.9,
+        "pct_from_high": -21.9
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T09:38:48.260565"
+      "updatedAt": "2026-06-02T10:15:55.650421"
     },
     "PLX": {
       "ticker": "PLX",
-      "name": "PLX",
+      "name": "Tập đoàn Xăng Dầu Việt Nam",
       "signal": "HOLD",
       "confidence": "low",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD dương"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng giảm",
+      "detail": "PLX đang trong xu hướng giảm, MACD dương nhưng RSI(14) neutral. Mức giá hiện tại 39.55 gần với MA20 và MA50. Cần quan sát thêm biến động trong ngắn hạn.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {},
+      "ta": {
+        "price": 39.55,
+        "ma20": 40.0,
+        "ma50": 40.0,
+        "rsi": 47.9,
+        "macd": 0.04,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 69.5,
+        "low52": 36.8,
+        "pct_from_high": -43.1
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T09:38:48.260570"
+      "updatedAt": "2026-06-02T10:15:56.602589"
     },
     "VIX": {
       "ticker": "VIX",
-      "name": "VIX",
+      "name": "CTCP Chứng khoán VIX",
       "signal": "HOLD",
       "confidence": "low",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD dương"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng giảm",
+      "detail": "Cổ phiếu VIX có tín hiệu kỹ thuậtHold với độ tin cậy thấp do xu hướng giảm và MACD dương. Dữ liệu TA cho thấy giá hiện tại thấp hơn MA20 và MA50, RSI(14) ở mức 32.1 cho thấyNeutral. Cổ phiếu này đang cách đỉnh 52 tuần -11.2%.",
       "entry": null,
       "stoploss": null,
-      "timeframe": "Ngắn hạn",
-      "ta": {},
+      "timeframe": "Trung hạn",
+      "ta": {
+        "price": 17.4,
+        "ma20": 18.0,
+        "ma50": 18.0,
+        "rsi": 32.1,
+        "macd": 0.07,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 19.59,
+        "low52": 15.35,
+        "pct_from_high": -11.2
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T09:38:48.260573"
+      "updatedAt": "2026-06-02T10:15:57.581820"
     },
     "PVS": {
       "ticker": "PVS",
-      "name": "PVS",
+      "name": "Tổng Công ty cổ phần Dịch vụ Kỹ thuật Dầu khí Việt Nam",
       "signal": "HOLD",
       "confidence": "low",
       "action": "GIỮ",
@@ -75,11 +139,11 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T09:38:48.260575"
+      "updatedAt": "2026-06-02T10:15:57.581866"
     },
     "NVL": {
       "ticker": "NVL",
-      "name": "NVL",
+      "name": "CTCP Tập đoàn Đầu tư Địa ốc No Va ",
       "signal": "HOLD",
       "confidence": "low",
       "action": "GIỮ",
@@ -90,11 +154,11 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T09:38:48.260578"
+      "updatedAt": "2026-06-02T10:15:57.581873"
     },
     "FPT": {
       "ticker": "FPT",
-      "name": "FPT",
+      "name": "CTCP FPT",
       "signal": "HOLD",
       "confidence": "low",
       "action": "GIỮ",
@@ -105,22 +169,38 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T09:38:48.260581"
+      "updatedAt": "2026-06-02T10:15:57.581879"
     },
     "PVT": {
       "ticker": "PVT",
-      "name": "PVT",
+      "name": "Tổng Công ty cổ phần Vận tải Dầu khí",
       "signal": "HOLD",
-      "confidence": "low",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng giảm, chờ tín hiệu",
+      "detail": "PVT đang trong xu hướng giảm với MACD âm và RSI trung lập. Dữ liệu TA không tích cực, tuy nhiên vẫn có thể có cơ hội Pullback. Rủi ro vẫn cao do xu hướng giảm mạnh",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {},
+      "ta": {
+        "price": 21.55,
+        "ma20": 23.0,
+        "ma50": 22.0,
+        "rsi": 36.2,
+        "macd": -0.14,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 30.7,
+        "low52": 19.9,
+        "pct_from_high": -29.8
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T09:38:48.260592"
+      "updatedAt": "2026-06-02T10:15:58.683894"
     }
   }
 }
