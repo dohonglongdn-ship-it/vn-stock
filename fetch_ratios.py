@@ -79,7 +79,9 @@ def main():
     with open(OUTPUT_FILE) as f:
         raw = json.load(f)
 
-    data = {k: v for k, v in raw.items() if isinstance(v, dict)}
+    # Đọc đúng format {prices: {...}, updated: ..., count: ...}
+    prices = raw.get('prices', raw)  # fallback nếu format cũ
+    data = {k: v for k, v in prices.items() if isinstance(v, dict)}
     print(f'  {len(data)} mã hợp lệ trong prices.json')
 
     # Chỉ xử lý HOSE để tránh timeout (~400 mã)
@@ -128,7 +130,10 @@ def main():
             return None
         return obj
 
-    raw = sanitize(raw)
+    prices.update(data)
+    raw['prices'] = sanitize(prices)
+    raw['updated'] = raw.get('updated', datetime.now().strftime('%Y-%m-%d'))
+    raw['count']   = len(prices)
 
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         json.dump(raw, f, ensure_ascii=False, separators=(',', ':'))
