@@ -170,20 +170,36 @@ def main():
         try:
             ud = json.load(open('user_data.json'))
             watchlist = ud.get('watchlist', [])
+            print(f"  Watchlist từ user_data.json: {watchlist}")
         except: pass
 
-    # Bổ sung: lấy giá trực tiếp từ TCBS cho watchlist (đảm bảo có giá đúng)
-    if watchlist:
-        import requests as req
-        print(f"  TCBS price cho watchlist {watchlist}...")
+    # Danh sách mã quan trọng cần đảm bảo có giá (kể cả UPCOM)
+    MUST_HAVE = [
+        'VCB','BID','CTG','MBB','TCB','ACB','VPB','STB','HDB','LPB',
+        'SSI','VND','HCM','VIX','MBS',
+        'HPG','HSG','VNM','MSN','SAB',
+        'VIC','VHM','NVL','PDR','KDH',
+        'GAS','PLX','OIL','PVD','PVS','PVT',
+        'FPT','MWG','PNJ',
+        'HVN','VJC','ACV','POW','REE',
+        'GVR','VGI','BSR','VEA',
+    ]
+    tcbs_list = list(set(MUST_HAVE + watchlist))
+
+    # Bổ sung: lấy giá trực tiếp từ TCBS cho tất cả mã quan trọng
+    import requests as req
+    print(f"  TCBS price cho {len(tcbs_list)} mã quan trọng...")
+    for i in range(0, len(tcbs_list), 50):
+        batch = tcbs_list[i:i+50]
         try:
             r = req.get(
                 'https://apipubaws.tcbs.com.vn/stock-insight/v2/stock/second-tc-price',
-                params={'tickers': ','.join(watchlist)},
+                params={'tickers': ','.join(batch)},
                 headers={'User-Agent': 'Mozilla/5.0'}, timeout=10
             )
             if r.ok:
-                items = r.json() if isinstance(r.json(), list) else r.json().get('data', [])
+                data = r.json()
+                items = data if isinstance(data, list) else data.get('data', [])
                 for item in items:
                     t = item.get('ticker', '')
                     price = safe_float(item.get('p') or item.get('lastPrice'))
@@ -191,8 +207,11 @@ def main():
                     if t and price:
                         chg = round((price-ref)/ref*100, 2) if ref and ref > 0 else None
                         board[t] = {'price': price, 'changePct': chg,
-                                    'volume': safe_float(item.get('vol')), 'source': 'tcbs'}
-                        print(f"    TCBS {t}: {price:,.0f} ({chg:+.2f}%)" if chg else f"    TCBS {t}: {price:,.0f}")
+                                    'volume': safe_float(item.get('vol'))}
+                        print(f"    {t}: {price:,.0f}")
+        except Exception as e:
+            print(f"  [WARN] TCBS batch {i//50}: {e}")
+        time.sleep(0.2)
         except Exception as e:
             print(f"  [WARN] TCBS watchlist: {e}")
 
