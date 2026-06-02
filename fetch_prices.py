@@ -20,7 +20,11 @@ def days_ago(n):
     return (datetime.now() - timedelta(days=n)).strftime('%Y-%m-%d')
 
 def safe_float(v):
-    try: return float(v) if v is not None else None
+    try:
+        f = float(v) if v is not None else None
+        if f is None: return None
+        import math
+        return None if math.isnan(f) or math.isinf(f) else f
     except: return None
 
 # ── 1. Danh sách mã ───────────────────────────────────────────────────
@@ -179,7 +183,7 @@ def main():
         }
 
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-        json.dump(result, f, ensure_ascii=False, separators=(',', ':'))
+        json.dump(result, f, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
 
     size_mb = os.path.getsize(OUTPUT_FILE) / 1024 / 1024
     print(f'\n=== Xong: {len(result)} mã, {size_mb:.1f} MB, {datetime.now()} ===')
