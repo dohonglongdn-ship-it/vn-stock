@@ -1,0 +1,45 @@
+name: Update Financial Ratios Weekly
+
+on:
+  schedule:
+    - cron: '0 2 * * 6'   # 09:00 ICT T7 hàng tuần
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests --quiet
+
+      - name: Run fetch_ratios.py
+        run: python fetch_ratios.py
+        timeout-minutes: 40
+
+      - name: Show results
+        run: |
+          python3 -c "
+          import json
+          d = json.load(open('prices.json'))
+          pe = sum(1 for v in d.values() if v.get('pe'))
+          pb = sum(1 for v in d.values() if v.get('pb'))
+          print(f'P/E: {pe} mã | P/B: {pb} mã / {len(d)} tổng')
+          "
+
+      - name: Commit & push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add prices.json
+          git diff --staged --quiet || git commit -m "📈 Cập nhật ratios PE/PB/ROE $(date +'%d/%m/%Y')"
+          git push
