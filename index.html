@@ -1311,11 +1311,13 @@ async function loadPricesJson() {
       if (!p) return
       const hist = p.history || []
       const fixedPrice = fixPrice(p.price, null)
+      // Fix giá trong history cũng cần đúng đơn vị
+      const spark = hist.slice(-10).map(b => fixPrice(b.close, null)).filter(Boolean)
       G.wlCache[t] = {
         ...(G.wlCache[t]||{}),
         price:  fixedPrice,
         chg:    p.changePct,
-        spark:  hist.slice(-10).map(b=>b.close),
+        spark:  spark,
         name:   G.wlCache[t]?.name || db(t)?.n || t,
         sector: G.wlCache[t]?.sector || db(t)?.s || '',
       }
@@ -1330,9 +1332,10 @@ async function loadPricesJson() {
     // Nếu đang xem stock thì cũng cập nhật giá
     if (G.ticker && G.pricesJson[G.ticker] && G.stockData) {
       const p = G.pricesJson[G.ticker]
-      G.stockData.price = p.price
+      const fixedP = fixPrice(p.price, null)
+      G.stockData.price = fixedP
       G.stockData.chgPct = p.changePct
-      el('h-price').textContent = fP(p.price)
+      el('h-price').textContent = fP(fixedP)
       const ce = el('h-chg')
       ce.textContent = `${p.changePct>=0?'▲':'▼'} ${fPct(p.changePct)}`
       ce.style.color = p.changePct>=0?C_UP:C_DN
