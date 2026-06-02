@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-02T13:57:05.399182",
+  "updatedAt": "2026-06-02T14:30:24.234436",
   "session": "evening",
   "alerts": {
     "OIL": {
@@ -15,67 +15,131 @@
       "timeframe": "Ngắn hạn",
       "ta": {},
       "session": "evening",
-      "updatedAt": "2026-06-02T13:57:02.385551"
+      "updatedAt": "2026-06-02T14:30:15.478649"
     },
     "ACV": {
       "ticker": "ACV",
       "name": "Tổng Công ty Cảng Hàng không Việt Nam - CTCP",
       "signal": "HOLD",
-      "confidence": "low",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng giảm",
+      "detail": "Giá ACV đang trong xu hướng giảm, MACD âm. RSI(14) ở mức 36.6, chỉ số trung lập. Cần theo dõi thêm trước khi đưa ra quyết định mới.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {},
+      "ta": {
+        "price": 43.4,
+        "ma20": 44.0,
+        "ma50": 45.0,
+        "rsi": 36.6,
+        "macd": -0.34,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 48.7,
+        "low52": 42.9,
+        "pct_from_high": -10.9
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T13:57:02.385563"
+      "updatedAt": "2026-06-02T14:30:16.583219"
     },
     "PLX": {
       "ticker": "PLX",
       "name": "Tập đoàn Xăng Dầu Việt Nam",
       "signal": "HOLD",
-      "confidence": "low",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng giảm",
+      "detail": "PLX đang trong xu hướng giảm, MACD âm và RSI ở mức trung tính. Giá đang dưới cả MA20 và MA50, thể hiện sự suy yếu. Tuy nhiên, mức giảm không quá sâu so với đỉnh 52 tuần, nên cân nhắc giữ.",
       "entry": null,
       "stoploss": null,
-      "timeframe": "Ngắn hạn",
-      "ta": {},
+      "timeframe": "Trung hạn",
+      "ta": {
+        "price": 38.85,
+        "ma20": 40.0,
+        "ma50": 40.0,
+        "rsi": 46.2,
+        "macd": -0.02,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 48.45,
+        "low52": 36.8,
+        "pct_from_high": -19.8
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T13:57:02.385568"
+      "updatedAt": "2026-06-02T14:30:17.738087"
     },
     "VIX": {
       "ticker": "VIX",
       "name": "CTCP Chứng khoán VIX",
       "signal": "HOLD",
       "confidence": "low",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD dương"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng giảm",
+      "detail": "Cổ phiếu VIX đang có xu hướng giảm với giá hiện tại thấp hơn MA20 và MA50. MACD đang ở mức dương nhưng RSI(14) ở mức trung tính, chưa có tín hiệu mua mạnh mẽ. Rủi ro giảm giá còn tiếp diễn.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {},
+      "ta": {
+        "price": 17.4,
+        "ma20": 18.0,
+        "ma50": 18.0,
+        "rsi": 32.1,
+        "macd": 0.07,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 19.35,
+        "low52": 15.35,
+        "pct_from_high": -10.1
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T13:57:02.385572"
+      "updatedAt": "2026-06-02T14:30:19.475986"
     },
     "PVS": {
       "ticker": "PVS",
       "name": "Tổng Công ty cổ phần Dịch vụ Kỹ thuật Dầu khí Việt Nam",
       "signal": "HOLD",
-      "confidence": "low",
+      "confidence": "medium",
+      "rule_reasons": [
+        "Xu hướng giảm",
+        "MACD âm"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng giảm",
+      "detail": "Giá PVS hiện tại đang thấp hơn cả MA20 và MA50, RSI ở mức trung lập. MACD âm cho thấy xu hướng giảm, nên giữ cổ phiếu. Rủi ro tiềm ẩn là giá có thể tiếp tục giảm nếu không có tín hiệu đảo chiều.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {},
+      "ta": {
+        "price": 37.8,
+        "ma20": 40.0,
+        "ma50": 39.0,
+        "rsi": 36.2,
+        "macd": -0.27,
+        "trend": "down",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 43.0,
+        "low52": 36.2,
+        "pct_from_high": -12.1
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T13:57:02.385575"
+      "updatedAt": "2026-06-02T14:30:20.763111"
     },
     "NVL": {
       "ticker": "NVL",
@@ -90,8 +154,8 @@
         "Giảm mạnh -6.9% hôm nay"
       ],
       "action": "BÁN",
-      "summary": "Death cross và RSI quá bán",
-      "detail": "Cổ phiếu NVL đang cho tín hiệu kỹ thuật bán mạnh do hình thành death cross và RSI quá bán, rủi ro ngắn hạn cao. Xu hướng giảm và MACD âm cũng ủng hộ việc bán ra. Tuy nhiên, nên cân nhắc thời điểm bán vì giá đã giảm mạnh -6.9% trong ngày và có thể có phản ứng tăng kỹ thuật.",
+      "summary": "Tín hiệu kỹ thuật SELL",
+      "detail": "RSI quá bán, MA20 cắt xuống MA50, MACD âm, giảm mạnh -6.9% hôm nay. Xu hướng giảm, có rủi ro tiếp tục giảm",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -105,26 +169,42 @@
         "rsi_signal": "oversold",
         "ma_cross": "death",
         "high52": 20.5,
-        "low52": 10.5,
+        "low52": 12.55,
         "pct_from_high": -30.7
       },
       "session": "evening",
-      "updatedAt": "2026-06-02T13:57:03.760529"
+      "updatedAt": "2026-06-02T14:30:22.046186"
     },
     "FPT": {
       "ticker": "FPT",
       "name": "CTCP FPT",
       "signal": "HOLD",
       "confidence": "low",
+      "rule_reasons": [
+        "Xu hướng tăng",
+        "MACD âm"
+      ],
       "action": "GIỮ",
-      "summary": "Không đủ dữ liệu lịch sử",
-      "detail": "",
+      "summary": "Xu hướng tăng, MACD âm",
+      "detail": "Giá đang trên đường MA20, RSI trung lập, MACD âm nên thận trọng. Xu hướng tăng ngắn hạn nhưng rủi ro điều chỉnh vẫn cao. Nhà đầu tư nên giữ cổ phiếu và theo dõi tín hiệu kỹ thuật tiếp theo.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
-      "ta": {},
+      "ta": {
+        "price": 74.8,
+        "ma20": 73.0,
+        "ma50": 74.0,
+        "rsi": 62.2,
+        "macd": -0.03,
+        "trend": "up",
+        "rsi_signal": "neutral",
+        "ma_cross": null,
+        "high52": 78.32,
+        "low52": 69.05,
+        "pct_from_high": -4.5
+      },
       "session": "evening",
-      "updatedAt": "2026-06-02T13:57:03.760574"
+      "updatedAt": "2026-06-02T14:30:23.143973"
     },
     "PVT": {
       "ticker": "PVT",
@@ -136,8 +216,8 @@
         "MACD âm"
       ],
       "action": "GIỮ",
-      "summary": "Xu hướng giảm",
-      "detail": "Cổ phiếu PVT hiện tại đang trong xu hướng giảm với tín hiệu kỹ thuật trung bình (medium), giá dưới đường MA20 và MA50. RSI(14) ở mức 36.2 tương đối trung lập, còn MACD âm cho thấy xu hướng giảm vẫn đang tiếp tục. Tuy nhiên, không nên bán tháo vì vẫn cần theo dõi các tín hiệu kỹ thuật tiếp theo.",
+      "summary": "Xu hướng giảm, MACD âm",
+      "detail": "Cổ phiếu PVT hiện đang trong xu hướng giảm với MACD âm, RSI ở mức trung tính. Điều này cho thấy áp lực bán vẫn còn và rủi ro giảm giá短 hạn vẫn tồn tại. Nhà đầu tư nên theo dõi chặt chẽ diễn biến thị trường trong ngắn hạn.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -150,12 +230,12 @@
         "trend": "down",
         "rsi_signal": "neutral",
         "ma_cross": null,
-        "high52": 30.7,
-        "low52": 19.9,
-        "pct_from_high": -29.8
+        "high52": 25.3,
+        "low52": 20.75,
+        "pct_from_high": -14.8
       },
       "session": "evening",
-      "updatedAt": "2026-06-02T13:57:05.399146"
+      "updatedAt": "2026-06-02T14:30:24.234376"
     }
   }
 }
