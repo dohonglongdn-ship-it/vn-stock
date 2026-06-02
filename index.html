@@ -1675,14 +1675,15 @@ async function loadStock(ticker) {
     const csvLastPrice = lastBar?.close || 0
 
     // Sanity check: Yahoo trả mã nước ngoài cùng tên → loại nếu chênh >10x so với CSV/json
-    const refPrice   = jsonData?.price || fixPrice(csvLastPrice, null) || 0
-    const rtPriceRaw = rt?.price || 0
-    const rtSuspect  = refPrice > 0 && rtPriceRaw > 0 &&
-                       (rtPriceRaw < refPrice/10 || rtPriceRaw > refPrice*10)
-    const rtClean    = rtSuspect ? null : rt
+    const jsonPrice    = jsonData?.price ? fixPrice(jsonData.price, null) : null
+    const refPrice     = jsonPrice || fixPrice(csvLastPrice, null) || 0
+    const rtPriceRaw   = rt?.price || 0
+    const rtSuspect    = refPrice > 0 && rtPriceRaw > 0 &&
+                         (rtPriceRaw < refPrice/10 || rtPriceRaw > refPrice*10)
+    const rtClean      = rtSuspect ? null : rt
 
     // Ưu tiên: Yahoo Finance (intraday) > prices.json (EOD hàng ngày) > CSV 06/2023
-    const price = rtClean?.price || jsonData?.price || fixPrice(csvLastPrice, null) || 0
+    const price = rtClean?.price || jsonPrice || fixPrice(csvLastPrice, null) || 0
     const priceSource = rtClean ? 'yahoo' : jsonData ? 'json' : 'csv'
     const chgPct   = rtClean?.changePct != null ? rtClean?.changePct : jsonData?.changePct != null ? jsonData?.changePct : (prevBar ? (lastBar.close-prevBar.close)/prevBar.close*100 : 0)
     const high52w  = rtClean?.high52w  || (csvBars ? Math.max(...csvBars.slice(-252).map(b=>b.high||b.close)) : null)
@@ -2207,8 +2208,8 @@ async function loadOneWlPrice(t) {
     ])
     const bars = csv||[]
 
-    // Giá: ưu tiên real-time → prices.json → CSV
-    const priceFromJson = pj?.price || null
+    // Giá: ưu tiên real-time → prices.json (với fixPrice) → CSV
+    const priceFromJson = pj?.price ? fixPrice(pj.price, null) : null
     const chgFromJson = pj?.changePct ?? null
 
     G.wlCache[t] = {
