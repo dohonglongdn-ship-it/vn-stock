@@ -117,9 +117,21 @@ def main():
                 changed = True
         if changed: updated += 1
 
-    raw.update(data)
+    import math
+
+    def sanitize(obj):
+        if isinstance(obj, dict):
+            return {k: sanitize(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [sanitize(v) for v in obj]
+        if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+            return None
+        return obj
+
+    raw = sanitize(raw)
+
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-        json.dump(raw, f, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
+        json.dump(raw, f, ensure_ascii=False, separators=(',', ':'))
 
     pe  = sum(1 for v in data.values() if v.get('pe'))
     pb  = sum(1 for v in data.values() if v.get('pb'))
