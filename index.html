@@ -1631,15 +1631,11 @@ async function loadStock(ticker) {
     const jsonData = getPriceFromJson(ticker)
 
     // 2. Parallel: CSV history (lịch sử dài) + real-time Yahoo (intraday)
-    // UPCOM không có trên Yahoo Finance → skip Worker
-    // Chỉ HOSE mới có trên Yahoo Finance ổn định
-    const exchange = (info?.e || '').toUpperCase()
-    const pjExchange = (G.pricesJson?.[ticker]?.exchange || '').toUpperCase()
-    const effectiveExchange = exchange || pjExchange
-    const skipWorker = effectiveExchange && effectiveExchange !== 'HOSE'
+    // Luôn thử Yahoo qua Worker cho tất cả sàn (HOSE/HNX/UPCOM đều có trên Yahoo .VN)
+    // prices.json là fallback khi Yahoo fail
     const [csvBars, rt] = await Promise.all([
       fetchCSV(ticker),
-      skipWorker ? Promise.resolve(null) : fetchRealtime(ticker)
+      fetchRealtime(ticker)
     ])
 
     if (!csvBars && !rt && !jsonData)
@@ -2200,20 +2196,15 @@ function addTicker(e) {
 async function loadOneWlPrice(t) {
   try {
     const info = db(t)
-    // Chỉ HOSE mới có trên Yahoo Finance ổn định
-    const exchange = (info?.e || '').toUpperCase()
-    const pjExchange = (G.pricesJson?.[t]?.exchange || '').toUpperCase()
-    const effectiveExchange = exchange || pjExchange
-    const skipWorker = effectiveExchange && effectiveExchange !== 'HOSE'
+    const pj = G.pricesJson?.[t]
 
     const [csv, rt] = await Promise.all([
       fetchCSV(t),
-      skipWorker ? Promise.resolve(null) : fetchRealtime(t)
+      fetchRealtime(t)
     ])
     const bars = csv||[]
 
-    // Fallback giá từ prices.json cho UPCOM
-    const pj = G.pricesJson?.[t]
+    // Giá: ưu tiên real-time → prices.json → CSV
     const priceFromJson = pj?.price || null
     const chgFromJson = pj?.changePct ?? null
 
