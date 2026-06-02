@@ -196,8 +196,14 @@ def main():
 
     result = sanitize(result)
 
+    output = {
+        'prices':  result,
+        'updated': today(),
+        'count':   len(result),
+    }
+
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
-        json.dump(result, f, ensure_ascii=False, separators=(',', ':'))
+        json.dump(output, f, ensure_ascii=False, separators=(',', ':'))
 
     size_mb = os.path.getsize(OUTPUT_FILE) / 1024 / 1024
     print(f'\n=== Xong: {len(result)} mã, {size_mb:.1f} MB, {datetime.now()} ===')
