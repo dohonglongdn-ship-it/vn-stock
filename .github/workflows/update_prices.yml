@@ -2,48 +2,34 @@ name: Update Stock Prices Daily
 
 on:
   schedule:
-    # Chạy 16:30 T2-T6 (giờ VN = UTC+7, 16:30 ICT = 09:30 UTC)
-    - cron: '30 9 * * 1-5'
-  workflow_dispatch:  # Cho phép chạy thủ công
+    - cron: '30 9 * * 1-5'   # 16:30 ICT T2-T6
+  workflow_dispatch:
 
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 60  # tăng lên vì lấy ratios lâu hơn
-    
+    timeout-minutes: 30
+
     steps:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install vnstock requests pandas --quiet
+        run: pip install vnstock requests pandas --quiet
 
       - name: Run fetch_prices.py
         run: python fetch_prices.py
-        timeout-minutes: 50
+        timeout-minutes: 25
 
-      - name: Check output
-        run: |
-          echo "prices.json size: $(du -sh prices.json)"
-          echo "Mã có P/E: $(python3 -c "
-          import json
-          d = json.load(open('prices.json'))
-          pe_count = sum(1 for v in d.values() if v.get('pe'))
-          pb_count = sum(1 for v in d.values() if v.get('pb'))
-          print(f'{pe_count} mã có PE, {pb_count} mã có PB / tổng {len(d)} mã')
-          ")"
-
-      - name: Commit & push prices.json
+      - name: Commit & push
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add prices.json
-          git diff --staged --quiet || git commit -m "📊 Cập nhật giá + ratios $(date +'%d/%m/%Y')"
+          git diff --staged --quiet || git commit -m "📊 Cập nhật giá $(date +'%d/%m/%Y %H:%M')"
           git push
