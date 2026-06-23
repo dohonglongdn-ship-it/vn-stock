@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-06-23T16:10:18.650723",
-  "session": "evening",
+  "updatedAt": "2026-06-23T21:05:55.203659",
+  "session": "morning",
   "alerts": {
     "ACV": {
       "ticker": "ACV",
@@ -12,11 +12,11 @@
         "MACD âm"
       ],
       "action": "GIỮ",
-      "summary": "Xu hướng giảm",
-      "detail": "Cổ phiếu ACV đang có xu hướng giảm với MACD âm và RSI ở vùng trung lập. Giá hiện tại thấp hơn MA20 và MA50, cho thấy áp lực bán vẫn còn. Tuy nhiên, mức RSI không quá thấp nên rủi ro giảm sâu cũng hạn chế.",
+      "summary": "Xu hướng giảm hiện tại",
+      "detail": "Cổ phiếu ACV đang trong xu hướng giảm với MACD âm và RSI(14) ở mức trung lập. Giá hiện tại dưới đường MA20 và MA50, cho thấy áp lực bán vẫn còn. Tuy nhiên, với độ tin cậy trung bình, nhà đầu tư nên giữ cổ phiếu và theo dõi chặt chẽ diễn biến tiếp theo.",
       "entry": null,
       "stoploss": null,
-      "timeframe": "Ngắn hạn",
+      "timeframe": "Trung hạn",
       "ta": {
         "price": 43.4,
         "ma20": 44.0,
@@ -30,8 +30,8 @@
         "low52": 42.9,
         "pct_from_high": -10.9
       },
-      "session": "evening",
-      "updatedAt": "2026-06-23T16:10:08.848112"
+      "session": "morning",
+      "updatedAt": "2026-06-23T21:05:47.286714"
     },
     "PLX": {
       "ticker": "PLX",
@@ -43,11 +43,11 @@
         "MACD âm"
       ],
       "action": "GIỮ",
-      "summary": "Xu hướng giảm nhẹ",
-      "detail": "Giá PLX đang giảm với MACD âm, RSI trung lập, nên giữ cổ phiếu để theo dõi xu hướng tiếp theo. Bối cảnh hiện tại không thuận lợi cho mua hoặc bán. Rủi ro ngắn hạn vẫn còn do xu hướng giảm",
+      "summary": "Xu hướng giảm",
+      "detail": "PLX đang ở xu hướng giảm với MACD âm và RSI(14) ở vùng trung lập. Giá hiện tại dưới MA20 và MA50, cách đỉnh 52 tuần tới 19.8%. Rủi ro tăng giá khi cổ phiếu ở gần vùng hỗ trợ.",
       "entry": null,
       "stoploss": null,
-      "timeframe": "Ngắn hạn",
+      "timeframe": "Trung hạn",
       "ta": {
         "price": 38.85,
         "ma20": 40.0,
@@ -61,8 +61,8 @@
         "low52": 36.8,
         "pct_from_high": -19.8
       },
-      "session": "evening",
-      "updatedAt": "2026-06-23T16:10:10.498293"
+      "session": "morning",
+      "updatedAt": "2026-06-23T21:05:48.400655"
     },
     "VIX": {
       "ticker": "VIX",
@@ -74,8 +74,8 @@
         "MACD dương"
       ],
       "action": "GIỮ",
-      "summary": "Xu hướng giảm",
-      "detail": "VIX có tín hiệu kỹ thuật HOLD với độ tin cậy thấp do đang trong xu hướng giảm và MACD dương. Giá hiện tại 17.4 nằm dưới MA20 và MA50, RSI ở vùng trung lập. Đây có thể là giai đoạn tích lũy, nhưng rủi ro vẫn còn cao do xu hướng giảm",
+      "summary": "Xu hướng giảm gần đây",
+      "detail": "Cổ phiếu VIX đang trong xu hướng giảm gần đây, tuy nhiên MACD dương cho thấy tín hiệu hồi phục. RSI(14) ở mức 32.1, chỉ ra sự trung lập. Cần theo dõi thêm các tín hiệu sau để quyết định mua hoặc bán. Dữ liệu TA hiện tại chưa đủ mạnh để đưa ra quyết định mua.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -92,8 +92,8 @@
         "low52": 15.35,
         "pct_from_high": -10.1
       },
-      "session": "evening",
-      "updatedAt": "2026-06-23T16:10:11.920839"
+      "session": "morning",
+      "updatedAt": "2026-06-23T21:05:49.506707"
     },
     "PVS": {
       "ticker": "PVS",
@@ -105,11 +105,11 @@
         "MACD âm"
       ],
       "action": "GIỮ",
-      "summary": "Xu hướng giảm",
-      "detail": "Cổ phiếu PVS đang trong xu hướng giảm với MACD âm, RSI(14) ở mức trung lập. Dữ liệu kỹ thuật không hỗ trợ mua hoặc bán mạnh, do đó giữ cổ phiếu là lựa chọn hợp lý. Rủi ro vẫn hiện hữu do xu hướng giảm và giá đã giảm 12.1% so với đỉnh 52 tuần.",
+      "summary": "Giá giảm, MACD âm",
+      "detail": "Xu hướng giảm ngắn hạn, RSI(14) tại 36.2 ở vùng trung lập, MACD âm và dưới tín hiệu cho thấy động lượng giảm. Trong bối cảnh này, sự thận trọng là cần thiết. Cần theo dõi thêm tín hiệu đảo chiều hoặc củng cố xu hướng.",
       "entry": null,
       "stoploss": null,
-      "timeframe": "Trung hạn",
+      "timeframe": "Ngắn hạn",
       "ta": {
         "price": 37.8,
         "ma20": 40.0,
@@ -123,8 +123,8 @@
         "low52": 36.2,
         "pct_from_high": -12.1
       },
-      "session": "evening",
-      "updatedAt": "2026-06-23T16:10:13.106170"
+      "session": "morning",
+      "updatedAt": "2026-06-23T21:05:50.775167"
     },
     "NVL": {
       "ticker": "NVL",
@@ -139,8 +139,8 @@
         "Giảm mạnh -6.9% hôm nay"
       ],
       "action": "BÁN",
-      "summary": "RSI quá bán, xu hướng giảm",
-      "detail": "Cổ phiếu NVL đang trong xu hướng giảm mạnh với RSI quá bán và death cross, MACD âm. Bối cảnh này cho thấy sự giảm mạnh sẽ tiếp tục. Dù RSI quá bán nhưng tín hiệu bán vẫn chiếm ưu thế do xu hướng giảm và các chỉ số kỹ thuật khác.",
+      "summary": "NVL giảm mạnh",
+      "detail": "Phân tích kỹ thuật cho thấy NVL đang giảm mạnh với tín hiệu death cross và RSI quá bán. Tuy nhiên, MACD âm và giá giảm -6.9% hôm nay cho thấy xu hướng giảm vẫn tiếp tục. Nhà đầu tư nên thận trọng và có thể xem xét bán cổ phiếu.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -157,8 +157,8 @@
         "low52": 12.55,
         "pct_from_high": -30.7
       },
-      "session": "evening",
-      "updatedAt": "2026-06-23T16:10:14.446740"
+      "session": "morning",
+      "updatedAt": "2026-06-23T21:05:51.914303"
     },
     "FPT": {
       "ticker": "FPT",
@@ -170,8 +170,8 @@
         "MACD âm"
       ],
       "action": "GIỮ",
-      "summary": "Xu hướng tăng nhưng MACD âm",
-      "detail": "Giá hiện tại 74.8, gần MA50, RSI ở vùng trung tính. MACD âm nhưng xu hướng vẫn tăng, rủi ro điều chỉnh ngắn hạn. Bối cảnh này phù hợp để giữ cổ phiếu.",
+      "summary": "Xu hướng tăng, MACD âm",
+      "detail": "FPT đang duy trì xu hướng tăng, nhưng chỉ số MACD đang ở mức âm. Dữ liệu RSI(14) cho thấy cổ phiếu đang ở vùng trung lập. Nhà đầu tư nên theo dõi chặt chẽ các tín hiệu kỹ thuật trong ngắn hạn để đưa ra quyết định đầu tư phù hợp.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -188,8 +188,8 @@
         "low52": 69.05,
         "pct_from_high": -4.5
       },
-      "session": "evening",
-      "updatedAt": "2026-06-23T16:10:15.624827"
+      "session": "morning",
+      "updatedAt": "2026-06-23T21:05:53.053549"
     },
     "PVT": {
       "ticker": "PVT",
@@ -202,7 +202,7 @@
       ],
       "action": "GIỮ",
       "summary": "Xu hướng giảm",
-      "detail": "Cổ phiếu PVT đang thể hiện xu hướng giảm với MACD âm và RSI ở mức trung lập. Giá hiện tại đang dưới MA20 và MA50, cho thấy áp lực bán vẫn còn. Tuy nhiên, với độ tin cậy ở mức medium, nhà đầu tư nên giữ cổ phiếu và theo dõi thêm các tín hiệu kỹ thuật trong thời gian tới.",
+      "detail": "Cổ phiếu PVT đang trong xu hướng giảm với MACD âm và giá dưới MA20. RSI(14) ở mức 36.2, cho thấy sự rung lắc có thể xảy ra. Nhà đầu tư cần theo dõi chặt chẽ diễn biến thị trường và điều chỉnh kế hoạch đầu tư cho phù hợp.",
       "entry": null,
       "stoploss": null,
       "timeframe": "Ngắn hạn",
@@ -219,8 +219,8 @@
         "low52": 20.75,
         "pct_from_high": -14.8
       },
-      "session": "evening",
-      "updatedAt": "2026-06-23T16:10:17.324595"
+      "session": "morning",
+      "updatedAt": "2026-06-23T21:05:54.094996"
     },
     "OIL": {
       "ticker": "OIL",
@@ -233,10 +233,10 @@
       ],
       "action": "GIỮ",
       "summary": "Xu hướng giảm",
-      "detail": "Giá hiện tại 14.6 đang dưới MA20 và MA50, RSI ở vùng trung lập, MACD âm cho thấy xu hướng giảm. Rủi ro tiềm ẩn khi xu hướng giảm tiếp tục. Cần theo dõi chặt chẽ biến động giá.",
+      "detail": "Cổ phiếu OIL đang trong xu hướng giảm, MACD âm và RSI(14) ở mức trung lập. Dữ liệu kỹ thuật cho thấy giá hiện tại đang dưới đường MA20 và MA50, thể hiện áp lực bán vẫn còn. Cần thận trọng và theo dõi thêm",
       "entry": null,
       "stoploss": null,
-      "timeframe": "Ngắn hạn",
+      "timeframe": "Trung hạn",
       "ta": {
         "price": 14.6,
         "ma20": 15.0,
@@ -250,8 +250,8 @@
         "low52": 14.1,
         "pct_from_high": -18.9
       },
-      "session": "evening",
-      "updatedAt": "2026-06-23T16:10:18.650684"
+      "session": "morning",
+      "updatedAt": "2026-06-23T21:05:55.203613"
     }
   }
 }
