@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-09-02T05:24:09.678907",
-  "session": "midday",
+  "updatedAt": "2026-09-02T09:59:25.716725",
+  "session": "evening",
   "alerts": {
     "ACV": {
       "ticker": "ACV",
@@ -30,8 +30,8 @@
         "low52": 42.9,
         "pct_from_high": -10.9
       },
-      "session": "midday",
-      "updatedAt": "2026-09-02T05:24:05.526539"
+      "session": "evening",
+      "updatedAt": "2026-09-02T09:59:20.973416"
     },
     "PLX": {
       "ticker": "PLX",
@@ -61,8 +61,8 @@
         "low52": 36.8,
         "pct_from_high": -19.8
       },
-      "session": "midday",
-      "updatedAt": "2026-09-02T05:24:06.120971"
+      "session": "evening",
+      "updatedAt": "2026-09-02T09:59:21.649788"
     },
     "VIX": {
       "ticker": "VIX",
@@ -92,8 +92,8 @@
         "low52": 15.35,
         "pct_from_high": -10.1
       },
-      "session": "midday",
-      "updatedAt": "2026-09-02T05:24:06.707607"
+      "session": "evening",
+      "updatedAt": "2026-09-02T09:59:22.341869"
     },
     "PVS": {
       "ticker": "PVS",
@@ -123,8 +123,8 @@
         "low52": 36.2,
         "pct_from_high": -12.1
       },
-      "session": "midday",
-      "updatedAt": "2026-09-02T05:24:07.298060"
+      "session": "evening",
+      "updatedAt": "2026-09-02T09:59:23.010531"
     },
     "NVL": {
       "ticker": "NVL",
@@ -157,8 +157,8 @@
         "low52": 12.55,
         "pct_from_high": -30.7
       },
-      "session": "midday",
-      "updatedAt": "2026-09-02T05:24:07.908538"
+      "session": "evening",
+      "updatedAt": "2026-09-02T09:59:23.688355"
     },
     "FPT": {
       "ticker": "FPT",
@@ -188,8 +188,8 @@
         "low52": 69.05,
         "pct_from_high": -4.5
       },
-      "session": "midday",
-      "updatedAt": "2026-09-02T05:24:08.498759"
+      "session": "evening",
+      "updatedAt": "2026-09-02T09:59:24.353500"
     },
     "PVT": {
       "ticker": "PVT",
@@ -219,8 +219,8 @@
         "low52": 20.75,
         "pct_from_high": -14.8
       },
-      "session": "midday",
-      "updatedAt": "2026-09-02T05:24:09.090013"
+      "session": "evening",
+      "updatedAt": "2026-09-02T09:59:25.049080"
     },
     "OIL": {
       "ticker": "OIL",
@@ -250,8 +250,8 @@
         "low52": 14.1,
         "pct_from_high": -18.9
       },
-      "session": "midday",
-      "updatedAt": "2026-09-02T05:24:09.678857"
+      "session": "evening",
+      "updatedAt": "2026-09-02T09:59:25.716685"
     }
   }
 }
