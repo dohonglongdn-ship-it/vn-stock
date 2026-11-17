@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-17T08:45:59.243985",
+  "updatedAt": "2026-11-17T14:56:45.918714",
   "session": "evening",
   "alerts": {
     "ACV": {
@@ -31,7 +31,7 @@
         "pct_from_high": -10.9
       },
       "session": "evening",
-      "updatedAt": "2026-11-17T08:45:55.266239"
+      "updatedAt": "2026-11-17T14:56:41.779221"
     },
     "PLX": {
       "ticker": "PLX",
@@ -62,7 +62,7 @@
         "pct_from_high": -19.8
       },
       "session": "evening",
-      "updatedAt": "2026-11-17T08:45:55.838714"
+      "updatedAt": "2026-11-17T14:56:42.370144"
     },
     "VIX": {
       "ticker": "VIX",
@@ -93,7 +93,7 @@
         "pct_from_high": -10.1
       },
       "session": "evening",
-      "updatedAt": "2026-11-17T08:45:56.408042"
+      "updatedAt": "2026-11-17T14:56:42.960318"
     },
     "PVS": {
       "ticker": "PVS",
@@ -124,7 +124,7 @@
         "pct_from_high": -12.1
       },
       "session": "evening",
-      "updatedAt": "2026-11-17T08:45:56.973235"
+      "updatedAt": "2026-11-17T14:56:43.554136"
     },
     "NVL": {
       "ticker": "NVL",
@@ -158,7 +158,7 @@
         "pct_from_high": -30.7
       },
       "session": "evening",
-      "updatedAt": "2026-11-17T08:45:57.537107"
+      "updatedAt": "2026-11-17T14:56:44.139350"
     },
     "FPT": {
       "ticker": "FPT",
@@ -189,7 +189,7 @@
         "pct_from_high": -4.5
       },
       "session": "evening",
-      "updatedAt": "2026-11-17T08:45:58.111586"
+      "updatedAt": "2026-11-17T14:56:44.747012"
     },
     "PVT": {
       "ticker": "PVT",
@@ -220,7 +220,7 @@
         "pct_from_high": -14.8
       },
       "session": "evening",
-      "updatedAt": "2026-11-17T08:45:58.674347"
+      "updatedAt": "2026-11-17T14:56:45.330820"
     },
     "OIL": {
       "ticker": "OIL",
@@ -251,7 +251,7 @@
         "pct_from_high": -18.9
       },
       "session": "evening",
-      "updatedAt": "2026-11-17T08:45:59.243931"
+      "updatedAt": "2026-11-17T14:56:45.918680"
     }
   }
 }
